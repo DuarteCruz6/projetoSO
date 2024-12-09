@@ -106,6 +106,25 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
   return 0;
 }
 
+///ordena uma lista de letras por ordem alfabetica. util para o Read
+/// @param list lista de caracteres
+/// @param size tamanho da lista
+/// @return vazio
+void order_list(char list[][MAX_STRING_SIZE], size_t size){
+  for (size_t i = 0; i < size - 1; i++) {
+    for (size_t j = 0; j < size - i - 1; j++) {
+      if (strcmp(list[j], list[j + 1]) > 0) {
+        // Troca as strings
+        char temp[MAX_STRING_SIZE];
+        strcpy(temp, list[j]);
+        strcpy(list[j], list[j + 1]);
+        strcpy(list[j + 1], temp);
+      }
+    }
+  }
+}
+
+
 /// Lê os valores associados a um conjunto de chaves no KVS.
 /// @param fd_out O descritor do file para onde a saída será escrita.
 /// @param num_pairs O número de chaves a serem lidas.
@@ -117,6 +136,8 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     return 1;
   }
 
+
+  order_list(keys,num_pairs);
   dprintf(fd_out, "[");  // Inicia a impressão da lista de resultados
   for (size_t i = 0; i < num_pairs; i++) {
     // Lê o valor associado à chave
