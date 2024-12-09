@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/duartecruz/Desktop/FACULDADE/2_ano/SO/proj/proj_24-25-p1_base",
+      "program": "/Users/duartecruz/Desktop/FACULDADE/2_ano/SO/proj/proj_24-25-p1_base/build/Debug/outDebug"
+    }
+  ]
+}
