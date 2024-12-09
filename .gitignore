@@ -1,0 +1,10 @@
+.DS_Store
+.vscode/c_cpp_properties.json
+projetoSO/.vscode/c_cpp_properties.json
+.vscode/launch.json
+projetoSO/.vscode/settings.json
+projetoSO/.vscode/launch.json
+.vscode/settings.json
+projetoSO/kvs.dSYM/Contents/Resources/DWARF/kvs
+projetoSO/kvs.dSYM/Contents/Info.plist
+projetoSO/kvs.dSYM/Contents/Resources/Relocations/aarch64/kvs.yml
