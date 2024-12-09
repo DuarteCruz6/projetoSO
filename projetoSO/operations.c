@@ -171,7 +171,7 @@ int kvs_read(size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
 /// @param num_pairs O número de chaves a serem deletadas.
 /// @param keys O array de chaves.
 /// @return 0 se a operação de deleção foi bem-sucedida, 1 caso contrário.
-int kvs_delete(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
+int kvs_delete_with_file(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     fprintf(stderr, "KVS state must be initialized\n");
@@ -197,17 +197,49 @@ int kvs_delete(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
 
   return 0;
 }
+int kvs_delete(size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
+  if (kvs_table == NULL) {
+    fprintf(stderr, "KVS state must be initialized\n");
+    return 1;
+  }
+  int aux = 0;
+
+  for (size_t i = 0; i < num_pairs; i++) {
+    if (delete_pair(kvs_table, keys[i]) != 0) {
+      if (!aux) {
+        printf("[");
+        aux = 1;
+      }
+      printf("(%s,KVSMISSING)", keys[i]);
+    }
+  }
+  if (aux) {
+    printf("]\n");
+  }
+
+  return 0;
+}
+
 
 /// Exibe todo o conteúdo do KVS.
 /// Imprime todos os pares chave-valor armazenados no KVS.
 /// @param fd_out O descritor de file para onde a saída será escrita.
-void kvs_show(int fd_out) {
+void kvs_show_with_file(int fd_out) {
   for (int i = 0; i < TABLE_SIZE; i++) {
     KeyNode *keyNode = kvs_table->table[i];
     while (keyNode != NULL) {
       // Imprime cada par chave-valor
       dprintf(fd_out, "(%s, %s)\n", keyNode->key, keyNode->value);
       keyNode = keyNode->next;  // Move para o próximo nó
+    }
+  }
+}
+void kvs_show() {
+  for (int i = 0; i < TABLE_SIZE; i++) {
+    KeyNode *keyNode = kvs_table->table[i];
+    while (keyNode != NULL) {
+      printf("(%s, %s)\n", keyNode->key, keyNode->value);
+      keyNode = keyNode->next; // Move to the next node
     }
   }
 }

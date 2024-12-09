@@ -53,14 +53,16 @@ Data de Finalização:
 #include "operations.h"
 
 void do_command(enum Command cmd,int fd_in, int fd_out){
+  char keys[MAX_WRITE_SIZE][MAX_STRING_SIZE] = {0};
+  char values[MAX_WRITE_SIZE][MAX_STRING_SIZE] = {0};
+  unsigned int delay;
+  size_t num_pairs;
   switch (cmd) {
       case CMD_WRITE: {
         // Declara as variáveis para armazenar as chaves e valores
-        char keys[MAX_WRITE_SIZE][MAX_STRING_SIZE];
-        char values[MAX_WRITE_SIZE][MAX_STRING_SIZE];
         
         // Lê as chaves e valores do file
-        size_t num_pairs = parse_write(fd_in, keys, values, MAX_WRITE_SIZE, MAX_STRING_SIZE);
+        num_pairs = parse_write(fd_in, keys, values, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
           fprintf(stderr, "Invalid WRITE command. See HELP for usage\n");
@@ -81,11 +83,9 @@ void do_command(enum Command cmd,int fd_in, int fd_out){
       }
 
       case CMD_READ: {
-        // Declara a variável para armazenar as chaves
-        char keys[MAX_WRITE_SIZE][MAX_STRING_SIZE];
         
         // Lê as chaves para o comando READ
-        size_t num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
+        num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
           fprintf(stderr, "Invalid READ command. See HELP for usage\n");
@@ -107,17 +107,20 @@ void do_command(enum Command cmd,int fd_in, int fd_out){
 
       case CMD_DELETE: {
         // Declara a variável para armazenar as chaves
-        char keys[MAX_WRITE_SIZE][MAX_STRING_SIZE];
         
         // Lê as chaves para o comando DELETE
-        size_t num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
+        num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
           fprintf(stderr, "Invalid DELETE command. See HELP for usage\n");
         }
 
         // Deleta os pares do KVS
-        if (kvs_delete(stderr, num_pairs, keys)) {
+        if(fd_out!=-1){
+          if (kvs_delete_with_file(fd_out,num_pairs, keys)) {
+            fprintf(stderr, "Failed to delete pair\n");
+          }
+        }else if (kvs_delete(num_pairs, keys)) {
           fprintf(stderr, "Failed to delete pair\n");
         }
         break;
@@ -125,12 +128,15 @@ void do_command(enum Command cmd,int fd_in, int fd_out){
 
       case CMD_SHOW:
         // Exibe o estado atual do KVS
-        kvs_show(stderr);
+        if(fd_out!=-1){
+          kvs_show_with_file(fd_out);
+        }else{
+          kvs_show();
+        }
+        
         break;
 
       case CMD_WAIT: {
-        unsigned int delay;
-        
         // Lê o tempo de delay para o comando WAIT
         if (parse_wait(fd_in, &delay, NULL) == -1) {
           fprintf(stderr, "Invalid WAIT command. See HELP for usage\n");
@@ -286,11 +292,6 @@ int main(int argc, char *argv[]) {
   }else if (argc == 1){
     //signfica que é no terminal
     while(1){
-      char keys[MAX_WRITE_SIZE][MAX_STRING_SIZE] = {0};
-      char values[MAX_WRITE_SIZE][MAX_STRING_SIZE] = {0};
-      unsigned int delay;
-      size_t num_pairs;
-
       printf("> ");
       fflush(stdout);
       do_command(get_next(STDIN_FILENO), STDIN_FILENO, -1);
