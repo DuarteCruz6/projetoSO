@@ -10,3 +10,5 @@ projetoSO/kvs.dSYM/Contents/Info.plist
 projetoSO/kvs.dSYM/Contents/Resources/Relocations/aarch64/kvs.yml
 projetoSO/kvs
 projetoSO/kvs.o
+projetoSO/parser.o
+projetoSO/operations.o
