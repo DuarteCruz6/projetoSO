@@ -89,7 +89,7 @@ int kvs_terminate() {
 /// @param keys O array de chaves.
 /// @param values O array de valores.
 /// @return 0 se os pares foram escritos com sucesso, 1 caso contrário.
-int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char values[][MAX_STRING_SIZE]) {
+int kvs_write_with_file(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char values[][MAX_STRING_SIZE]) {
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     dprintf(fd_out, "KVS state must be initialized\n");
@@ -106,12 +106,27 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
   return 0;
 }
 
+int kvs_write(size_t num_pairs, char keys[][MAX_STRING_SIZE], char values[][MAX_STRING_SIZE]) {
+  if (kvs_table == NULL) {
+    fprintf(stderr, "KVS state must be initialized\n");
+    return 1;
+  }
+
+  for (size_t i = 0; i < num_pairs; i++) {
+    if (write_pair(kvs_table, keys[i], values[i]) != 0) {
+      fprintf(stderr, "Failed to write keypair (%s,%s)\n", keys[i], values[i]);
+    }
+  }
+
+  return 0;
+}
+
 /// Lê os valores associados a um conjunto de chaves no KVS.
 /// @param fd_out O descritor do file para onde a saída será escrita.
 /// @param num_pairs O número de chaves a serem lidas.
 /// @param keys O array de chaves.
 /// @return 0 se as chaves foram lidas com sucesso, 1 caso contrário.
-int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
+int kvs_read_with_file(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     return 1;
@@ -127,6 +142,26 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
   }
   dprintf(fd_out, "]\n");
 
+  return 0;
+}
+
+int kvs_read(size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
+  if (kvs_table == NULL) {
+    fprintf(stderr, "KVS state must be initialized\n");
+    return 1;
+  }
+
+  printf("[");
+  for (size_t i = 0; i < num_pairs; i++) {
+    char* result = read_pair(kvs_table, keys[i]);
+    if (result == NULL) {
+      printf("(%s,KVSERROR)", keys[i]);
+    } else {
+      printf("(%s,%s)", keys[i], result);
+    }
+    free(result);
+  }
+  printf("]\n");
   return 0;
 }
 
