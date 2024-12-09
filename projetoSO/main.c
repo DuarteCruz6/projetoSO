@@ -88,13 +88,13 @@ void process_job_file(const char *input_path, const char *output_path) {
         size_t num_pairs = parse_write(fd_in, keys, values, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
-          dprintf(fd_out, "Invalid WRITE command. See HELP for usage\n");
+          fprintf(stderr, "Invalid WRITE command. See HELP for usage\n");
           continue;
         }
 
         // Chama a função de escrita no KVS, passando os pares chave-valor
         if (kvs_write(fd_out, num_pairs, keys, values)) {
-          dprintf(fd_out, "Failed to write pair\n");
+          fprintf(stderr, "Failed to write pair\n");
         }
         break;
       }
@@ -107,13 +107,13 @@ void process_job_file(const char *input_path, const char *output_path) {
         size_t num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
-          dprintf(fd_out, "Invalid READ command. See HELP for usage\n");
+          fprintf(stderr, "Invalid READ command. See HELP for usage\n");
           continue;
         }
 
         // Lê os valores do KVS
         if (kvs_read(fd_out, num_pairs, keys)) {
-          dprintf(fd_out, "Failed to read pair\n");
+          fprintf(stderr, "Failed to read pair\n");
         }
         break;
       }
@@ -126,13 +126,13 @@ void process_job_file(const char *input_path, const char *output_path) {
         size_t num_pairs = parse_read_delete(fd_in, keys, MAX_WRITE_SIZE, MAX_STRING_SIZE);
 
         if (num_pairs == 0) {
-          dprintf(fd_out, "Invalid DELETE command. See HELP for usage\n");
+          fprintf(stderr, "Invalid DELETE command. See HELP for usage\n");
           continue;
         }
 
         // Deleta os pares do KVS
         if (kvs_delete(fd_out, num_pairs, keys)) {
-          dprintf(fd_out, "Failed to delete pair\n");
+          fprintf(stderr, "Failed to delete pair\n");
         }
         break;
       }
@@ -147,7 +147,7 @@ void process_job_file(const char *input_path, const char *output_path) {
         
         // Lê o tempo de delay para o comando WAIT
         if (parse_wait(fd_in, &delay, NULL) == -1) {
-          dprintf(fd_out, "Invalid WAIT command. See HELP for usage\n");
+          fprintf(stderr, "Invalid WAIT command. See HELP for usage\n");
           continue;
         }
         
@@ -165,12 +165,12 @@ void process_job_file(const char *input_path, const char *output_path) {
         return;
 
       case CMD_INVALID:
-        dprintf(fd_out, "Invalid command. See HELP for usage\n");
+        fprintf(stderr, "Invalid command. See HELP for usage\n");
         break;
 
       case CMD_BACKUP:
         // O comando BACKUP não está implementado
-        dprintf(fd_out, "BACKUP command not implemented\n");
+        fprintf(stderr, "BACKUP command not implemented\n");
         break;
 
       case CMD_HELP:
@@ -189,7 +189,7 @@ void process_job_file(const char *input_path, const char *output_path) {
 
       default:
         // Comando desconhecido
-        dprintf(fd_out, "ERROR: Unknown command\n");
+        fprintf(stderr, "ERROR: Unknown command\n");
         break;
     }
   }
@@ -234,18 +234,18 @@ int main(int argc, char *argv[]) {
     // Verificar a extensão .job
     if (strstr(entry->d_name, ".job") != NULL) {
       // Construir caminhos para os files de entrada e saída
-      char job_input_path[PATH_MAX];
-      char job_output_path[PATH_MAX];
+      char job_input_path[MAX_PATH_NAME_SIZE];
+      char job_output_path[MAX_PATH_NAME_SIZE];
 
-      snprintf(job_input_path, PATH_MAX, "%s/%s", directory, entry->d_name);
+      snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
 
       // Substituir extensão .job por .out
-      strncpy(job_output_path, job_input_path, PATH_MAX);
+      strncpy(job_output_path, job_input_path, MAX_PATH_NAME_SIZE);
       char *ext = strrchr(job_output_path, '.');  // Encontrar a última ocorrência de '.'
       if (ext != NULL) {
         strcpy(ext, ".out");  // Substituir .job por .out
       } else {
-        strncat(job_output_path, ".out", PATH_MAX - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
+        strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
       }
 
       // Limpar o KVS para o próximo file
