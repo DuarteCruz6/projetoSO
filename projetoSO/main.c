@@ -162,6 +162,9 @@ void process_job_file(const char *input_path, const char *output_path) {
 
       case EOC:
         // Fim, termina a função
+        // Fechar os files após o processamento
+        close(fd_in);
+        close(fd_out);
         return;
 
       case CMD_INVALID:
@@ -190,13 +193,12 @@ void process_job_file(const char *input_path, const char *output_path) {
       default:
         // Comando desconhecido
         dprintf(fd_out, "ERROR: Unknown command\n");
+        // Fechar os files após o processamento
+        close(fd_in);
+        close(fd_out);
         break;
     }
   }
-
-  // Fechar os files após o processamento
-  close(fd_in);
-  close(fd_out);
 }
 
 int main(int argc, char *argv[]) {
