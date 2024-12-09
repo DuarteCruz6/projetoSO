@@ -219,6 +219,9 @@ void process_job_file(const char *input_path, const char *output_path) {
   while (1) {
     // Obtém o próximo comando do file .job
     enum Command cmd = get_next(fd_in);
+    if (cmd==EOC){
+      break;
+    }
     do_command(cmd, fd_in, fd_out);
     
   }
@@ -294,7 +297,11 @@ int main(int argc, char *argv[]) {
     while(1){
       printf("> ");
       fflush(stdout);
-      do_command(get_next(STDIN_FILENO), STDIN_FILENO, -1);
+      enum Command cmd = get_next(STDIN_FILENO);
+      if (cmd==EOC){
+        break;
+      }
+      do_command(cmd, STDIN_FILENO, -1);
     }
   }else{
     fprintf(stderr, "Usage: %s <directory> <max_backups>\n", argv[0]);
