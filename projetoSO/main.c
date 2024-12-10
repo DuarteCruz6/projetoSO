@@ -205,7 +205,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
           int fd_backup = open(backup_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
           //cria o ficheiro de backup no backup_path
           if (fd_backup < 0) {
-            perror("Error opening backup file");  // Se falhar, print erro
+            fprintf(stderr, "Error opening backup file\n");
             close(fd_in);
             return;
           }
