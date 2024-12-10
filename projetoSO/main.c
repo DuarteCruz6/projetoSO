@@ -198,7 +198,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
         }else if (pid==0){
           //processo filho
 
-          char backup_path[MAX_PATH_NAME_SIZE];
+          char backup_path[MAX_JOB_FILE_NAME_SIZE+16];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
           backup_path[strlen(output_path) - 4] = '\0';
           
@@ -285,18 +285,19 @@ int main(int argc, char *argv[]) {
     // Verificar a extensão .job
     if (strstr(entry->d_name, ".job") != NULL) {
       // Construir caminhos para os files de entrada e saída
-      char job_input_path[MAX_PATH_NAME_SIZE];
-      char job_output_path[MAX_PATH_NAME_SIZE];
+      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);;
+      char job_input_path[max_path_name_size];
+      char job_output_path[max_path_name_size];
 
-      snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
+      snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
 
       // Substituir extensão .job por .out
-      strncpy(job_output_path, job_input_path, MAX_PATH_NAME_SIZE);
+      strncpy(job_output_path, job_input_path, max_path_name_size);
       char *ext = strrchr(job_output_path, '.');  // Encontrar a última ocorrência de '.'
       if (ext != NULL) {
         strcpy(ext, ".out");  // Substituir .job por .out
       } else {
-        strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
+        strncat(job_output_path, ".out", max_path_name_size - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
       }
 
       // Limpar o KVS para o próximo file
