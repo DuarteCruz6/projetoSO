@@ -1,0 +1,13 @@
+SHOW
+WRITE [(g6,78)(r0,61)(b3,81)(m5,87)]
+WRITE [(w8,28)(w9,72)]
+BACKUP
+WRITE [(r9,55)(c5,29)(n5,1)]
+DELETE [r0,m5,c5]
+WRITE [(j7,23)(p4,94)(z5,49)(v5,55)(e7,93)]
+BACKUP
+WRITE [(w7,71)(m9,22)(m6,39)(o1,15)]
+WRITE [(j3,10)]
+WRITE [(k3,2)(k9,76)(t4,54)(i9,17)]
+SHOW
+READ [r9]
