@@ -56,14 +56,14 @@ Data de Finalização:
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
 
-void do_backup(int id_backup,int fd_out){
+void do_backup(int fd_out){
   //faz o backup do kvs para o ficheiro
   kvs_backup(fd_out);
 }
 
 
 void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
-  pid_t backupsConcorrentes[num_backups_concorrentes];
+  //pid_t backupsConcorrentes[num_backups_concorrentes];
   int backupsDecorrer=0;
   int id_backup=0;
   // Abrir o file .job em modo leitura
@@ -188,14 +188,16 @@ void process_job_file(const char *input_path, const char *output_path, const int
             //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
           }
 
-          backupsConcorrentes[backupsDecorrer]=pid;  //adiciona este processo filho à lista de processos filhos a decorrer
+          //backupsConcorrentes[backupsDecorrer]=pid;  //adiciona este processo filho à lista de processos filhos a decorrer
           backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
           id_backup++;  //adiciona um ao id de processos filhos
 
           char backup_path[MAX_PATH_NAME_SIZE];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
+          backup_path[strlen(output_path) - 4] = '\0';
           
           char backup_id[20];
+
           sprintf(backup_id, "-%d.bck", id_backup); //backup_id = "-{id}.bck"
 
           strcat(backup_path,backup_id); //adiciona o backup_id ao backup_path 
@@ -207,14 +209,14 @@ void process_job_file(const char *input_path, const char *output_path, const int
             close(fd_in);
             return;
           }
-          do_backup(id_backup,fd_backup); //cria o backup no ficheiro
+          do_backup(fd_backup); //cria o backup no ficheiro
           close(fd_backup); //fecha o ficheiro de backup
           backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
         }else{
-          //processo pai
-          continue;
+          //processo pai pode continuar
+          
         }
-
+        break;
       case CMD_HELP:
         // Exibe a ajuda de todos os comandos
         printf( 
