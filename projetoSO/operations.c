@@ -198,10 +198,9 @@ void kvs_show(int fd_out) {
   }
 }
 
-/// Aqui tu faz a função de backup do KVS
-/// @return 0 somente para nao dar erro.
-int kvs_backup() {
-  return 0;
+/// Faz um backup do KVS para o ficheiro
+void kvs_backup(int fd_out) {
+  kvs_show(fd_out);
 }
 
 /// Aguarda o tempo especificado em milissegundos.

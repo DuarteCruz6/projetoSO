@@ -95,6 +95,10 @@ int delete_pair(HashTable *ht, const char *key) {
     return 1;
 }
 
+int get_size(HashTable *ht){
+    return sizeof(ht);
+}
+
 void free_table(HashTable *ht) {
     for (int i = 0; i < TABLE_SIZE; i++) {
         KeyNode *keyNode = ht->table[i];

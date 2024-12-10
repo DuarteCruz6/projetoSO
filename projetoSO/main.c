@@ -55,8 +55,17 @@ Data de Finalização:
 // Função para processar o file .job
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
-void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
 
+void do_backup(int id_backup,int fd_out){
+  //faz o backup do kvs para o ficheiro
+  kvs_backup(fd_out);
+}
+
+
+void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
+  pid_t backupsConcorrentes[num_backups_concorrentes];
+  int backupsDecorrer=0;
+  int id_backup=0;
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
   if (fd_in < 0) {
@@ -169,16 +178,42 @@ void process_job_file(const char *input_path, const char *output_path, const int
         break;
 
       case CMD_BACKUP:
-        pid_t backupsConcorrentes[num_backups_concorrentes];
-        for(int backup=1;backup<=num_backups_concorrentes;backup++){
-          pid_t pid;
-          pid= fork()
-          if ()
-          backupsConcorrentes[backup]=pid;
+        pid_t pid = fork();
+        if (pid<0){
+          fprintf(stderr, "Error creating child process\n");
+          break;
+        }else if (pid==0){
+          //processo filho
+          while(backupsDecorrer==num_backups_concorrentes){
+            //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
+          }
+
+          backupsConcorrentes[backupsDecorrer]=pid;  //adiciona este processo filho à lista de processos filhos a decorrer
+          backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
+          id_backup++;  //adiciona um ao id de processos filhos
+
+          char backup_path[MAX_PATH_NAME_SIZE];
+          strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
+          
+          char backup_id[20];
+          sprintf(backup_id, "-%d.bck", id_backup); //backup_id = "-{id}.bck"
+
+          strcat(backup_path,backup_id); //adiciona o backup_id ao backup_path 
+    
+          int fd_backup = open(backup_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+          //cria o ficheiro de backup no backup_path
+          if (fd_backup < 0) {
+            perror("Error opening backup file");  // Se falhar, print erro
+            close(fd_in);
+            return;
+          }
+          do_backup(id_backup,fd_backup); //cria o backup no ficheiro
+          close(fd_backup); //fecha o ficheiro de backup
+          backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
+        }else{
+          //processo pai
+          continue;
         }
-        // O comando BACKUP não está implementado
-        fprintf(stderr, "BACKUP command not implemented\n");
-        break;
 
       case CMD_HELP:
         // Exibe a ajuda de todos os comandos
