@@ -27,7 +27,7 @@ limpa e liberada corretamente.
 
 Autores:
 - Davi Rocha
-- 
+- Duarte Cruz
 
 Data de Finalização:
 - 08/12/2024 - Parte 1

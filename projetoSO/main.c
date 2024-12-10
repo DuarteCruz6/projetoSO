@@ -31,7 +31,7 @@ Funções:
 
 Autores:
 - Davi Rocha
--
+- Duarte Cruz
 
 Data de Finalização:
 - 08/12/2024 - Parte 1
@@ -43,6 +43,7 @@ Data de Finalização:
 #include <limits.h>
 #include <stdio.h>
 #include <unistd.h> 
+#include <sys/wait.h>  
 #include <stdlib.h>
 #include <dirent.h>
 #include <string.h>
@@ -65,7 +66,7 @@ void do_backup(int fd_out){
 void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
   //pid_t backupsConcorrentes[num_backups_concorrentes];
   int backupsDecorrer=0;
-  int id_backup=0;
+  int id_backup=1;
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
   if (fd_in < 0) {
@@ -178,19 +179,24 @@ void process_job_file(const char *input_path, const char *output_path, const int
         break;
 
       case CMD_BACKUP:
+        
+        if (backupsDecorrer >= num_backups_concorrentes) {
+            //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
+            pid_t terminated_pid = wait(NULL);
+            if (terminated_pid > 0) {  
+                backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
+            } else if (terminated_pid == -1) {
+              fprintf(stderr, "Error waiting for child process\n");
+            }
+        }
+
         pid_t pid = fork();
+
         if (pid<0){
           fprintf(stderr, "Error creating child process\n");
           break;
         }else if (pid==0){
           //processo filho
-          while(backupsDecorrer==num_backups_concorrentes){
-            //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
-          }
-
-          //backupsConcorrentes[backupsDecorrer]=pid;  //adiciona este processo filho à lista de processos filhos a decorrer
-          backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
-          id_backup++;  //adiciona um ao id de processos filhos
 
           char backup_path[MAX_PATH_NAME_SIZE];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
@@ -207,14 +213,15 @@ void process_job_file(const char *input_path, const char *output_path, const int
           if (fd_backup < 0) {
             fprintf(stderr, "Error opening backup file\n");
             close(fd_in);
-            return;
+            exit(1);
           }
           do_backup(fd_backup); //cria o backup no ficheiro
           close(fd_backup); //fecha o ficheiro de backup
-          backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
+          exit(0);
         }else{
           //processo pai pode continuar
-          
+          backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
+          id_backup++;  //adiciona um ao id de processos filhos
         }
         break;
       case CMD_HELP:
