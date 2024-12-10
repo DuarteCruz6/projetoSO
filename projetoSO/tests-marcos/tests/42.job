@@ -1,0 +1,17 @@
+WRITE [(y9,31)(g4,82)]
+READ [g4]
+WRITE [(j7,49)(o9,1)(w5,87)]
+WAIT 2000
+WRITE [(q6,38)(q8,76)(h7,27)(q8,40)]
+DELETE [h7,g4,y9]
+DELETE [j7,q6,q8,o9,w5]
+WRITE [(x1,77)]
+WRITE [(i6,81)(s1,18)]
+WRITE [(e2,96)(o8,62)]
+READ [o8]
+READ [i6]
+DELETE [e2,o8,i6,x1,s1]
+WAIT 3000
+WRITE [(w0,29)(s9,30)(j1,27)(t4,80)]
+WRITE [(z9,38)(q2,34)]
+WAIT 2000

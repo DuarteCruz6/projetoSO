@@ -1,0 +1,13 @@
+BACKUP
+BACKUP
+WRITE [(h4,84)]
+READ [h4]
+WRITE [(x2,8)(t8,27)(n0,85)]
+WRITE [(q2,60)]
+READ [q2]
+WRITE [(u2,28)(w9,30)]
+WRITE [(m1,68)]
+WAIT 2000
+WRITE [(f9,98)]
+READ [m1]
+WRITE [(x0,98)(m2,10)]

@@ -1,0 +1,16 @@
+WAIT 3000
+SHOW
+WRITE [(g6,6)(c6,99)(j4,47)(q6,66)]
+WAIT 3000
+WRITE [(e6,18)(f8,86)(i5,34)(k6,48)]
+WRITE [(x5,96)(f2,74)(h7,63)(k1,40)]
+WAIT 2000
+WAIT 2000
+DELETE [k6]
+WRITE [(n4,88)(u2,34)(f5,99)(k5,23)]
+WRITE [(d0,33)(c5,43)(v0,67)(m7,89)]
+WRITE [(t0,80)(x9,82)(s5,38)(p4,8)(y2,88)]
+READ [k1]
+WRITE [(r5,99)]
+WRITE [(d3,87)]
+WRITE [(o4,49)(s0,66)(n3,44)]
