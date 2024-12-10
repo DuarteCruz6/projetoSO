@@ -42,8 +42,8 @@ Data de Finalização:
 
 #include <limits.h>
 #include <stdio.h>
+#include <unistd.h> 
 #include <stdlib.h>
-#include <unistd.h>
 #include <dirent.h>
 #include <string.h>
 #include <fcntl.h>
@@ -55,7 +55,7 @@ Data de Finalização:
 // Função para processar o file .job
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
-void process_job_file(const char *input_path, const char *output_path) {
+void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
 
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
@@ -169,6 +169,13 @@ void process_job_file(const char *input_path, const char *output_path) {
         break;
 
       case CMD_BACKUP:
+        pid_t backupsConcorrentes[num_backups_concorrentes];
+        for(int backup=1;backup<=num_backups_concorrentes;backup++){
+          pid_t pid;
+          pid= fork()
+          if ()
+          backupsConcorrentes[backup]=pid;
+        }
         // O comando BACKUP não está implementado
         fprintf(stderr, "BACKUP command not implemented\n");
         break;
@@ -252,7 +259,7 @@ int main(int argc, char *argv[]) {
       kvs_clear();
 
       // Processar o file .job
-      process_job_file(job_input_path, job_output_path);
+      process_job_file(job_input_path, job_output_path, max_backups);
     }
   }
 
