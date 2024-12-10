@@ -2,7 +2,7 @@ import random
 import string
 
 # Change this to the number of test files you want to generate
-NUMBER_OF_TESTS = 100
+NUMBER_OF_TESTS = 5
 
 
 def generate_random_key(existing_keys):
