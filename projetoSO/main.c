@@ -48,10 +48,12 @@ Data de Finalização:
 #include <dirent.h>
 #include <string.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "constants.h"
 #include "parser.h"
 #include "operations.h"
+
 
 // Função para processar o file .job
 // O parâmetro input_path é o caminho para o file de entrada .job
@@ -62,22 +64,22 @@ void do_backup(int fd_out){
   kvs_backup(fd_out);
 }
 
-
 void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
+
   //pid_t backupsConcorrentes[num_backups_concorrentes];
   int backupsDecorrer=0;
   int id_backup=1;
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
   if (fd_in < 0) {
-    perror("Error opening input file");  // Se falhar, print erro
+    fprintf(stderr, "Error opening input file");  // Se falhar, print erro
     return;
   }
 
   // Criar ou abrir o file .out em modo escrita
   int fd_out = open(output_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   if (fd_out < 0) {
-    perror("Error opening output file");  // Se falhar, print erro
+    fprintf(stderr, "Error output input file");  // Se falhar, print erro
     close(fd_in);
     return;
   }
@@ -250,28 +252,73 @@ void process_job_file(const char *input_path, const char *output_path, const int
   close(fd_out);
 }
 
-int main(int argc, char *argv[]) {
-  // Verificar número de argumentos
-  if (argc < 3) {
-    fprintf(stderr, "Usage: %s <directory> <max_backups>\n", argv[0]);
-    return 1;
+typedef struct {
+    char *job_input_path;
+    int num_backups;
+} thread_args;
+
+void *thread_work(void *arguments){
+  thread_args* args = (thread_args*) arguments;
+
+  long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
+
+  char job_input_path[max_path_name_size];
+  strcpy(job_input_path, args->job_input_path);
+
+  //criar os ficheiros .out
+  char job_output_path[max_path_name_size];
+  // Substituir extensão .job por .out
+  strncpy(job_output_path, job_input_path, max_path_name_size);
+  char *ext = strrchr(job_output_path, '.');  // Encontrar a última ocorrência de '.'
+  if (ext != NULL) {
+    strcpy(ext, ".out");  // Substituir .job por .out
+  } else {
+    strncat(job_output_path, ".out", max_path_name_size - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
   }
 
-  char *directory = argv[1];
-  int max_backups = atoi(argv[2]);
+  //processar os .job
+  int num_backups = args->num_backups;
+  process_job_file(job_input_path,job_output_path,num_backups);
+}
 
-  // Validar valor de max_backups
-  if (max_backups <= 0) {
-    fprintf(stderr, "Invalid value for max_backups\n");
-    return 1;
+void wait_for_threads(int max_threads,pthread_t lista_threads[]){
+  //wait for each thread to complete
+  for (int i = 0; i < max_threads; i++) {
+    if(pthread_join(lista_threads[i], NULL)!=0){
+      fprintf(stderr, "Failed to end thread\n");
+    }
   }
+}
 
+void create_threads(int max_threads,pthread_t lista_threads[], const char *input_path,int num_backups){
+  //create all threads one by one
+  int result_code;
+  for (int i=0; i < max_threads; i++) {
+    printf("In main: Creating thread %d.\n", i);
+    thread_args* args = (thread_args*) malloc(sizeof(thread_args));
+    args->job_input_path = strdup(input_path);  // Copia o caminho do arquivo
+    args->num_backups = num_backups;
+    if(pthread_create(&lista_threads[i], NULL, thread_work, args)!=0){
+      fprintf(stderr, "Failed to create thread\n");
+    }
+  }
+  wait_for_threads(max_threads,lista_threads);
+}
+
+void do_backup(int fd_out){
+  //faz o backup do kvs para o ficheiro
+  kvs_backup(fd_out);
+}
+
+void create_files(char *directory, int max_backups, int max_threads){
   // Inicializar KVS
   if (kvs_init()) {
     fprintf(stderr, "Failed to initialize KVS\n");
     return 1;
   }
 
+  pthread_t lista_threads[max_threads];
+  
   // Abrir o diretório
   DIR *dir = opendir(directory);
   if (dir == NULL) {
@@ -285,26 +332,13 @@ int main(int argc, char *argv[]) {
     // Verificar a extensão .job
     if (strstr(entry->d_name, ".job") != NULL) {
       // Construir caminhos para os files de entrada e saída
-      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);;
+      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
       char job_input_path[max_path_name_size];
-      char job_output_path[max_path_name_size];
-
       snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
-
-      // Substituir extensão .job por .out
-      strncpy(job_output_path, job_input_path, max_path_name_size);
-      char *ext = strrchr(job_output_path, '.');  // Encontrar a última ocorrência de '.'
-      if (ext != NULL) {
-        strcpy(ext, ".out");  // Substituir .job por .out
-      } else {
-        strncat(job_output_path, ".out", max_path_name_size - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
-      }
 
       // Limpar o KVS para o próximo file
       kvs_clear();
-
-      // Processar o file .job
-      process_job_file(job_input_path, job_output_path, max_backups);
+      create_threads(max_threads,lista_threads,job_input_path,max_backups);
     }
   }
 
@@ -313,5 +347,32 @@ int main(int argc, char *argv[]) {
 
   // Finalizar KVS
   kvs_terminate();
+}
+
+
+int main(int argc, char *argv[]) {
+  // Verificar número de argumentos
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <directory> <max_backups>\n", argv[0]);
+    return 1;
+  }
+
+  char *directory = argv[1];
+  int max_backups = atoi(argv[2]);
+  int max_threads = atoi(argv[3]);
+
+  // Validar valor de max_backups
+  if (max_backups <= 0) {
+    fprintf(stderr, "Invalid value for max_backups\n");
+    return 1;
+  }
+
+  // Validar valor de max_threads
+  if (max_threads <= 0) {
+    fprintf(stderr, "Invalid value for max_threads\n");
+    return 1;
+  }
+
+  create_files(directory,max_backups,max_threads);
   return 0;
 }
