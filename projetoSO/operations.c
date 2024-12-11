@@ -106,18 +106,19 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     dprintf(fd_out, "KVS state must be initialized\n");
+    pthread_mutex_unlock(&kvs_mutex);
     return 1;
   }
-
   for (size_t i = 0; i < num_pairs; i++) {
     // Tenta escrever cada par chave-valor na tabela
     if (write_pair(kvs_table, keys[i], values[i]) != 0) {
       dprintf(fd_out, "Failed to write keypair (%s,%s)\n", keys[i], values[i]);
+      pthread_mutex_unlock(&kvs_mutex);
+      return 1;
     }
   }
   // Desbloquear o mutex após a operação
   pthread_mutex_unlock(&kvs_mutex);
-
   return 0;
 }
 
@@ -126,8 +127,6 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
 /// @param size tamanho da lista
 /// @return vazio
 void order_list(char list[][MAX_STRING_SIZE], size_t size){
-  // Bloquear o mutex para garantir que apenas uma thread acesse o KVS por vez
-  pthread_mutex_lock(&kvs_mutex);
   for (size_t i = 0; i < size - 1; i++) {
     for (size_t j = 0; j < size - i - 1; j++) {
       if (strcmp(list[j], list[j + 1]) > 0) {
@@ -139,9 +138,6 @@ void order_list(char list[][MAX_STRING_SIZE], size_t size){
       }
     }
   }
-  // Desbloquear o mutex após a operação
-  pthread_mutex_unlock(&kvs_mutex);
-
 }
 
 
@@ -158,7 +154,6 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     return 1;
   }
 
-
   order_list(keys,num_pairs);
   dprintf(fd_out, "[");  // Inicia a impressão da lista de resultados
   for (size_t i = 0; i < num_pairs; i++) {
@@ -171,7 +166,6 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
   dprintf(fd_out, "]\n");
   // Desbloquear o mutex após a operação
   pthread_mutex_unlock(&kvs_mutex);
-
 
   return 0;
 }

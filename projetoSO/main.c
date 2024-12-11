@@ -87,6 +87,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
   while (1) {
     // Obtém o próximo comando do file .job
     enum Command cmd = get_next(fd_in);
+    
 
     // Dependendo do comando, executa a ação correspondente
     switch (cmd) {
@@ -97,16 +98,16 @@ void process_job_file(const char *input_path, const char *output_path, const int
         
         // Lê as chaves e valores do file
         size_t num_pairs = parse_write(fd_in, keys, values, MAX_WRITE_SIZE, MAX_STRING_SIZE);
-
         if (num_pairs == 0) {
           fprintf(stderr, "Invalid WRITE command. See HELP for usage\n");
           continue;
         }
-
+        //printf("1 output %s numero pares %ld chaves %s valores %s\n",output_path,num_pairs,keys[0],values[0]);
         // Chama a função de escrita no KVS, passando os pares chave-valor
         if (kvs_write(fd_out, num_pairs, keys, values)) {
           fprintf(stderr, "Failed to write pair\n");
         }
+        //printf("2 output %s numero pares %ld chaves %s valores %s\n",output_path,num_pairs,keys[0],values[0]);
         break;
       }
 
@@ -123,9 +124,11 @@ void process_job_file(const char *input_path, const char *output_path, const int
         }
 
         // Lê os valores do KVS
+        //printf("1 ler %s numero pares %ld chaves %s \n",output_path,num_pairs,keys[0]);
         if (kvs_read(fd_out, num_pairs, keys)) {
           fprintf(stderr, "Failed to read pair\n");
         }
+        //printf("2 ler %s numero pares %ld chaves %s \n",output_path,num_pairs,keys[0]);
         break;
       }
 
@@ -173,6 +176,12 @@ void process_job_file(const char *input_path, const char *output_path, const int
 
       case EOC:
         // Fim, termina a função
+        //printf(":\n");
+       // printf("a acabar o input %s com o output %s\n",input_path,output_path);
+        //printf(":\n");
+        // Fechar os files após o processamento
+        close(fd_in);
+        close(fd_out);
         return;
 
       case CMD_INVALID:
@@ -245,15 +254,16 @@ void process_job_file(const char *input_path, const char *output_path, const int
         break;
     }
   }
-
+  //printf("a acabar o input %s\n",input_path);
   // Fechar os files após o processamento
   close(fd_in);
   close(fd_out);
 }
 
 typedef struct {
-    char *job_input_path;
+    char job_input_path[1000];
     int num_backups;
+    int num_thread;
 } thread_args;
 
 void *thread_work(void *arguments){
@@ -277,32 +287,78 @@ void *thread_work(void *arguments){
 
   //processar os .job
   int num_backups = args->num_backups;
+  //int num_thread = args->num_thread;
+  //printf("thread %d work: input %s output %s backups %d\n", num_thread, job_input_path,job_output_path,num_backups);
   process_job_file(job_input_path,job_output_path,num_backups);
-
+  kvs_clear();
   return NULL;
 }
 
-void wait_for_threads(int max_threads,pthread_t lista_threads[]){
+void wait_for_threads(int thread_count,int max_threads,pthread_t lista_threads[]){
   //wait for each thread to complete
-  for (int i = 0; i < max_threads; i++) {
-    if(pthread_join(lista_threads[i], NULL)!=0){
-      fprintf(stderr, "Failed to end thread\n");
+  int index=0;
+  for (int i = 0; i < thread_count; i++) {
+    if(index==max_threads){
+      index=0;
     }
+    if(pthread_join(lista_threads[index], NULL)!=0){
+      //fprintf(stderr, "Failed to end thread %i com index %i\n",i,index);
+    }
+    //printf("In main: Thread %d com index %i has ended.\n", i,index);
+    index++;
   }
 }
 
-void create_threads(int max_threads,pthread_t lista_threads[], const char *input_path,int num_backups){
-  //create all threads one by one
-  for (int i=0; i < max_threads; i++) {
-    printf("In main: Creating thread %d.\n", i);
-    thread_args* args = (thread_args*) malloc(sizeof(thread_args));
-    args->job_input_path = strdup(input_path);  // Copia o caminho do arquivo
-    args->num_backups = num_backups;
-    if(pthread_create(&lista_threads[i], NULL, thread_work, args)!=0){
-      fprintf(stderr, "Failed to create thread\n");
+void create_threads(int max_threads, const char *directory, int num_backups) {
+  // Abrir o diretório
+  DIR *dir = opendir(directory);
+  if (dir == NULL) {
+    perror("Error opening directory");
+    return;
+  }
+
+  pthread_t lista_threads[max_threads];
+
+  struct dirent *entry;
+  int thread_count = 0;
+
+  // Iterar pelos arquivos do diretório
+  while ((entry = readdir(dir)) != NULL) {
+    // Verificar a extensão .job
+    if (strstr(entry->d_name, ".job") != NULL) {
+      // Construir caminhos para os files de entrada e saída
+      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
+      char job_input_path[max_path_name_size];
+      snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
+
+      // Criar argumentos para a thread
+      thread_args args;
+      strncpy(args.job_input_path, job_input_path, sizeof(args.job_input_path) - 1); // Copia o caminho do arquivo
+      args.num_backups = num_backups;
+      args.num_thread = thread_count;
+
+      int current_thread = thread_count % max_threads;
+      // Criar a thread para processar o arquivo
+      if (pthread_create(&lista_threads[current_thread], NULL, thread_work, (void*)&args) != 0) {
+        fprintf(stderr, "Failed to create thread for file %s\n", job_input_path);
+      } else {
+        thread_count++;  // Incrementar a contagem de threads criadas
+      }
+
+      // Se o número de threads atingiu o limite, aguarde o término de uma thread
+      if (thread_count >= max_threads) {
+        // Espera até que qualquer thread termine antes de continuar criando novas
+        pthread_join(lista_threads[current_thread], NULL);
+      }
+      //free(args);
     }
   }
-  wait_for_threads(max_threads,lista_threads);
+
+  // Esperar que todas as threads terminem
+  wait_for_threads(thread_count,max_threads,lista_threads);
+
+  // Fechar o diretório após iteração
+  closedir(dir);
 }
 
 void create_files(char *directory, int max_backups, int max_threads){
@@ -312,33 +368,7 @@ void create_files(char *directory, int max_backups, int max_threads){
     return;
   }
 
-  pthread_t lista_threads[max_threads];
-  
-  // Abrir o diretório
-  DIR *dir = opendir(directory);
-  if (dir == NULL) {
-    perror("Error opening directory");
-    kvs_terminate();
-    return;
-  }
-
-  struct dirent *entry;
-  while ((entry = readdir(dir)) != NULL) {
-    // Verificar a extensão .job
-    if (strstr(entry->d_name, ".job") != NULL) {
-      // Construir caminhos para os files de entrada e saída
-      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
-      char job_input_path[max_path_name_size];
-      snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
-
-      // Limpar o KVS para o próximo file
-      kvs_clear();
-      create_threads(max_threads,lista_threads,job_input_path,max_backups);
-    }
-  }
-
-  // Fechar o diretório
-  closedir(dir);
+  create_threads(max_threads,directory,max_backups);
 
   // Finalizar KVS
   kvs_terminate();
