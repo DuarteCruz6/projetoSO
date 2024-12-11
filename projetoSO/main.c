@@ -48,14 +48,22 @@ Data de Finalização:
 #include <dirent.h>
 #include <string.h>
 #include <fcntl.h>
+#include <pthread.h>
 
 #include "constants.h"
 #include "parser.h"
 #include "operations.h"
 
-// Função para processar o file .job
-// O parâmetro input_path é o caminho para o file de entrada .job
-// O parâmetro output_path é o caminho para o file de saída .out
+// Fila para armazenar nomes de ficheiros
+#define MAX_QUEUE_SIZE 10
+char *file_queue[MAX_QUEUE_SIZE];
+int queue_start = 0, queue_end = 0, queue_count = 0;
+
+// Mutex e condição para sincronizar acesso à fila
+pthread_mutex_t queue_mutex;
+pthread_cond_t queue_not_empty;
+pthread_cond_t queue_not_full;
+
 
 void do_backup(int fd_out){
   //faz o backup do kvs para o ficheiro
@@ -252,13 +260,14 @@ void process_job_file(const char *input_path, const char *output_path, const int
 
 int main(int argc, char *argv[]) {
   // Verificar número de argumentos
-  if (argc < 3) {
-    fprintf(stderr, "Usage: %s <directory> <max_backups>\n", argv[0]);
+  if (argc < 4) {
+    fprintf(stderr, "Usage: %s <directory> <max_backups> <max_threads>\n", argv[0]);
     return 1;
   }
 
   char *directory = argv[1];
   int max_backups = atoi(argv[2]);
+  int max_threads = atoi(argv[3]);
 
   // Validar valor de max_backups
   if (max_backups <= 0) {
@@ -285,7 +294,7 @@ int main(int argc, char *argv[]) {
     // Verificar a extensão .job
     if (strstr(entry->d_name, ".job") != NULL) {
       // Construir caminhos para os files de entrada e saída
-      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);;
+      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
       char job_input_path[max_path_name_size];
       char job_output_path[max_path_name_size];
 
