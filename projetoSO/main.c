@@ -39,7 +39,6 @@ Data de Finalização:
 */
 
 
-
 #include <limits.h>
 #include <stdio.h>
 #include <unistd.h> 
@@ -235,7 +234,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
             "  DELETE [key,key2,...]\n"
             "  SHOW\n"
             "  WAIT <delay_ms>\n"
-            "  BACKUP\n" // Not implemented (yet)
+            "  BACKUP\n"
             "  HELP\n"
         );
         break;
