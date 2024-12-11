@@ -1,9 +1,12 @@
 [(l,KVSERROR)(v,KVSERROR)(x,KVSERROR)(z,KVSERROR)]
 (a, anna)
+(a, anna)
 (b, bernardo)
 (c, carlota)
 (d, dinis)
+[(c,KVSMISSING)]
 [(c,KVSERROR)]
+(a, anna)
 (a, anna)
 (b, bernardo)
 (d, dinis)

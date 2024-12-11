@@ -62,7 +62,7 @@ Data de Finalização:
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t queue_cond = PTHREAD_COND_INITIALIZER;
 
-char *job_queue[MAX_QUEUE_SIZE];
+char *out_queue[MAX_QUEUE_SIZE];
 int queue_start = 0, queue_end = 0, queue_count = 0;
 int max_threads;
 long unsigned MAX_PATH_NAME_SIZE;
@@ -73,10 +73,10 @@ void do_backup(int fd_out){
 }
 
 // Função para adicionar um ficheiro à fila de trabalho
-void enqueue_job(const char *job_path) {
+void enqueue_job(const char *out_path) {
   pthread_mutex_lock(&queue_mutex);
   if (queue_count < MAX_QUEUE_SIZE) {
-      job_queue[queue_end] = strdup(job_path);
+      out_queue[queue_end] = strdup(out_path);
       queue_end = (queue_end + 1) % MAX_QUEUE_SIZE;
       queue_count++;
       pthread_cond_signal(&queue_cond);
@@ -288,23 +288,23 @@ void process_job_file(const char *input_path, const char *output_path, const int
 void *worker_thread() {
   while (1) {
     char *job_path = dequeue_job();
-    if (job_path == NULL) {
-        break; // Sinal de terminação
-    }
-    // Criar caminho para o ficheiro de saída
-    char output_path[MAX_PATH_NAME_SIZE];
-    strncpy(output_path, job_path, MAX_PATH_NAME_SIZE);
-    char *ext = strrchr(output_path, '.');
-    if (ext != NULL) {
-        strcpy(ext, ".out");
-    } else {
-        strncat(output_path, ".out", MAX_PATH_NAME_SIZE - strlen(output_path) - 1);
-    }
-    // Limpar o KVS para o próximo ficheiro
-    kvs_clear();
-    // Processar o ficheiro
-    process_job_file(job_path, output_path, max_threads);
-    free(job_path);
+    //if (job_path == NULL) {
+    //    break; // Sinal de terminação
+    //}
+    //// Criar caminho para o ficheiro de saída
+    //char output_path[MAX_PATH_NAME_SIZE];
+    //strncpy(output_path, job_path, MAX_PATH_NAME_SIZE);
+    //char *ext = strrchr(output_path, '.');
+    //if (ext != NULL) {
+    //    strcpy(ext, ".out");
+    //} else {
+    //    strncat(output_path, ".out", MAX_PATH_NAME_SIZE - strlen(output_path) - 1);
+    //}
+    //// Limpar o KVS para o próximo ficheiro
+    //kvs_clear();
+    //// Processar o ficheiro
+    //process_job_file(job_path, output_path, max_threads);
+    //free(job_path);
   }
   return NULL;
 }
@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
       char job_output_path[MAX_PATH_NAME_SIZE];
 
       snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
-      enqueue_job(job_input_path);
+      
 
       // Substituir extensão .job por .out
       strncpy(job_output_path, job_input_path, MAX_PATH_NAME_SIZE);
@@ -371,6 +371,8 @@ int main(int argc, char *argv[]) {
       } else {
         strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
       }
+
+      enqueue_job(job_output_path);
 
       // Limpar o KVS para o próximo file
       kvs_clear();
