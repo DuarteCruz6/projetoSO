@@ -58,11 +58,6 @@ Data de Finalização:
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
 
-void do_backup(int fd_out){
-  //faz o backup do kvs para o ficheiro
-  kvs_backup(fd_out);
-}
-
 void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
 
   //pid_t backupsConcorrentes[num_backups_concorrentes];
@@ -225,7 +220,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
             close(fd_in);
             exit(1);
           }
-          do_backup(fd_backup); //cria o backup no ficheiro
+          kvs_backup(fd_backup); //cria o backup no ficheiro
           close(fd_backup); //fecha o ficheiro de backup
           exit(0);
         }else{

@@ -227,11 +227,7 @@ void kvs_show(int fd_out) {
 
 /// Faz um backup do KVS para o ficheiro
 void kvs_backup(int fd_out) {
-  // Bloquear o mutex para garantir que apenas uma thread acesse o KVS por vez
-  pthread_mutex_lock(&kvs_mutex);
   kvs_show(fd_out);
-  // Desbloquear o mutex após a operação
-  pthread_mutex_unlock(&kvs_mutex);
 }
 
 /// Aguarda o tempo especificado em milissegundos.
