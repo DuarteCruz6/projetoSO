@@ -97,12 +97,10 @@ void process_job_file(const char *input_path, const char *output_path, const int
           fprintf(stderr, "Invalid WRITE command. See HELP for usage\n");
           continue;
         }
-        //printf("1 output %s numero pares %ld chaves %s valores %s\n",output_path,num_pairs,keys[0],values[0]);
         // Chama a função de escrita no KVS, passando os pares chave-valor
         if (kvs_write(fd_out, num_pairs, keys, values)) {
           fprintf(stderr, "Failed to write pair\n");
         }
-        //printf("2 output %s numero pares %ld chaves %s valores %s\n",output_path,num_pairs,keys[0],values[0]);
         break;
       }
 
@@ -184,9 +182,9 @@ void process_job_file(const char *input_path, const char *output_path, const int
         break;
 
       case CMD_BACKUP:
-        
         if (backupsDecorrer >= num_backups_concorrentes) {
             //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
+            
             pid_t terminated_pid = wait(NULL);
             if (terminated_pid > 0) {  
                 backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
@@ -200,9 +198,10 @@ void process_job_file(const char *input_path, const char *output_path, const int
         if (pid<0){
           fprintf(stderr, "Error creating child process\n");
           break;
+
         }else if (pid==0){
           //processo filho
-
+          
           char backup_path[MAX_JOB_FILE_NAME_SIZE+16];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
           backup_path[strlen(output_path) - 4] = '\0';
@@ -212,22 +211,28 @@ void process_job_file(const char *input_path, const char *output_path, const int
           sprintf(backup_id, "-%d.bck", id_backup); //backup_id = "-{id}.bck"
 
           strcat(backup_path,backup_id); //adiciona o backup_id ao backup_path 
-    
+         
           int fd_backup = open(backup_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
           //cria o ficheiro de backup no backup_path
           if (fd_backup < 0) {
+            
             fprintf(stderr, "Error opening backup file\n");
             close(fd_in);
             exit(1);
           }
+          
           kvs_backup(fd_backup); //cria o backup no ficheiro
+          
           close(fd_backup); //fecha o ficheiro de backup
+          
           exit(0);
         }else{
           //processo pai pode continuar
+          
           backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
           id_backup++;  //adiciona um ao id de processos filhos
         }
+         
         break;
       case CMD_HELP:
         // Exibe a ajuda de todos os comandos
@@ -262,12 +267,12 @@ typedef struct {
 } thread_args;
 
 void *thread_work(void *arguments){
-  thread_args* args = (thread_args*) arguments;
+  thread_args args = *((thread_args*) arguments);
 
   long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
 
   char job_input_path[max_path_name_size];
-  strcpy(job_input_path, args->job_input_path);
+  strcpy(job_input_path, args.job_input_path);
 
   //criar os ficheiros .out
   char job_output_path[max_path_name_size];
@@ -281,11 +286,12 @@ void *thread_work(void *arguments){
   }
 
   //processar os .job
-  int num_backups = args->num_backups;
+  int num_backups = args.num_backups;
   //int num_thread = args->num_thread;
   //printf("thread %d work: input %s output %s backups %d\n", num_thread, job_input_path,job_output_path,num_backups);
   process_job_file(job_input_path,job_output_path,num_backups);
   kvs_clear();
+
   return NULL;
 }
 
@@ -327,14 +333,14 @@ void create_threads(int max_threads, const char *directory, int num_backups) {
       snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
 
       // Criar argumentos para a thread
-      thread_args args;
-      strncpy(args.job_input_path, job_input_path, sizeof(args.job_input_path) - 1); // Copia o caminho do arquivo
-      args.num_backups = num_backups;
-      args.num_thread = thread_count;
+      thread_args *args_thread = malloc(sizeof(thread_args));
+      strncpy(args_thread->job_input_path, job_input_path, sizeof(args_thread->job_input_path) - 1);
+      args_thread->num_backups = num_backups;
+      args_thread->num_thread = thread_count;
 
       int current_thread = thread_count % max_threads;
       // Criar a thread para processar o arquivo
-      if (pthread_create(&lista_threads[current_thread], NULL, thread_work, (void*)&args) != 0) {
+      if (pthread_create(&lista_threads[current_thread], NULL, thread_work, (void*)args_thread) != 0) {
         fprintf(stderr, "Failed to create thread for file %s\n", job_input_path);
       } else {
         thread_count++;  // Incrementar a contagem de threads criadas
@@ -345,7 +351,7 @@ void create_threads(int max_threads, const char *directory, int num_backups) {
         // Espera até que qualquer thread termine antes de continuar criando novas
         pthread_join(lista_threads[current_thread], NULL);
       }
-      //free(args);
+      free(args_thread);
     }
   }
 
