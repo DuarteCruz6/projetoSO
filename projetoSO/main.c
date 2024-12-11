@@ -279,6 +279,8 @@ void *thread_work(void *arguments){
   //processar os .job
   int num_backups = args->num_backups;
   process_job_file(job_input_path,job_output_path,num_backups);
+
+  return NULL;
 }
 
 void wait_for_threads(int max_threads,pthread_t lista_threads[]){
@@ -292,7 +294,6 @@ void wait_for_threads(int max_threads,pthread_t lista_threads[]){
 
 void create_threads(int max_threads,pthread_t lista_threads[], const char *input_path,int num_backups){
   //create all threads one by one
-  int result_code;
   for (int i=0; i < max_threads; i++) {
     printf("In main: Creating thread %d.\n", i);
     thread_args* args = (thread_args*) malloc(sizeof(thread_args));
@@ -305,16 +306,11 @@ void create_threads(int max_threads,pthread_t lista_threads[], const char *input
   wait_for_threads(max_threads,lista_threads);
 }
 
-void do_backup(int fd_out){
-  //faz o backup do kvs para o ficheiro
-  kvs_backup(fd_out);
-}
-
 void create_files(char *directory, int max_backups, int max_threads){
   // Inicializar KVS
   if (kvs_init()) {
     fprintf(stderr, "Failed to initialize KVS\n");
-    return 1;
+    return;
   }
 
   pthread_t lista_threads[max_threads];
@@ -324,7 +320,7 @@ void create_files(char *directory, int max_backups, int max_threads){
   if (dir == NULL) {
     perror("Error opening directory");
     kvs_terminate();
-    return 1;
+    return;
   }
 
   struct dirent *entry;
