@@ -13,16 +13,16 @@
 #include "operations.h"
 
 // Variáveis globais para controle de threads
-int active_threads = 0;
 int MAX_BACKUPS=0;
 int MAX_THREADS=0;
 long unsigned MAX_PATH_NAME_SIZE = 0;
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
 typedef struct {
     char *job_input_path;
     int num_thread;
+    pthread_rwlock_t* mutex_active_threads;
+    pthread_rwlock_t* mutex_active_backups;
+    int* active_threads;
 } thread_args;
 
 
@@ -30,10 +30,10 @@ typedef struct {
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
 
-void process_job_file(const char *input_path, const char *output_path) {
+void process_job_file(const char *input_path, const char *output_path, int* backups_ativos, 
+  pthread_rwlock_t* mutex_activeBackups) {
 
   //pid_t backupsConcorrentes[num_backups_concorrentes];
-  int backupsDecorrer=0;
   int id_backup=1;
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
@@ -154,16 +154,21 @@ void process_job_file(const char *input_path, const char *output_path) {
         break;
 
       case CMD_BACKUP:
-        if (backupsDecorrer >= MAX_BACKUPS) {
+        pthread_rwlock_rdlock(mutex_activeBackups);
+        if ((*backups_ativos) >= MAX_BACKUPS) {
             //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
             
             pid_t terminated_pid = waitpid(-1, NULL, 0); // Espera por qualquer processo filho
             if (terminated_pid > 0) {  
-                backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
+                pthread_rwlock_unlock(mutex_activeBackups);
+                pthread_rwlock_wrlock(mutex_activeBackups);
+                (*backups_ativos)--; //remove um ao numero de processos filhos a acontecer
+                pthread_rwlock_unlock(mutex_activeBackups);
             } else if (terminated_pid == -1) {
               fprintf(stderr, "Error waiting for child process\n");
             }
         }
+        pthread_rwlock_unlock(mutex_activeBackups);
 
         pid_t pid = fork();
 
@@ -173,7 +178,6 @@ void process_job_file(const char *input_path, const char *output_path) {
 
         }else if (pid==0){
           //processo filho
-          
           
           char backup_path[MAX_JOB_FILE_NAME_SIZE+16];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
@@ -203,7 +207,9 @@ void process_job_file(const char *input_path, const char *output_path) {
           exit(0);
         }else{
           //processo pai pode continuar
-          backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
+          pthread_rwlock_wrlock(mutex_activeBackups);
+          (*backups_ativos)++;     //adiciona um ao numero de backups a decorrer
+          pthread_rwlock_unlock(mutex_activeBackups);
           id_backup++;  //adiciona um ao id de processos filhos
         }
          
@@ -232,6 +238,7 @@ void process_job_file(const char *input_path, const char *output_path) {
   // Fechar os files após o processamento
   close(fd_in);
   close(fd_out);
+  free(backups_ativos);
 }
 
 void *thread_work(void *arguments){
@@ -254,20 +261,19 @@ void *thread_work(void *arguments){
   //processar os .job
   //int num_thread = args.num_thread;
   //printf("thread %d work\n", num_thread);
-  process_job_file(job_input_path,job_output_path);
+  process_job_file(job_input_path,job_output_path,args.active_threads,args.mutex_active_backups);
    // Espera que todos os processos filhos terminem
     for (int i = 0; i < MAX_BACKUPS; ++i) {
         wait(NULL); // Espera qualquer processo filho terminar
     }
+  
+  pthread_rwlock_wrlock(args.mutex_active_threads);
+  args.active_threads--;
+  pthread_rwlock_unlock(args.mutex_active_threads);
+
   free(args.job_input_path);
   free(job_input_path);
   free(arguments);
-
-  pthread_mutex_lock(&lock);
-  active_threads--;
-  pthread_cond_signal(&cond);  // Notificar que uma thread terminou
-  pthread_mutex_unlock(&lock);
-
   return NULL;
 }
 
@@ -275,6 +281,7 @@ void wait_for_threads(int thread_count,pthread_t *lista_threads){
   // Esperar por todas as threads restantes
   for (int i = 0; i < thread_count; i++) {
       pthread_join(lista_threads[i], NULL);
+
   }
 }
 
@@ -306,6 +313,13 @@ void create_threads(const char *directory) {
   int thread_count = 0;
 
   char **lista_ficheiros = malloc(0 * sizeof(char*));
+  int* backups_a_decorrer = malloc(sizeof(int));
+  int* active_threads = malloc(sizeof(int));
+
+  pthread_rwlock_t *mutex_backups_a_decorrer=malloc(sizeof(pthread_rwlock_t));
+  pthread_rwlock_init(mutex_backups_a_decorrer,NULL);
+  pthread_rwlock_t *mutex_threads_a_decorrer=malloc(sizeof(pthread_rwlock_t));
+  pthread_rwlock_init(mutex_threads_a_decorrer,NULL);
 
   // Contar o número de ficheiros .job no diretório
   int num_files = 0;
@@ -320,7 +334,6 @@ void create_threads(const char *directory) {
       }
   }
   //ordena a lista de files por ordem alfabetica
-  printf("num files %d\n",num_files);
   if(num_files>1){
     order_files(lista_ficheiros, (size_t) num_files);
   }
@@ -339,22 +352,29 @@ void create_threads(const char *directory) {
       args_thread->job_input_path= strdup(job_input_path);
 
       args_thread->num_thread = thread_count;
+      args_thread->active_threads=backups_a_decorrer;
 
-      pthread_mutex_lock(&lock);
+      args_thread->mutex_active_backups= mutex_backups_a_decorrer;
+      args_thread->mutex_active_threads= mutex_threads_a_decorrer;
+
       // Esperar caso o número de threads ativas atinja o limite
-      while (active_threads >= MAX_THREADS) {
-          pthread_cond_wait(&cond, &lock);
+      pthread_rwlock_rdlock(args_thread->mutex_active_threads);
+      while ((*active_threads) >= MAX_THREADS) {
+          
       }
+      pthread_rwlock_unlock(args_thread->mutex_active_threads);
       // Criar nova thread
-      if (pthread_create(&lista_threads[thread_count % MAX_THREADS], NULL, thread_work, (void*)args_thread) != 0) {
+      if (pthread_create(&lista_threads[thread_count], NULL, thread_work, (void*)args_thread) != 0) {
           fprintf(stderr, "Falha ao criar thread para o arquivo %s\n", job_input_path);
           free(args_thread->job_input_path);
           free(args_thread);
       } else {
-          active_threads++;
+          pthread_rwlock_wrlock(args_thread->mutex_active_threads);
+          (*active_threads)++;
+          pthread_rwlock_unlock(args_thread->mutex_active_threads);
           thread_count++;
       }
-      pthread_mutex_unlock(&lock);
+    
       //free(args_thread);
     }
   
@@ -368,7 +388,13 @@ void create_threads(const char *directory) {
       free(lista_ficheiros[i]);  // Libertar cada caminho alocado
   }
   free(lista_ficheiros);  // Libertar a lista de caminhos
+  pthread_rwlock_destroy(mutex_backups_a_decorrer);
+  pthread_rwlock_destroy(mutex_threads_a_decorrer);
+  free(mutex_backups_a_decorrer);
+  free(mutex_threads_a_decorrer);
 
+  free(backups_a_decorrer);
+  free(active_threads);
   // Fechar o diretório após iteração
   closedir(dir);
 }
