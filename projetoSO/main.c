@@ -280,9 +280,8 @@ void *thread_work(void *arguments){
 
 void wait_for_threads(int thread_count,pthread_t *lista_threads){
   // Esperar por todas as threads restantes
-  for (int i = 0; i<thread_count && i<MAX_THREADS; i++) {
+  for (int i = 0; i<thread_count; i++) {
       pthread_join(lista_threads[i], NULL);
-
   }
 }
 
@@ -330,7 +329,7 @@ void create_threads(const char *directory) {
     order_files(lista_ficheiros, (size_t) num_files);
   }
 
-  pthread_t *lista_threads = malloc((size_t)10000 * sizeof(pthread_t));
+  pthread_t *lista_threads = malloc((size_t)num_files * sizeof(pthread_t));
 
   int thread_count = 0;
 

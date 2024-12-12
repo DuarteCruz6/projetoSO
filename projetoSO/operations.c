@@ -75,7 +75,6 @@ int kvs_init() {
 /// Libera os recursos alocados para a tabela de hash.
 /// @return 0 se o KVS foi finalizado com sucesso, 1 se o KVS não foi inicializado.
 int kvs_terminate() {
-  // Bloquear o mutex para garantir que apenas uma thread acesse o KVS por vez
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     fprintf(stderr, "KVS state must be initialized\n");
@@ -95,7 +94,7 @@ int kvs_terminate() {
 /// @param values O array de valores.
 /// @return 0 se os pares foram escritos com sucesso, 1 caso contrário.
 int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char values[][MAX_STRING_SIZE]) {
-  // Bloquear o mutex para garantir que apenas uma thread acesse o KVS por vez
+  
   if (kvs_table == NULL) {
     // Se o KVS não foi inicializado, retorna erro
     dprintf(fd_out, "KVS state must be initialized\n");
