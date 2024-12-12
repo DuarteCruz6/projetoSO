@@ -204,7 +204,7 @@ void process_job_file(const char *input_path, const char *output_path, int* back
           
           close(fd_backup); //fecha o ficheiro de backup
           
-          exit(0);
+          _exit(0);
         }else{
           //processo pai pode continuar
           pthread_rwlock_wrlock(mutex_activeBackups);
