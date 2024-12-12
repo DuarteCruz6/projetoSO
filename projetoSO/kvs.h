@@ -4,11 +4,13 @@
 #define TABLE_SIZE 26
 
 #include <stddef.h>
+#include <pthread.h>
 
 typedef struct KeyNode {
     char *key;
     char *value;
     struct KeyNode *next;
+    pthread_rwlock_t *mutex_par_hashTable;
 } KeyNode;
 
 typedef struct HashTable {

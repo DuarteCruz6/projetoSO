@@ -199,7 +199,9 @@ void kvs_show(int fd_out) {
     KeyNode *keyNode = kvs_table->table[i];
     while (keyNode != NULL) {
       // Imprime cada par chave-valor
+      pthread_rwlock_rdlock(keyNode->mutex_par_hashTable);
       dprintf(fd_out, "(%s, %s)\n", keyNode->key, keyNode->value);
+      pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
       keyNode = keyNode->next;  // Move para o próximo nó
     }
   }

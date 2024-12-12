@@ -2,6 +2,7 @@
 #include "string.h"
 
 #include <stdlib.h>
+#include <pthread.h>
 #include <ctype.h>
 
 // Hash function based on key initial.
@@ -35,18 +36,24 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
     // Search for the key node
     while (keyNode != NULL) {
         if (strcmp(keyNode->key, key) == 0) {
+            pthread_rwlock_wrlock(keyNode->mutex_par_hashTable);
             free(keyNode->value);
             keyNode->value = strdup(value);
+            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
             return 0;
         }
         keyNode = keyNode->next; // Move to the next node
     }
 
     // Key not found, create a new key node
+
+    pthread_rwlock_t *mutex_par_hash=malloc(sizeof(pthread_rwlock_t));
+    pthread_rwlock_init(mutex_par_hash,NULL);
     keyNode = malloc(sizeof(KeyNode));
     keyNode->key = strdup(key); // Allocate memory for the key
     keyNode->value = strdup(value); // Allocate memory for the value
     keyNode->next = ht->table[index]; // Link to existing nodes
+    keyNode->mutex_par_hashTable = mutex_par_hash; //cria um mutex para este par 
     ht->table[index] = keyNode; // Place new key node at the start of the list
     return 0;
 }
@@ -58,7 +65,9 @@ char* read_pair(HashTable *ht, const char *key) {
 
     while (keyNode != NULL) {
         if (strcmp(keyNode->key, key) == 0) {
+            pthread_rwlock_rdlock(keyNode->mutex_par_hashTable);
             value = strdup(keyNode->value);
+            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
             return value; // Return copy of the value if found
         }
         keyNode = keyNode->next; // Move to the next node
@@ -77,12 +86,15 @@ int delete_pair(HashTable *ht, const char *key) {
             // Key found; delete this node
             if (prevNode == NULL) {
                 // Node to delete is the first node in the list
+                pthread_rwlock_wrlock(keyNode->mutex_par_hashTable);
                 ht->table[index] = keyNode->next; // Update the table to point to the next node
+                pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
             } else {
                 // Node to delete is not the first; bypass it
                 prevNode->next = keyNode->next; // Link the previous node to the next node
             }
             // Free the memory allocated for the key and value
+            free(keyNode->mutex_par_hashTable);
             free(keyNode->key);
             free(keyNode->value);
             free(keyNode); // Free the key node itself
