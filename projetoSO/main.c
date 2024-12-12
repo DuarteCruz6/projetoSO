@@ -334,11 +334,6 @@ void create_threads(const char *directory) {
           thread_count++;
       }
       pthread_mutex_unlock(&lock);
-
-      // Se o número de ficheiros for inferior ao número máximo de threads, não há necessidade de esperar
-      if (thread_count >= num_files) {
-          break;  // Sair do loop quando todas as threads para os ficheiros forem criadas
-      }
       //free(args_thread);
     }
   
