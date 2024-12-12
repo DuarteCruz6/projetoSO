@@ -145,6 +145,7 @@ void process_job_file(const char *input_path, const char *output_path, int* back
        // printf("a acabar o input %s com o output %s\n",input_path,output_path);
         //printf(":\n");
         // Fechar os files após o processamento
+        
         close(fd_in);
         close(fd_out);
         return;
@@ -329,7 +330,7 @@ void create_threads(const char *directory) {
     order_files(lista_ficheiros, (size_t) num_files);
   }
 
-  pthread_t *lista_threads = malloc((size_t)MAX_THREADS * sizeof(pthread_t));
+  pthread_t *lista_threads = malloc((size_t)10000 * sizeof(pthread_t));
 
   int thread_count = 0;
 
@@ -342,9 +343,6 @@ void create_threads(const char *directory) {
   pthread_rwlock_init(mutex_threads_a_decorrer,NULL);
 
   // Iterar pelos arquivos do diretório
-
-  
-  
     for(int i=0;i<num_files;i++){
 
       char job_input_path[MAX_PATH_NAME_SIZE];
@@ -361,25 +359,26 @@ void create_threads(const char *directory) {
       args_thread->mutex_active_backups= mutex_backups_a_decorrer;
       args_thread->mutex_active_threads= mutex_threads_a_decorrer;
 
-      // Esperar caso o número de threads ativas atinja o limite
-      pthread_rwlock_rdlock(args_thread->mutex_active_threads);
-      //while ((*active_threads) >= MAX_THREADS) {
-      //    
-      //}
-      pthread_rwlock_unlock(args_thread->mutex_active_threads);
-      // Criar nova thread
-      if (pthread_create(&lista_threads[thread_count], NULL, thread_work, (void*)args_thread) != 0) {
-          fprintf(stderr, "Falha ao criar thread para o arquivo %s\n", job_input_path);
-          free(args_thread->job_input_path);
-          free(args_thread);
-      } else {
-          pthread_rwlock_wrlock(args_thread->mutex_active_threads);
+      while(1) {
+        pthread_rwlock_rdlock(mutex_threads_a_decorrer);
+        if (*active_threads < MAX_THREADS) {
+          pthread_rwlock_unlock(mutex_threads_a_decorrer);
+          pthread_rwlock_wrlock(mutex_threads_a_decorrer);
           (*active_threads)++;
-          pthread_rwlock_unlock(args_thread->mutex_active_threads);
-          thread_count++;
+          pthread_rwlock_unlock(mutex_threads_a_decorrer);
+          break;
+        }
+        pthread_rwlock_unlock(mutex_threads_a_decorrer);
+        //we can add a wait function if we want
       }
-    
-     // free(args_thread);
+
+      pthread_create(&lista_threads[thread_count], NULL, thread_work, (void*)args_thread);
+      pthread_rwlock_wrlock(args_thread->mutex_active_threads);
+      (*active_threads)++;
+      pthread_rwlock_unlock(args_thread->mutex_active_threads);
+      thread_count++;
+
+      // free(args_thread);
     }
   
   //free(args_thread);
