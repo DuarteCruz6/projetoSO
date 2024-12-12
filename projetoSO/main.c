@@ -255,6 +255,10 @@ void *thread_work(void *arguments){
   //int num_thread = args.num_thread;
   //printf("thread %d work\n", num_thread);
   process_job_file(job_input_path,job_output_path);
+   // Espera que todos os processos filhos terminem
+    for (int i = 0; i < MAX_BACKUPS; ++i) {
+        wait(NULL); // Espera qualquer processo filho terminar
+    }
   free(args.job_input_path);
   free(job_input_path);
   free(arguments);
@@ -269,7 +273,7 @@ void *thread_work(void *arguments){
 
 void wait_for_threads(int thread_count,pthread_t *lista_threads){
   // Esperar por todas as threads restantes
-  for (int i = 0; i < thread_count && i < MAX_THREADS; i++) {
+  for (int i = 0; i < thread_count; i++) {
       pthread_join(lista_threads[i], NULL);
   }
 }
