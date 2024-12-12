@@ -54,6 +54,6 @@ void kvs_clear();
 /// @brief Ordena uma lista por ordem alfabetica
 /// @param list 
 /// @param size 
-void order_list(char *list[], size_t size);
+void order_list(char list[][MAX_STRING_SIZE], size_t size);
 
 #endif  // KVS_OPERATIONS_H

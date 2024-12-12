@@ -126,10 +126,10 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
 /// @param list lista de caracteres
 /// @param size tamanho da lista
 /// @return vazio
-void order_list(char *list[], size_t size){
+void order_list(char list[][MAX_STRING_SIZE], size_t size){
   for (size_t i = 0; i < size - 1; i++) {
     for (size_t j = 0; j < size - i - 1; j++) {
-      if (list[j] != NULL && list[j + 1] != NULL && strcmp(list[j], list[j + 1]) > 0) {
+      if (strcmp(list[j], list[j + 1]) > 0) {
         // Troca as strings
         char temp[MAX_STRING_SIZE];
         strcpy(temp, list[j]);
@@ -153,11 +153,11 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     // Se o KVS não foi inicializado, retorna erro
     return 1;
   }
-printf("Antes de ordenar:\n");
+  printf("Antes de ordenar:\n");
   for (size_t i = 0; i < num_pairs; i++) {
     printf("Key %zu: %s\n", i, keys[i] ? keys[i] : "NULL");
   }
-  order_list((char **)keys,num_pairs);
+  order_list(keys,num_pairs);
   printf("Depois de ordenar:\n");
   for (size_t i = 0; i < num_pairs; i++) {
     printf("Key %zu: %s\n", i, keys[i] ? keys[i] : "NULL");

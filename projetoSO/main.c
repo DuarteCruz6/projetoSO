@@ -278,6 +278,20 @@ void wait_for_threads(int thread_count,pthread_t *lista_threads){
   }
 }
 
+// Função de comparação para qsort
+int compare_files(const void *a, const void *b) {
+    const char *file_a = *(const char **)a;
+    const char *file_b = *(const char **)b;
+    return strcmp(file_a, file_b); // Ordenação alfabética
+}
+
+// Função para ordenar a lista de ficheiros
+void order_files(char **lista_ficheiros, int num_files) {
+    if (num_files > 1) { // Apenas ordena se existir mais de um ficheiro
+        qsort(lista_ficheiros, (size_t)num_files, sizeof(char *), compare_files);
+    }
+}
+
 void create_threads(const char *directory) {
   // Abrir o diretório
   DIR *dir = opendir(directory);
@@ -308,7 +322,7 @@ void create_threads(const char *directory) {
   //ordena a lista de files por ordem alfabetica
   printf("num files %d\n",num_files);
   if(num_files>1){
-    order_list(lista_ficheiros, (size_t) num_files);
+    order_files(lista_ficheiros, (size_t) num_files);
   }
 
   // Iterar pelos arquivos do diretório
