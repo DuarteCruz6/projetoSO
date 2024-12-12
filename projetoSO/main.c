@@ -196,7 +196,7 @@ void process_job_file(const char *input_path, const char *output_path, int* back
             
             fprintf(stderr, "Error opening backup file\n");
             close(fd_in);
-            exit(1);
+            _exit(1);
           }
           
           kvs_backup(fd_backup); //cria o backup no ficheiro
