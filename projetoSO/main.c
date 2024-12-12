@@ -300,19 +300,14 @@ void order_files(char **lista_ficheiros, int num_files) {
 }
 
 void create_threads(const char *directory) {
-  // Abrir o diretório
   DIR *dir = opendir(directory);
-  if (dir == NULL) {
-    perror("Error opening directory");
-    return;
-  }
+  char **lista_ficheiros = malloc(0 * sizeof(char*));
+  get_path(directory,lista_ficheiros);
 
   pthread_t *lista_threads = malloc((size_t)MAX_THREADS * sizeof(pthread_t));
 
-  struct dirent *entry;
   int thread_count = 0;
 
-  char **lista_ficheiros = malloc(0 * sizeof(char*));
   int* backups_a_decorrer = malloc(sizeof(int));
   int* active_threads = malloc(sizeof(int));
 
@@ -321,26 +316,9 @@ void create_threads(const char *directory) {
   pthread_rwlock_t *mutex_threads_a_decorrer=malloc(sizeof(pthread_rwlock_t));
   pthread_rwlock_init(mutex_threads_a_decorrer,NULL);
 
-  // Contar o número de ficheiros .job no diretório
-  int num_files = 0;
-  while ((entry = readdir(dir)) != NULL) {
-      if (strstr(entry->d_name, ".job") != NULL) {
-          // Construir caminhos para os files de entrada
-          lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
-          char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
-          snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
-          lista_ficheiros[num_files]=job_input_path;
-          num_files++;  // Contar os ficheiros .job
-      }
-  }
-  //ordena a lista de files por ordem alfabetica
-  if(num_files>1){
-    order_files(lista_ficheiros, (size_t) num_files);
-  }
-
   // Iterar pelos arquivos do diretório
   
-    for(int i=0;i<num_files;i++){
+    for(int i=0;i<sizeof(lista_ficheiros);i++){
 
       char job_input_path[MAX_PATH_NAME_SIZE];
 
@@ -384,7 +362,7 @@ void create_threads(const char *directory) {
   wait_for_threads(thread_count,lista_threads);
 
   free(lista_threads);
-  for (int i = 0; i < num_files; i++) {
+  for (int i = 0; i < sizeof(lista_ficheiros); i++) {
       free(lista_ficheiros[i]);  // Libertar cada caminho alocado
   }
   free(lista_ficheiros);  // Libertar a lista de caminhos
@@ -397,6 +375,34 @@ void create_threads(const char *directory) {
   free(active_threads);
   // Fechar o diretório após iteração
   closedir(dir);
+}
+
+void get_path(const char *directory, char **lista_ficheiros){
+  // Abrir o diretório
+  DIR *dir = opendir(directory);
+  if (dir == NULL) {
+    perror("Error opening directory");
+    return;
+  }
+
+  struct dirent *entry;
+
+  // Contar o número de ficheiros .job no diretório
+  int num_files = 0;
+  while ((entry = readdir(dir)) != NULL) {
+      if (strstr(entry->d_name, ".job") != NULL) {
+          // Construir caminhos para os files de entrada
+          lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
+          char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
+          snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
+          lista_ficheiros[num_files]=job_input_path;
+          num_files++;  // Contar os ficheiros .job
+      }
+  }
+  //ordena a lista de files por ordem alfabetica
+  if(num_files>1){
+    order_files(lista_ficheiros, (size_t) num_files);
+  }
 }
 
 void create_files(char *directory){
