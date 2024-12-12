@@ -1,44 +1,3 @@
-/*
-
-FILE: main.c
-
-Uso do programa: 
-abra o diretório onde está a raiz do projeto;
-make -> para compilar;
-./kvs <directory> <max_backups> -> para rodar;
-
-ex:
-./kvs tests-public/jobs 1
-
-Descrição:
-Este file contém a função principal do sistema. Ele é responsável por inicializar o sistema KVS (Key-Value Store),
-processar files de comandos .job, e gerar os respectivos files de saída .out. A função 'main' é responsável por 
-abrir o diretório onde os files .job estão localizados, processá-los um a um, executando os comandos especificados
-em cada file e garantindo que o estado do KVS seja reinicializado entre cada file.
-
-Funcionalidades:
-- Inicialização do KVS.
-- Leitura e execução de comandos dos files .job (como WRITE, READ, DELETE, SHOW, etc.).
-- Criação de files .out com os resultados da execução dos comandos.
-- Processamento de múltiplos files .job de forma sequencial.
-- Gerenciamento de erros, com mensagens de erro escritas no file de saída .out.
-
-Funções:
-- 'process_job_file': Processa um file .job específico, executando os comandos contidos nele e escrevendo os resultados 
-  no file de saída.
-- 'main': Função principal, que inicializa o KVS, lê files .job de um diretório e os processa, gerando os files .out 
-  correspondentes.
-
-Autores:
-- Davi Rocha
-- Duarte Cruz
-
-Data de Finalização:
-- 08/12/2024 - Parte 1
-
-*/
-
-
 #include <limits.h>
 #include <stdio.h>
 #include <unistd.h> 
@@ -53,12 +12,20 @@ Data de Finalização:
 #include "parser.h"
 #include "operations.h"
 
+// Variáveis globais para controle de threads
+int active_threads = 0;
+int MAX_BACKUPS=0;
+int MAX_THREADS=0;
+long unsigned MAX_PATH_NAME_SIZE = 0;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
+
 
 // Função para processar o file .job
 // O parâmetro input_path é o caminho para o file de entrada .job
 // O parâmetro output_path é o caminho para o file de saída .out
 
-void process_job_file(const char *input_path, const char *output_path, const int num_backups_concorrentes) {
+void process_job_file(const char *input_path, const char *output_path) {
 
   //pid_t backupsConcorrentes[num_backups_concorrentes];
   int backupsDecorrer=0;
@@ -66,14 +33,14 @@ void process_job_file(const char *input_path, const char *output_path, const int
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
   if (fd_in < 0) {
-    fprintf(stderr, "Error opening input file");  // Se falhar, print erro
+    fprintf(stderr, "Error opening input file _%s_\n",input_path);  // Se falhar, print erro
     return;
   }
 
   // Criar ou abrir o file .out em modo escrita
   int fd_out = open(output_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
   if (fd_out < 0) {
-    fprintf(stderr, "Error output input file");  // Se falhar, print erro
+    fprintf(stderr, "Error opening output file\n");  // Se falhar, print erro
     close(fd_in);
     return;
   }
@@ -182,10 +149,10 @@ void process_job_file(const char *input_path, const char *output_path, const int
         break;
 
       case CMD_BACKUP:
-        if (backupsDecorrer >= num_backups_concorrentes) {
+        if (backupsDecorrer >= MAX_BACKUPS) {
             //tem de esperar que um backup acabe, pois ja ta a acontecer o numero maximo de backups
             
-            pid_t terminated_pid = wait(NULL);
+            pid_t terminated_pid = waitpid(-1, NULL, 0); // Espera por qualquer processo filho
             if (terminated_pid > 0) {  
                 backupsDecorrer--; //remove um ao numero de processos filhos a acontecer
             } else if (terminated_pid == -1) {
@@ -202,6 +169,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
         }else if (pid==0){
           //processo filho
           
+          
           char backup_path[MAX_JOB_FILE_NAME_SIZE+16];
           strncpy(backup_path, output_path, strlen(output_path)-4); //cria o backup_path igual a output_path mas sem o .out
           backup_path[strlen(output_path) - 4] = '\0';
@@ -213,6 +181,7 @@ void process_job_file(const char *input_path, const char *output_path, const int
           strcat(backup_path,backup_id); //adiciona o backup_id ao backup_path 
          
           int fd_backup = open(backup_path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+          
           //cria o ficheiro de backup no backup_path
           if (fd_backup < 0) {
             
@@ -223,12 +192,12 @@ void process_job_file(const char *input_path, const char *output_path, const int
           
           kvs_backup(fd_backup); //cria o backup no ficheiro
           
+          
           close(fd_backup); //fecha o ficheiro de backup
           
           exit(0);
         }else{
           //processo pai pode continuar
-          
           backupsDecorrer++;     //adiciona um ao numero de backups a decorrer
           id_backup++;  //adiciona um ao id de processos filhos
         }
@@ -261,56 +230,51 @@ void process_job_file(const char *input_path, const char *output_path, const int
 }
 
 typedef struct {
-    char job_input_path[1000];
-    int num_backups;
+    char *job_input_path;
     int num_thread;
 } thread_args;
 
 void *thread_work(void *arguments){
-  thread_args args = *((thread_args*) arguments);
+  thread_args args = *((thread_args*)arguments);  // Converter o argumento void* para thread_args*
 
-  long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
-
-  char job_input_path[max_path_name_size];
+  char *job_input_path = (char *)malloc(MAX_PATH_NAME_SIZE * sizeof(char));
   strcpy(job_input_path, args.job_input_path);
 
   //criar os ficheiros .out
-  char job_output_path[max_path_name_size];
+  char job_output_path[MAX_PATH_NAME_SIZE];
   // Substituir extensão .job por .out
-  strncpy(job_output_path, job_input_path, max_path_name_size);
+  strncpy(job_output_path, job_input_path, MAX_PATH_NAME_SIZE);
   char *ext = strrchr(job_output_path, '.');  // Encontrar a última ocorrência de '.'
   if (ext != NULL) {
     strcpy(ext, ".out");  // Substituir .job por .out
   } else {
-    strncat(job_output_path, ".out", max_path_name_size - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
+    strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
   }
 
   //processar os .job
-  int num_backups = args.num_backups;
-  //int num_thread = args->num_thread;
-  //printf("thread %d work: input %s output %s backups %d\n", num_thread, job_input_path,job_output_path,num_backups);
-  process_job_file(job_input_path,job_output_path,num_backups);
-  kvs_clear();
+  //int num_thread = args.num_thread;
+  //printf("thread %d work\n", num_thread);
+  process_job_file(job_input_path,job_output_path);
+  free(args.job_input_path);
+  free(job_input_path);
+  free(arguments);
+
+  pthread_mutex_lock(&lock);
+  active_threads--;
+  pthread_cond_signal(&cond);  // Notificar que uma thread terminou
+  pthread_mutex_unlock(&lock);
 
   return NULL;
 }
 
-void wait_for_threads(int thread_count,int max_threads,pthread_t lista_threads[]){
-  //wait for each thread to complete
-  int index=0;
-  for (int i = 0; i < thread_count; i++) {
-    if(index==max_threads){
-      index=0;
-    }
-    if(pthread_join(lista_threads[index], NULL)!=0){
-      //fprintf(stderr, "Failed to end thread %i com index %i\n",i,index);
-    }
-    //printf("In main: Thread %d com index %i has ended.\n", i,index);
-    index++;
+void wait_for_threads(int thread_count,pthread_t *lista_threads){
+  // Esperar por todas as threads restantes
+  for (int i = 0; i < thread_count && i < MAX_THREADS; i++) {
+      pthread_join(lista_threads[i], NULL);
   }
 }
 
-void create_threads(int max_threads, const char *directory, int num_backups) {
+void create_threads(const char *directory) {
   // Abrir o diretório
   DIR *dir = opendir(directory);
   if (dir == NULL) {
@@ -318,87 +282,120 @@ void create_threads(int max_threads, const char *directory, int num_backups) {
     return;
   }
 
-  pthread_t lista_threads[max_threads];
+  pthread_t *lista_threads = malloc((size_t)MAX_THREADS * sizeof(pthread_t));
 
   struct dirent *entry;
   int thread_count = 0;
 
-  // Iterar pelos arquivos do diretório
-  while ((entry = readdir(dir)) != NULL) {
-    // Verificar a extensão .job
-    if (strstr(entry->d_name, ".job") != NULL) {
-      // Construir caminhos para os files de entrada e saída
-      long unsigned max_path_name_size = (long unsigned)pathconf(".", _PC_PATH_MAX);
-      char job_input_path[max_path_name_size];
-      snprintf(job_input_path, max_path_name_size, "%s/%s", directory, entry->d_name);
+  char **lista_ficheiros = malloc(0 * sizeof(char*));
 
+  // Contar o número de ficheiros .job no diretório
+  int num_files = 0;
+  while ((entry = readdir(dir)) != NULL) {
+      if (strstr(entry->d_name, ".job") != NULL) {
+          // Construir caminhos para os files de entrada
+          lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
+          char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
+          snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
+          lista_ficheiros[num_files]=job_input_path;
+          num_files++;  // Contar os ficheiros .job
+      }
+  }
+  //ordena a lista de files por ordem alfabetica
+  order_list(lista_ficheiros, (size_t) num_files);
+
+  // Iterar pelos arquivos do diretório
+  
+    for(int i=0;i<num_files;i++){
+
+      char job_input_path[MAX_PATH_NAME_SIZE];
+
+      snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s", lista_ficheiros[i]);
+      
       // Criar argumentos para a thread
       thread_args *args_thread = malloc(sizeof(thread_args));
-      strncpy(args_thread->job_input_path, job_input_path, sizeof(args_thread->job_input_path) - 1);
-      args_thread->num_backups = num_backups;
+
+      args_thread->job_input_path= strdup(job_input_path);
+
       args_thread->num_thread = thread_count;
 
-      int current_thread = thread_count % max_threads;
-      // Criar a thread para processar o arquivo
-      if (pthread_create(&lista_threads[current_thread], NULL, thread_work, (void*)args_thread) != 0) {
-        fprintf(stderr, "Failed to create thread for file %s\n", job_input_path);
+      pthread_mutex_lock(&lock);
+      // Esperar caso o número de threads ativas atinja o limite
+      while (active_threads >= MAX_THREADS) {
+          pthread_cond_wait(&cond, &lock);
+      }
+      // Criar nova thread
+      if (pthread_create(&lista_threads[thread_count % MAX_THREADS], NULL, thread_work, (void*)args_thread) != 0) {
+          fprintf(stderr, "Falha ao criar thread para o arquivo %s\n", job_input_path);
+          free(args_thread->job_input_path);
+          free(args_thread);
       } else {
-        thread_count++;  // Incrementar a contagem de threads criadas
+          active_threads++;
+          thread_count++;
       }
+      pthread_mutex_unlock(&lock);
 
-      // Se o número de threads atingiu o limite, aguarde o término de uma thread
-      if (thread_count >= max_threads) {
-        // Espera até que qualquer thread termine antes de continuar criando novas
-        pthread_join(lista_threads[current_thread], NULL);
+      // Se o número de ficheiros for inferior ao número máximo de threads, não há necessidade de esperar
+      if (thread_count >= num_files) {
+          break;  // Sair do loop quando todas as threads para os ficheiros forem criadas
       }
-      free(args_thread);
+      //free(args_thread);
     }
-  }
+  
+  //free(args_thread);
 
   // Esperar que todas as threads terminem
-  wait_for_threads(thread_count,max_threads,lista_threads);
+  wait_for_threads(thread_count,lista_threads);
+
+  free(lista_threads);
+  for (int i = 0; i < num_files; i++) {
+      free(lista_ficheiros[i]);  // Libertar cada caminho alocado
+  }
+  free(lista_ficheiros);  // Libertar a lista de caminhos
 
   // Fechar o diretório após iteração
   closedir(dir);
 }
 
-void create_files(char *directory, int max_backups, int max_threads){
+void create_files(char *directory){
   // Inicializar KVS
   if (kvs_init()) {
     fprintf(stderr, "Failed to initialize KVS\n");
     return;
   }
 
-  create_threads(max_threads,directory,max_backups);
+  create_threads(directory);
 
-  // Finalizar KVS
-  kvs_terminate();
 }
 
 
 int main(int argc, char *argv[]) {
   // Verificar número de argumentos
   if (argc < 4) {
-    fprintf(stderr, "Usage: %s <directory> <max_backups>\n", argv[0]);
+    fprintf(stderr, "Usage: %s <directory> <MAX_BACKUPS>\n", argv[0]);
     return 1;
   }
 
   char *directory = argv[1];
-  int max_backups = atoi(argv[2]);
-  int max_threads = atoi(argv[3]);
+  MAX_BACKUPS = atoi(argv[2]);
+  MAX_THREADS = atoi(argv[3]);
+  MAX_PATH_NAME_SIZE = (long unsigned)pathconf(".", _PC_PATH_MAX);
 
-  // Validar valor de max_backups
-  if (max_backups <= 0) {
-    fprintf(stderr, "Invalid value for max_backups\n");
+  // Validar valor de MAX_BACKUPS
+  if (MAX_BACKUPS <= 0) {
+    fprintf(stderr, "Invalid value for MAX_BACKUPS\n");
     return 1;
   }
 
-  // Validar valor de max_threads
-  if (max_threads <= 0) {
-    fprintf(stderr, "Invalid value for max_threads\n");
+  // Validar valor de MAX_THREADS
+  if (MAX_THREADS <= 0) {
+    fprintf(stderr, "Invalid value for MAX_THREADS\n");
     return 1;
   }
 
-  create_files(directory,max_backups,max_threads);
+  create_files(directory);
+  kvs_clear();
+  // Finalizar KVS
+  kvs_terminate();
   return 0;
 }
