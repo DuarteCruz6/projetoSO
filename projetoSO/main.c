@@ -262,7 +262,7 @@ void *thread_work(void *arguments){
   //int num_thread = args.num_thread;
   //printf("thread %d work\n", num_thread);
   process_job_file(job_input_path,job_output_path,args.active_threads,args.mutex_active_backups);
-   // Espera que todos os processos filhos terminem
+  // Espera que todos os processos filhos terminem
     for (int i = 0; i < MAX_BACKUPS; ++i) {
         wait(NULL); // Espera qualquer processo filho terminar
     }
@@ -279,7 +279,7 @@ void *thread_work(void *arguments){
 
 void wait_for_threads(int thread_count,pthread_t *lista_threads){
   // Esperar por todas as threads restantes
-  for (int i = 0; i < thread_count; i++) {
+  for (int i = 0; i<thread_count && i<MAX_THREADS; i++) {
       pthread_join(lista_threads[i], NULL);
 
   }
@@ -342,13 +342,14 @@ void create_threads(const char *directory) {
   pthread_rwlock_init(mutex_threads_a_decorrer,NULL);
 
   // Iterar pelos arquivos do diretório
+
+  
   
     for(int i=0;i<num_files;i++){
 
       char job_input_path[MAX_PATH_NAME_SIZE];
 
       snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s", lista_ficheiros[i]);
-      
       // Criar argumentos para a thread
       thread_args *args_thread = malloc(sizeof(thread_args));
 
@@ -362,9 +363,9 @@ void create_threads(const char *directory) {
 
       // Esperar caso o número de threads ativas atinja o limite
       pthread_rwlock_rdlock(args_thread->mutex_active_threads);
-      while ((*active_threads) >= MAX_THREADS) {
-          
-      }
+      //while ((*active_threads) >= MAX_THREADS) {
+      //    
+      //}
       pthread_rwlock_unlock(args_thread->mutex_active_threads);
       // Criar nova thread
       if (pthread_create(&lista_threads[thread_count], NULL, thread_work, (void*)args_thread) != 0) {
@@ -378,7 +379,7 @@ void create_threads(const char *directory) {
           thread_count++;
       }
     
-      //free(args_thread);
+     // free(args_thread);
     }
   
   //free(args_thread);
