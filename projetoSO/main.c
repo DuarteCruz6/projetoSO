@@ -299,6 +299,34 @@ void order_files(char **lista_ficheiros, int num_files) {
     }
 }
 
+void get_path(const char *directory, char **lista_ficheiros){
+  // Abrir o diretório
+  DIR *dir = opendir(directory);
+  if (dir == NULL) {
+    perror("Error opening directory");
+    return;
+  }
+
+  struct dirent *entry;
+
+  // Contar o número de ficheiros .job no diretório
+  int num_files = 0;
+  while ((entry = readdir(dir)) != NULL) {
+      if (strstr(entry->d_name, ".job") != NULL) {
+          // Construir caminhos para os files de entrada
+          lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
+          char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
+          snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
+          lista_ficheiros[num_files]=job_input_path;
+          num_files++;  // Contar os ficheiros .job
+      }
+  }
+  //ordena a lista de files por ordem alfabetica
+  if(num_files>1){
+    order_files(lista_ficheiros, (size_t) num_files);
+  }
+}
+
 void create_threads(const char *directory) {
   DIR *dir = opendir(directory);
   char **lista_ficheiros = malloc(0 * sizeof(char*));
@@ -375,34 +403,6 @@ void create_threads(const char *directory) {
   free(active_threads);
   // Fechar o diretório após iteração
   closedir(dir);
-}
-
-void get_path(const char *directory, char **lista_ficheiros){
-  // Abrir o diretório
-  DIR *dir = opendir(directory);
-  if (dir == NULL) {
-    perror("Error opening directory");
-    return;
-  }
-
-  struct dirent *entry;
-
-  // Contar o número de ficheiros .job no diretório
-  int num_files = 0;
-  while ((entry = readdir(dir)) != NULL) {
-      if (strstr(entry->d_name, ".job") != NULL) {
-          // Construir caminhos para os files de entrada
-          lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
-          char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
-          snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
-          lista_ficheiros[num_files]=job_input_path;
-          num_files++;  // Contar os ficheiros .job
-      }
-  }
-  //ordena a lista de files por ordem alfabetica
-  if(num_files>1){
-    order_files(lista_ficheiros, (size_t) num_files);
-  }
 }
 
 void create_files(char *directory){
