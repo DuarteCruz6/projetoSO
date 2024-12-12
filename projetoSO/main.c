@@ -331,7 +331,7 @@ void create_threads(const char *directory) {
   DIR *dir = opendir(directory);
   char **lista_ficheiros = malloc(0 * sizeof(char*));
   get_path(directory,lista_ficheiros);
-
+  int num_files=sizeof(lista_ficheiros);
   pthread_t *lista_threads = malloc((size_t)MAX_THREADS * sizeof(pthread_t));
 
   int thread_count = 0;
@@ -346,7 +346,7 @@ void create_threads(const char *directory) {
 
   // Iterar pelos arquivos do diretório
   
-    for(int i=0;i<sizeof(lista_ficheiros);i++){
+    for(int i=0;i<num_files;i++){
 
       char job_input_path[MAX_PATH_NAME_SIZE];
 
@@ -390,7 +390,7 @@ void create_threads(const char *directory) {
   wait_for_threads(thread_count,lista_threads);
 
   free(lista_threads);
-  for (int i = 0; i < sizeof(lista_ficheiros); i++) {
+  for (int i = 0; i < num_files; i++) {
       free(lista_ficheiros[i]);  // Libertar cada caminho alocado
   }
   free(lista_ficheiros);  // Libertar a lista de caminhos
