@@ -135,9 +135,9 @@ void order_list(char *list[], size_t size){
         strcpy(temp, list[j]);
         strcpy(list[j], list[j + 1]);
         strcpy(list[j + 1], temp);
+      }
     }
   }
-}
 }
 
 
@@ -153,8 +153,15 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     // Se o KVS não foi inicializado, retorna erro
     return 1;
   }
-
+printf("Antes de ordenar:\n");
+  for (size_t i = 0; i < num_pairs; i++) {
+    printf("Key %zu: %s\n", i, keys[i] ? keys[i] : "NULL");
+  }
   order_list((char **)keys,num_pairs);
+  printf("Depois de ordenar:\n");
+  for (size_t i = 0; i < num_pairs; i++) {
+    printf("Key %zu: %s\n", i, keys[i] ? keys[i] : "NULL");
+  }
   dprintf(fd_out, "[");  // Inicia a impressão da lista de resultados
   for (size_t i = 0; i < num_pairs; i++) {
     // Lê o valor associado à chave

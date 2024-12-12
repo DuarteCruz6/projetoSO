@@ -306,7 +306,10 @@ void create_threads(const char *directory) {
       }
   }
   //ordena a lista de files por ordem alfabetica
-  order_list(lista_ficheiros, (size_t) num_files);
+  printf("num files %d\n",num_files);
+  if(num_files>1){
+    order_list(lista_ficheiros, (size_t) num_files);
+  }
 
   // Iterar pelos arquivos do diretório
   
