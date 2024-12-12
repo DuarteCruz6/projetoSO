@@ -330,7 +330,7 @@ void get_path(const char *directory, char ***lista_ficheiros){
 void create_threads(const char *directory) {
   DIR *dir = opendir(directory);
   char **lista_ficheiros = malloc(0 * sizeof(char*));
-  get_path(directory,lista_ficheiros);
+  get_path(directory,&lista_ficheiros);
   int num_files=sizeof(lista_ficheiros);
   pthread_t *lista_threads = malloc((size_t)MAX_THREADS * sizeof(pthread_t));
 
