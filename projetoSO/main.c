@@ -299,7 +299,7 @@ void order_files(char **lista_ficheiros, int num_files) {
     }
 }
 
-void get_path(const char *directory, char **lista_ficheiros){
+void get_path(const char *directory, char ***lista_ficheiros){
   // Abrir o diretório
   DIR *dir = opendir(directory);
   if (dir == NULL) {
