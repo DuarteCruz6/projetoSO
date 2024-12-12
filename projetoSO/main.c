@@ -20,6 +20,11 @@ long unsigned MAX_PATH_NAME_SIZE = 0;
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
+typedef struct {
+    char *job_input_path;
+    int num_thread;
+} thread_args;
+
 
 // Função para processar o file .job
 // O parâmetro input_path é o caminho para o file de entrada .job
@@ -228,11 +233,6 @@ void process_job_file(const char *input_path, const char *output_path) {
   close(fd_in);
   close(fd_out);
 }
-
-typedef struct {
-    char *job_input_path;
-    int num_thread;
-} thread_args;
 
 void *thread_work(void *arguments){
   thread_args args = *((thread_args*)arguments);  // Converter o argumento void* para thread_args*
