@@ -319,6 +319,7 @@ void create_threads(const char *directory) {
   DIR *dir = opendir(directory);
   if (dir == NULL) {
     fprintf(stderr, "Error opening directory\n");
+    free(lista_ficheiros);
     return;
   }
 
@@ -360,6 +361,8 @@ void create_threads(const char *directory) {
 
   if(num_files==0){
     fprintf(stderr, "No .job files in the directory\n");
+    closedir(dir);
+    free(lista_ficheiros);
     return;
   }
 
