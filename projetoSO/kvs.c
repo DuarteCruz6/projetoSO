@@ -73,9 +73,12 @@ char* read_pair(HashTable *ht, const char *key) {
                                                               //nao queremos que nenhuma thread o 
                                                               //altere mas pode ler
         if (strcmp(keyNode->key, key) == 0) {
-            value = strdup(keyNode->value);
-            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
-            return value; // Return copy of the value if found
+            if(keyNode->value !=NULL){
+                value = strdup(keyNode->value);
+                pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
+                return value; // Return copy of the value if found
+            }
+            return NULL;
         }
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
         keyNode = keyNode->next; // Move to the next node
@@ -86,30 +89,21 @@ char* read_pair(HashTable *ht, const char *key) {
 int delete_pair(HashTable *ht, const char *key) {
     int index = hash(key);
     KeyNode *keyNode = ht->table[index];
-    KeyNode *prevNode = NULL;
 
     // Search for the key node
     while (keyNode != NULL) {
         pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //damos lock do tipo write pois nao queremos que 
                                                              //nenhuma thread o leia/altere
-        if (strcmp(keyNode->key, key) == 0) {
+        if (strcmp(keyNode->key, key) == 0 && keyNode->value!=NULL) {
             // Key found; delete this node
-            if (prevNode == NULL) {
-                // Node to delete is the first node in the list
-                ht->table[index] = keyNode->next; // Update the table to point to the next node
-            } else {    
-                // Node to delete is not the first; bypass it
-                prevNode->next = keyNode->next; // Link the previous node to the next node
-            }
+            
             // Free the memory allocated for the key and value
-            free(keyNode->key);
-            free(keyNode->value);
+            
+            keyNode->value=NULL;
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //damos unlock
-            free(keyNode->mutex_par_hashTable);
-            free(keyNode); // Free the key node itself
+            
             return 0; // Exit the function
         }
-        prevNode = keyNode; // Move prevNode to current node
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
         keyNode = keyNode->next; // Move to the next node
     }

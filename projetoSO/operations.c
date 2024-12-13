@@ -164,7 +164,9 @@ void kvs_show(int fd_out) {
       pthread_rwlock_rdlock(keyNode->mutex_par_hashTable);  //da lock do tipo read a este par da hash table pois nao queremos
                                                             //que o seu valor seja alterado enquanto lemos, mas pode ser lido
                                                             //por outras threads
-      dprintf(fd_out, "(%s, %s)\n", keyNode->key, keyNode->value);
+      if(keyNode->value!=NULL){
+        dprintf(fd_out, "(%s, %s)\n", keyNode->key, keyNode->value);
+      }
       pthread_rwlock_unlock(keyNode->mutex_par_hashTable);  //damos unlock
       keyNode = keyNode->next;  // Move para o próximo nó
     }
