@@ -273,12 +273,10 @@ void *thread_work(void *arguments){
     // Garantir que .out seja adicionado
   }
 
-  printf("a thread %d input %s\n",args.num_thread,args.job_input_path);
   //processar os .job
   process_job_file(job_input_path,job_output_path,args.active_threads,args.mutex_active_backups);
   // Espera que todos os processos filhos terminem
   
-  printf("b thread %d input %s\n",args.num_thread,args.job_input_path);
   for (int i = 0; i < MAX_BACKUPS; ++i) {
       wait(NULL); // Espera qualquer processo filho terminar
   }

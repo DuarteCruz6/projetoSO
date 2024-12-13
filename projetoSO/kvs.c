@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <ctype.h>
-#include <stdio.h>
 
 // Hash function based on key initial.
 // @param key Lowercase alphabetical string.
@@ -101,7 +100,6 @@ int delete_pair(HashTable *ht, const char *key) {
         if (strcmp(keyNode->key, key) == 0) {
 
             if(keyNode->value==NULL){
-                printf("encontrou null\n");
                 pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
                 return 1;
             }
