@@ -36,24 +36,23 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
     // Search for the key node
     while (keyNode != NULL) {
         if (strcmp(keyNode->key, key) == 0) {
-            pthread_rwlock_wrlock(keyNode->mutex_par_hashTable);
+            pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //da lock do tipo write a este par da hash table, pois vamos alterar o seu valor
             free(keyNode->value);
             keyNode->value = strdup(value);
-            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
+            pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
             return 0;
         }
         keyNode = keyNode->next; // Move to the next node
     }
 
     // Key not found, create a new key node
-
-    pthread_rwlock_t *mutex_par_hash=malloc(sizeof(pthread_rwlock_t));
-    pthread_rwlock_init(mutex_par_hash,NULL);
+    pthread_rwlock_t *mutex_par_hash=malloc(sizeof(pthread_rwlock_t)); //criar um mutex do tipo read and write para este par para podermos dar lock
+    pthread_rwlock_init(mutex_par_hash,NULL);   //inicializar o mutex
     keyNode = malloc(sizeof(KeyNode));
     keyNode->key = strdup(key); // Allocate memory for the key
     keyNode->value = strdup(value); // Allocate memory for the value
     keyNode->next = ht->table[index]; // Link to existing nodes
-    keyNode->mutex_par_hashTable = mutex_par_hash; //cria um mutex para este par 
+    keyNode->mutex_par_hashTable = mutex_par_hash; //guarda o mutex do par
     ht->table[index] = keyNode; // Place new key node at the start of the list
     return 0;
 }
@@ -65,9 +64,10 @@ char* read_pair(HashTable *ht, const char *key) {
 
     while (keyNode != NULL) {
         if (strcmp(keyNode->key, key) == 0) {
-            pthread_rwlock_rdlock(keyNode->mutex_par_hashTable);
+            pthread_rwlock_rdlock(keyNode->mutex_par_hashTable);    //da lock do tipo read, pois nao queremos que o seu valor seja alterado
+                                                                    //mas pode ser lido por outras threads
             value = strdup(keyNode->value);
-            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
+            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
             return value; // Return copy of the value if found
         }
         keyNode = keyNode->next; // Move to the next node
@@ -86,10 +86,10 @@ int delete_pair(HashTable *ht, const char *key) {
             // Key found; delete this node
             if (prevNode == NULL) {
                 // Node to delete is the first node in the list
-                pthread_rwlock_wrlock(keyNode->mutex_par_hashTable);
+                pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //damos unlock do tipo write pois nao queremos que nenhuma thread o leia/altere
                 ht->table[index] = keyNode->next; // Update the table to point to the next node
-                pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
-            } else {
+                pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //damos unlock
+            } else {    
                 // Node to delete is not the first; bypass it
                 prevNode->next = keyNode->next; // Link the previous node to the next node
             }
@@ -107,11 +107,13 @@ int delete_pair(HashTable *ht, const char *key) {
     return 1;
 }
 
-int get_size(HashTable *ht){
-    return sizeof(ht);
-}
+
+//int get_size(HashTable *ht){
+//    return sizeof(ht);
+//}
 
 void free_table(HashTable *ht) {
+    //dar free a toda a hash table
     for (int i = 0; i < TABLE_SIZE; i++) {
         KeyNode *keyNode = ht->table[i];
         while (keyNode != NULL) {

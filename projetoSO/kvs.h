@@ -10,7 +10,8 @@ typedef struct KeyNode {
     char *key;
     char *value;
     struct KeyNode *next;
-    pthread_rwlock_t *mutex_par_hashTable;
+    pthread_rwlock_t *mutex_par_hashTable; //mutex do tipo write and read para podermos bloquear a escritura/leitura
+                                           //deste par da tabela
 } KeyNode;
 
 typedef struct HashTable {
