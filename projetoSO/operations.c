@@ -17,6 +17,33 @@ static struct timespec delay_to_timespec(unsigned int delay_ms) {
   return (struct timespec){delay_ms / 1000, (delay_ms % 1000) * 1000000};
 }
 
+///ordena a lista de chaves e valores. util para o write.
+///caso values seja null, entao apenas ordenas as chaves. util para o read e delete
+/// @param keys lista de chaves da hashtable
+/// @param values lista de valores da hashtable
+/// @param size tamanho da lista
+/// @return vazio
+void order_keys_values(char keys[][MAX_STRING_SIZE],char values[][MAX_STRING_SIZE],size_t size){
+  for (size_t i = 0; i < size - 1; i++) {
+    for (size_t j = 0; j < size - i - 1; j++) {
+      if (strcmp(keys[j], keys[j + 1]) > 0) {
+        // Troca as strings
+        char temp[MAX_STRING_SIZE];
+        strcpy(temp, keys[j]);
+        strcpy(keys[j], keys[j+1]);
+        strcpy(keys[j + 1], temp);
+
+        if(values){
+          char temp_value[MAX_STRING_SIZE];
+          strcpy(temp_value, values[j]);
+          strcpy(values[j], values[j+1]);
+          strcpy(values[j+1], temp_value);
+        }
+      }
+    }
+  }
+}
+
 /// Inicializa o estado do KVS (Key-Value Store).
 /// A função cria uma nova tabela de hash para armazenar os pares chave-valor.
 /// @return 0 se o KVS foi inicializado com sucesso, 1 caso contrário (se já foi inicializado).
@@ -59,6 +86,7 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
     dprintf(fd_out, "KVS state must be initialized\n");
     return 1;
   }
+  order_keys_values(keys,values,num_pairs);
   for (size_t i = 0; i < num_pairs; i++) {
     // Tenta escrever cada par chave-valor na tabela
     if (write_pair(kvs_table, keys[i], values[i]) != 0) {
@@ -68,25 +96,6 @@ int kvs_write(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE], char v
   }
   return 0;
 }
-
-///ordena uma lista de letras por ordem alfabetica. util para o Read
-/// @param list lista de caracteres
-/// @param size tamanho da lista
-/// @return vazio
-void order_list(char list[][MAX_STRING_SIZE], size_t size){
-  for (size_t i = 0; i < size - 1; i++) {
-    for (size_t j = 0; j < size - i - 1; j++) {
-      if (strcmp(list[j], list[j + 1]) > 0) {
-        // Troca as strings
-        char temp[MAX_STRING_SIZE];
-        strcpy(temp, list[j]);
-        strcpy(list[j], list[j + 1]);
-        strcpy(list[j + 1], temp);
-      }
-    }
-  }
-}
-
 
 /// Lê os valores associados a um conjunto de chaves no KVS.
 /// @param fd_out O descritor do file para onde a saída será escrita.
@@ -98,7 +107,7 @@ int kvs_read(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     // Se o KVS não foi inicializado, retorna erro
     return 1;
   }
-  order_list(keys,num_pairs);
+  order_keys_values(keys,NULL,num_pairs);
   dprintf(fd_out, "[");  // Inicia a impressão da lista de resultados
   for (size_t i = 0; i < num_pairs; i++) {
     // Lê o valor associado à chave
@@ -124,8 +133,8 @@ int kvs_delete(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
     fprintf(stderr, "KVS state must be initialized\n");
     return 1;
   }
-
   int aux = 0;
+  order_keys_values(keys,NULL,num_pairs);
   for (size_t i = 0; i < num_pairs; i++) {
     // Tenta deletar cada chave da tabela
     if (delete_pair(kvs_table, keys[i]) != 0) {
