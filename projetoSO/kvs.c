@@ -106,7 +106,7 @@ int delete_pair(HashTable *ht, const char *key) {
             // Key found; delete this node
             
             // Free the memory allocated for the key and value
-            
+            free(keyNode->value);
             keyNode->value=NULL;
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //damos unlock
             
