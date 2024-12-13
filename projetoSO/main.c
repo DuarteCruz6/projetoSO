@@ -7,6 +7,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <pthread.h>
+#include <ctype.h>
 
 #include "constants.h"
 #include "parser.h"
@@ -250,7 +251,7 @@ void *thread_work(void *arguments){
   char *job_input_path = (char *)malloc(MAX_PATH_NAME_SIZE * sizeof(char)); //caminho da diretoria
   if (job_input_path == NULL) {
     fprintf(stderr, "Memory allocation failed for job_input_path\n");
-    return;
+    return NULL;
   }
   strcpy(job_input_path, args.job_input_path);
 
@@ -525,17 +526,17 @@ int main(int argc, char *argv[]) {
   char *directory = argv[1];
 
   MAX_PATH_NAME_SIZE = (long unsigned)pathconf(".", _PC_PATH_MAX);
-  if (MAX_PATH_NAME_SIZE == -1) {
+  if (MAX_PATH_NAME_SIZE == (long unsigned)-1) {
     fprintf(stderr, "Error using pathconf\n");
     return 1;
-}
+  }
 
   //validar MAX_BACKUPS
   if (!is_number(argv[2])) {
     fprintf(stderr, "Invalid value for MAX_BACKUPS: must be a positive integer\n");
     return 1;
   }
-  int MAX_BACKUPS = atoi(argv[2]);
+  MAX_BACKUPS = atoi(argv[2]);
   if (MAX_BACKUPS <= 0) {
     fprintf(stderr, "Invalid value for MAX_BACKUPS: must be greater than 0\n");
     return 1;
@@ -546,7 +547,7 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Invalid value for MAX_THREADS: must be a positive integer\n");
     return 1;
   }
-  int MAX_THREADS = atoi(argv[3]);
+  MAX_THREADS = atoi(argv[3]);
   if (MAX_THREADS <= 0) {
         fprintf(stderr, "Invalid value for MAX_THREADS: must be greater than 0\n");
         return 1;
