@@ -41,7 +41,7 @@ void process_job_file(const char *input_path, const char *output_path, int* back
   // Abrir o file .job em modo leitura
   int fd_in = open(input_path, O_RDONLY);
   if (fd_in < 0) {
-    fprintf(stderr, "Error opening input file _%s_\n",input_path);  // Se falhar, print erro
+    fprintf(stderr, "Error opening input file\n");  // Se falhar, print erro
     return;
   }
 
@@ -128,7 +128,6 @@ void process_job_file(const char *input_path, const char *output_path, int* back
           fprintf(stderr, "Invalid WAIT command. See HELP for usage\n");
           continue;
         }
-        
         // Espera o tempo especificado
         kvs_wait(delay);
         break;
@@ -249,6 +248,10 @@ void *thread_work(void *arguments){
   thread_args args = *((thread_args*)arguments);  // Converter o argumento void* para thread_args*
 
   char *job_input_path = (char *)malloc(MAX_PATH_NAME_SIZE * sizeof(char)); //caminho da diretoria
+  if (job_input_path == NULL) {
+    fprintf(stderr, "Memory allocation failed for job_input_path\n");
+    return;
+  }
   strcpy(job_input_path, args.job_input_path);
 
   //criar os ficheiros .out
@@ -304,15 +307,17 @@ void order_files(char **lista_ficheiros, int num_files) {
   }
 }
 
-
-
 void create_threads(const char *directory) {
   //cria as threads
   char **lista_ficheiros = malloc(0 * sizeof(char*)); //lista com as diretorias dos .job
+  if (lista_ficheiros == NULL) {
+    fprintf(stderr, "Memory allocation failed for lista_ficheiros\n");
+    return;
+  }
   //abrir o diretório
   DIR *dir = opendir(directory);
   if (dir == NULL) {
-    perror("Error opening directory");
+    fprintf(stderr, "Error opening directory\n");
     return;
   }
 
@@ -321,31 +326,97 @@ void create_threads(const char *directory) {
   //contar o número de ficheiros .job no diretório
   int num_files = 0;
   while ((entry = readdir(dir)) != NULL) {
+     if (entry == NULL) {
+        fprintf(stderr, "Error reading directory entry\n");
+        closedir(dir);
+        free(lista_ficheiros);
+        return;
+    }
       if (strstr(entry->d_name, ".job") != NULL) {
           //construir caminhos para os files de entrada
           lista_ficheiros = realloc(lista_ficheiros, (size_t)(num_files + 1) * sizeof(char*));
+          if (lista_ficheiros == NULL) {
+            fprintf(stderr, "Memory allocation failed for lista_ficheiros\n");
+            for (int i = 0; i < num_files; i++) {
+                free(lista_ficheiros[i]);
+            }
+            free(lista_ficheiros);
+            closedir(dir);
+            return;
+          }       
           char *job_input_path = malloc(MAX_PATH_NAME_SIZE * sizeof(char));
+          if (job_input_path == NULL) {
+            fprintf(stderr, "Memory allocation failed for job_input_path\n");
+            free(lista_ficheiros);
+            closedir(dir);
+            return;
+          }
           snprintf(job_input_path, MAX_PATH_NAME_SIZE, "%s/%s", directory, entry->d_name);
           lista_ficheiros[num_files]=job_input_path;  //adiciona a diretoria do .job à lista
           num_files++;  //contar os ficheiros .job
       }
   }
 
+  if(num_files==0){
+    fprintf(stderr, "No .job files in the directory\n");
+    return;
+  }
+
   order_files(lista_ficheiros, (size_t) num_files); //ordena a lista de files por ordem alfabetica
   
   pthread_t *lista_threads = malloc((size_t)num_files * sizeof(pthread_t)); 
+  if (lista_threads == NULL) {
+    fprintf(stderr, "Memory allocation failed for lista_threads\n");
+    free(lista_ficheiros);
+    closedir(dir);
+    return;
+  }
 
   int thread_count = 0; //numero de threads totais
 
   int* backups_a_decorrer = malloc(sizeof(int));
+  if (backups_a_decorrer == NULL) {
+    fprintf(stderr, "Memory allocation failed for backups_a_decorrer\n");
+    free(lista_ficheiros);
+    free(lista_threads);
+    closedir(dir);
+    return;
+  }
   int* active_threads = malloc(sizeof(int));
+  if (active_threads == NULL) {
+    fprintf(stderr, "Memory allocation failed for active_threads\n");
+    free(lista_ficheiros);
+    free(lista_threads);
+    free(backups_a_decorrer);
+    closedir(dir);
+    return;
+  }
 
   //cria os locks do tipo read and write para o numero de backups e threads ativos 
   //pois nao queremos que varias threads mudem o valor destas variaveis ao mesmo tempo
   //nem que leiam o valor desta variavel ao mesmo tempo que outra thread muda o seu valor
   pthread_rwlock_t *mutex_backups_a_decorrer=malloc(sizeof(pthread_rwlock_t));
+  if (mutex_backups_a_decorrer == NULL) {
+    fprintf(stderr, "Memory allocation failed for mutex_backups_a_decorrer\n");
+    free(lista_ficheiros);
+    free(lista_threads);
+    free(backups_a_decorrer);
+    free(active_threads);
+    closedir(dir);
+    return;
+  }
   pthread_rwlock_init(mutex_backups_a_decorrer,NULL); //inicializar o mutex
   pthread_rwlock_t *mutex_threads_a_decorrer=malloc(sizeof(pthread_rwlock_t));
+  if (mutex_threads_a_decorrer == NULL) {
+    fprintf(stderr, "Memory allocation failed for mutex_threads_a_decorrer\n");
+    free(lista_ficheiros);
+    free(lista_threads);
+    free(backups_a_decorrer);
+    free(active_threads);
+    free(mutex_backups_a_decorrer);
+    closedir(dir);
+    return;
+  }
   pthread_rwlock_init(mutex_threads_a_decorrer,NULL); //inicializar o mutex
 
   //iterar pelos arquivos do diretório
@@ -356,6 +427,17 @@ void create_threads(const char *directory) {
 
       //criar argumentos para a thread
       thread_args *args_thread = malloc(sizeof(thread_args));
+      if (args_thread == NULL) {
+        fprintf(stderr, "Memory allocation failed for args_thread\n");
+        free(lista_ficheiros);
+        free(lista_threads);
+        free(backups_a_decorrer);
+        free(active_threads);
+        free(mutex_backups_a_decorrer);
+        free(mutex_threads_a_decorrer);
+        closedir(dir);
+        return;
+      }
       args_thread->job_input_path= strdup(job_input_path); //guarda a diretoria do .job
       args_thread->num_thread = thread_count; //guarda o numero total de threads 
       args_thread->active_threads=backups_a_decorrer; //guarda um ponteiro para o numero de backups a decorrer ao mesmo tempo
@@ -380,8 +462,13 @@ void create_threads(const char *directory) {
       pthread_rwlock_wrlock(args_thread->mutex_active_threads); //da lock do tipo write porque vamos mudar o valor da variavel
       (*active_threads)++;                                      //aumentamos o numero de threads ativas
       pthread_rwlock_unlock(args_thread->mutex_active_threads); //damos unlock pois ja alteramos o valor
-      pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread); //criamos uma thread que vai fazer a funcao thread_work cujos argumentos
-                                                                                    //sao args_thread
+      if (pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread) != 0) {//criamos uma thread que vai fazer a funcao thread_work cujos argumentos
+                                                                                              //sao args_thread
+        fprintf(stderr, "Failed to create thread\n");
+        free(args_thread->job_input_path);
+        free(args_thread);
+        continue;  // Tenta criar a próxima thread
+      }
       thread_count++; //aumentamos o numero total de threads
     }
   
@@ -414,29 +501,56 @@ void create_files(char *directory){
 }
 
 
+//função para verificar se uma string é composta apenas por dígitos
+int is_number(const char *str) {
+  if (str == NULL || *str == '\0') {
+    fprintf(stderr, "is_number: Input string is NULL or empty\n");
+    return 0; //não é número se for NULL ou string vazia
+  }
+  for (int i = 0; str[i] != '\0'; i++) {
+    if (!isdigit((unsigned char)str[i])) {
+       return 0; //retorna falso se encontrar um carácter não numérico
+    }
+  }
+  return 1; //é um número válido
+}
+
 int main(int argc, char *argv[]) {
   // Verificar número de argumentos
-  if (argc < 4) {
-    fprintf(stderr, "Usage: %s <directory> <MAX_BACKUPS>\n", argv[0]);
+  if (argc != 4) {
+    fprintf(stderr, "Usage: %s <directory> <MAX_BACKUPS> <MAX_THREADS>\n", argv[0]);
     return 1;
   }
 
   char *directory = argv[1];
-  MAX_BACKUPS = atoi(argv[2]);
-  MAX_THREADS = atoi(argv[3]);
+
   MAX_PATH_NAME_SIZE = (long unsigned)pathconf(".", _PC_PATH_MAX);
+  if (MAX_PATH_NAME_SIZE == -1) {
+    fprintf(stderr, "Error using pathconf\n");
+    return 1;
+}
 
-  // Validar valor de MAX_BACKUPS
+  //validar MAX_BACKUPS
+  if (!is_number(argv[2])) {
+    fprintf(stderr, "Invalid value for MAX_BACKUPS: must be a positive integer\n");
+    return 1;
+  }
+  int MAX_BACKUPS = atoi(argv[2]);
   if (MAX_BACKUPS <= 0) {
-    fprintf(stderr, "Invalid value for MAX_BACKUPS\n");
+    fprintf(stderr, "Invalid value for MAX_BACKUPS: must be greater than 0\n");
     return 1;
   }
 
-  // Validar valor de MAX_THREADS
-  if (MAX_THREADS <= 0) {
-    fprintf(stderr, "Invalid value for MAX_THREADS\n");
+  //validar MAX_THREADS
+  if (!is_number(argv[3])) {
+    fprintf(stderr, "Invalid value for MAX_THREADS: must be a positive integer\n");
     return 1;
   }
+  int MAX_THREADS = atoi(argv[3]);
+  if (MAX_THREADS <= 0) {
+        fprintf(stderr, "Invalid value for MAX_THREADS: must be greater than 0\n");
+        return 1;
+    }
 
   create_files(directory);
   kvs_clear();
