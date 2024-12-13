@@ -370,14 +370,11 @@ void create_threads(const char *directory) {
         pthread_rwlock_unlock(mutex_threads_a_decorrer);
         //we can add a wait function if we want
       }
-
-      pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread);
       pthread_rwlock_wrlock(args_thread->mutex_active_threads);
       (*active_threads)++;
       pthread_rwlock_unlock(args_thread->mutex_active_threads);
+      pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread);
       thread_count++;
-
-      // free(args_thread);
     }
   
   //free(args_thread);

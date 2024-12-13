@@ -117,6 +117,7 @@ void free_table(HashTable *ht) {
         while (keyNode != NULL) {
             KeyNode *temp = keyNode;
             keyNode = keyNode->next;
+            free(temp->mutex_par_hashTable);
             free(temp->key);
             free(temp->value);
             free(temp);
