@@ -1,4 +1,9 @@
 [(l,KVSERROR)(v,KVSERROR)(x,KVSERROR)(z,KVSERROR)]
+(a, anna)
+(b, bernardo)
 (c, carlota)
+(d, dinis)
 [(c,KVSERROR)]
-(b, berenice)
+(a, anna)
+(b, bernardo)
+(d, dinis)
