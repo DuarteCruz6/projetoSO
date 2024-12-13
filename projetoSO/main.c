@@ -273,10 +273,12 @@ void *thread_work(void *arguments){
     // Garantir que .out seja adicionado
   }
 
+  printf("a thread %d input %s\n",args.num_thread,args.job_input_path);
   //processar os .job
   process_job_file(job_input_path,job_output_path,args.active_threads,args.mutex_active_backups);
   // Espera que todos os processos filhos terminem
- 
+  
+  printf("b thread %d input %s\n",args.num_thread,args.job_input_path);
   for (int i = 0; i < MAX_BACKUPS; ++i) {
       wait(NULL); // Espera qualquer processo filho terminar
   }
@@ -454,7 +456,6 @@ void create_threads(const char *directory) {
       args_thread->active_threads=backups_a_decorrer; //guarda um ponteiro para o numero de backups a decorrer ao mesmo tempo
       args_thread->mutex_active_backups= mutex_backups_a_decorrer;  //guarda o mutex para a variavel do numero de backups ao mesmo tempo
       args_thread->mutex_active_threads= mutex_threads_a_decorrer;  //guarda o mutex para a variavel do numero de threads ao mesmo tempo
-
       while(1) {
         pthread_rwlock_rdlock(mutex_threads_a_decorrer);  //da lock do tipo read ao numero de threads a acontecer pois nao queremos que nenhuma
                                                           //thread mude o valor desta variavel, mas queremos que leiam

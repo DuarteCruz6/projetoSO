@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <ctype.h>
+#include <stdio.h>
 
 // Hash function based on key initial.
 // @param key Lowercase alphabetical string.
@@ -41,7 +42,9 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
             pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //da lock do tipo write a este par da hash table, 
                                                                  //pois vamos alterar o seu valor
-            free(keyNode->value);
+            if(keyNode->value!=NULL){
+                free(keyNode->value);
+            }
             keyNode->value = strdup(value);
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
             return 0;
@@ -78,6 +81,7 @@ char* read_pair(HashTable *ht, const char *key) {
                 pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
                 return value; // Return copy of the value if found
             }
+            pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
             return NULL;
         }
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
@@ -94,7 +98,13 @@ int delete_pair(HashTable *ht, const char *key) {
     while (keyNode != NULL) {
         pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //damos lock do tipo write pois nao queremos que 
                                                              //nenhuma thread o leia/altere
-        if (strcmp(keyNode->key, key) == 0 && keyNode->value!=NULL) {
+        if (strcmp(keyNode->key, key) == 0) {
+
+            if(keyNode->value==NULL){
+                printf("encontrou null\n");
+                pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
+                return 1;
+            }
             // Key found; delete this node
             
             // Free the memory allocated for the key and value
@@ -121,7 +131,9 @@ void free_table(HashTable *ht) {
             pthread_rwlock_destroy(temp->mutex_par_hashTable);
             free(temp->mutex_par_hashTable);
             free(temp->key);
-            free(temp->value);
+            if(temp->value!=NULL){
+                free(temp->value);
+            }
             free(temp);
         }
     }
