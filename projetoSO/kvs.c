@@ -35,10 +35,12 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
 
     // Search for the key node
     while (keyNode != NULL) {
-        pthread_rwlock_rdlock(keyNode->mutex_par_hashTable); //damos lock do tipo read pois nao queremos que nenhuma thread o altere mas pode ler
+        pthread_rwlock_rdlock(keyNode->mutex_par_hashTable); //damos lock do tipo read pois nao queremos que 
+                                                             //nenhuma thread o altere mas pode ler
         if (strcmp(keyNode->key, key) == 0) {
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
-            pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //da lock do tipo write a este par da hash table, pois vamos alterar o seu valor
+            pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //da lock do tipo write a este par da hash table, 
+                                                                 //pois vamos alterar o seu valor
             free(keyNode->value);
             keyNode->value = strdup(value);
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
@@ -49,7 +51,8 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
     }
 
     // Key not found, create a new key node
-    pthread_rwlock_t *mutex_par_hash=malloc(sizeof(pthread_rwlock_t)); //criar um mutex do tipo read and write para este par para podermos dar lock
+    pthread_rwlock_t *mutex_par_hash=malloc(sizeof(pthread_rwlock_t)); //criar um mutex do tipo read and write 
+                                                                       //para este par para podermos dar lock
     pthread_rwlock_init(mutex_par_hash,NULL);   //inicializar o mutex
     keyNode = malloc(sizeof(KeyNode));
     keyNode->key = strdup(key); // Allocate memory for the key
@@ -66,7 +69,9 @@ char* read_pair(HashTable *ht, const char *key) {
     char* value;
 
     while (keyNode != NULL) {
-        pthread_rwlock_rdlock(keyNode->mutex_par_hashTable); //damos lock do tipo read pois nao queremos que nenhuma thread o altere mas pode ler
+        pthread_rwlock_rdlock(keyNode->mutex_par_hashTable); //damos lock do tipo read pois 
+                                                              //nao queremos que nenhuma thread o 
+                                                              //altere mas pode ler
         if (strcmp(keyNode->key, key) == 0) {
             value = strdup(keyNode->value);
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
@@ -85,7 +90,8 @@ int delete_pair(HashTable *ht, const char *key) {
 
     // Search for the key node
     while (keyNode != NULL) {
-        pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //damos lock do tipo write pois nao queremos que nenhuma thread o leia/altere
+        pthread_rwlock_wrlock(keyNode->mutex_par_hashTable); //damos lock do tipo write pois nao queremos que 
+                                                             //nenhuma thread o leia/altere
         if (strcmp(keyNode->key, key) == 0) {
             // Key found; delete this node
             if (prevNode == NULL) {
@@ -123,6 +129,7 @@ void free_table(HashTable *ht) {
         while (keyNode != NULL) {
             KeyNode *temp = keyNode;
             keyNode = keyNode->next;
+            pthread_rwlock_destroy(temp->mutex_par_hashTable);
             free(temp->mutex_par_hashTable);
             free(temp->key);
             free(temp->value);

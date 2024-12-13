@@ -22,8 +22,10 @@ long unsigned MAX_PATH_NAME_SIZE = 0;
 typedef struct {
     char *job_input_path; //o caminho da diretoria do .job
     int num_thread; //o id da thread
-    pthread_rwlock_t* mutex_active_threads; //mutex do tipo write/read para o número de threads a acontecer ao mesmo tempo
-    pthread_rwlock_t* mutex_active_backups; //mutex do tipo write/read para o número de backups a acontecer ao mesmo tempo
+    pthread_rwlock_t* mutex_active_threads; //mutex do tipo write/read para o número de threads 
+                                            //a acontecer ao mesmo tempo
+    pthread_rwlock_t* mutex_active_backups; //mutex do tipo write/read para o número de backups 
+                                            //a acontecer ao mesmo tempo
     int* active_threads;  //ponteiro para o número de threads a acontecer ao mesmo tempo
 } thread_args;
 
@@ -150,8 +152,9 @@ void process_job_file(const char *input_path, const char *output_path, int* back
         break;
 
       case CMD_BACKUP:
-        pthread_rwlock_rdlock(mutex_activeBackups); //da lock do tipo read ao mutex do numero de backups a acontecer ao mesmo tempo
-                                                    //de forma a que nenhuma thread possa mudar o valor da variável backups_ativos
+        pthread_rwlock_rdlock(mutex_activeBackups); //da lock do tipo read ao mutex do numero de backups a 
+                                                    //acontecer ao mesmo tempo de forma a que nenhuma thread 
+                                                    //possa mudar o valor da variável backups_ativos
                                                     //mas de forma a permitir que leiam o valor da variável 
 
         if ((*backups_ativos) >= MAX_BACKUPS) {
@@ -160,8 +163,10 @@ void process_job_file(const char *input_path, const char *output_path, int* back
 
             if (terminated_pid > 0) {  
                 //tem de alterar o valor da variavel backups_ativos
-                pthread_rwlock_unlock(mutex_activeBackups); //da unlock ao mutex para podermos bloquear com o tipo write lock
-                pthread_rwlock_wrlock(mutex_activeBackups); //da lock do tipo write lock ao mutex de forma a que nenhuma outra thread
+                pthread_rwlock_unlock(mutex_activeBackups); //da unlock ao mutex para podermos bloquear com o 
+                                                            //tipo write lock
+                pthread_rwlock_wrlock(mutex_activeBackups); //da lock do tipo write lock ao mutex de forma a 
+                                                            //que nenhuma outra thread
                                                             //possa escrever/ler esta variavel ate darmos unlock
                 (*backups_ativos)--; //remove um ao numero de processos filhos a acontecer
                 pthread_rwlock_unlock(mutex_activeBackups); //da unlock pois ja mexemos no valor da variavel
@@ -210,8 +215,9 @@ void process_job_file(const char *input_path, const char *output_path, int* back
         }else{
           //processo pai pode continuar
 
-          pthread_rwlock_wrlock(mutex_activeBackups); //lock do tipo write ao numero de backups ativos, pois vamos mexer na variavel
-                                                      //entao nao podemos deixar que outras threads leiam/mudem o valor da variavel
+          pthread_rwlock_wrlock(mutex_activeBackups); //lock do tipo write ao numero de backups ativos, pois 
+                                                      //vamos mexer na variavel entao nao podemos deixar que 
+                                                      //outras threads leiam/mudem o valor da variavel
           (*backups_ativos)++;     //adiciona um ao numero de backups a decorrer
           pthread_rwlock_unlock(mutex_activeBackups); //unlock ao mutex pois ja mexemos no valor da variavel
           id_backup++;  //adiciona um ao id de processos filhos
@@ -263,7 +269,8 @@ void *thread_work(void *arguments){
   if (ext != NULL) {
     strcpy(ext, ".out");  // Substituir .job por .out
   } else {
-    strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  // Garantir que .out seja adicionado
+    strncat(job_output_path, ".out", MAX_PATH_NAME_SIZE - strlen(job_output_path) - 1);  
+    // Garantir que .out seja adicionado
   }
 
   //processar os .job
@@ -460,14 +467,14 @@ void create_threads(const char *directory) {
           break;                                            //sai do while loop
         }
         //precisamos de esperar que uma thread acabe porque atingimos o maximo de threads a acontecer ao mesmo tempo
-        pthread_rwlock_unlock(mutex_threads_a_decorrer);   //damos unlock ao numero de threads a acontecer pois pode ser precisa noutra thread
+        pthread_rwlock_unlock(mutex_threads_a_decorrer);//damos unlock ao numero de threads a acontecer pois pode ser precisa noutra thread
         //we can add a wait function if we want
       }
       pthread_rwlock_wrlock(args_thread->mutex_active_threads); //da lock do tipo write porque vamos mudar o valor da variavel
       (*active_threads)++;                                      //aumentamos o numero de threads ativas
       pthread_rwlock_unlock(args_thread->mutex_active_threads); //damos unlock pois ja alteramos o valor
-      if (pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread) != 0) {//criamos uma thread que vai fazer a funcao thread_work cujos argumentos
-                                                                                              //sao args_thread
+      if (pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread) != 0) {//criamos uma thread que vai fazer a funcao 
+                                                                                              //thread_work cujos argumentos sao args_thread
         fprintf(stderr, "Failed to create thread\n");
         free(args_thread->job_input_path);
         free(args_thread);
