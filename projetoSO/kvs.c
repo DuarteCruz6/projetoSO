@@ -25,12 +25,14 @@ struct HashTable* create_hash_table() {
   if (!ht) return NULL;
   for (int i = 0; i < TABLE_SIZE; i++) {
       ht->table[i] = NULL;
+      pthread_rwlock_init(&ht->mutex_index[i], NULL);
   }
   return ht;
 }
 
 int write_pair(HashTable *ht, const char *key, const char *value) {
     int index = hash(key);
+    pthread_rwlock_wrlock(&ht->mutex_index[index]);  
     KeyNode *keyNode = ht->table[index];
 
     // Search for the key node
@@ -46,6 +48,7 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
             }
             keyNode->value = strdup(value);
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
+            pthread_rwlock_unlock(&ht->mutex_index[index]);
             return 0;
         }
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
@@ -57,16 +60,20 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
                                                                        //para este par para podermos dar lock
     pthread_rwlock_init(mutex_par_hash,NULL);   //inicializar o mutex
     keyNode = malloc(sizeof(KeyNode));
+    keyNode->mutex_par_hashTable = mutex_par_hash; //guarda o mutex do par
+    pthread_rwlock_wrlock(keyNode->mutex_par_hashTable);
     keyNode->key = strdup(key); // Allocate memory for the key
     keyNode->value = strdup(value); // Allocate memory for the value
     keyNode->next = ht->table[index]; // Link to existing nodes
-    keyNode->mutex_par_hashTable = mutex_par_hash; //guarda o mutex do par
     ht->table[index] = keyNode; // Place new key node at the start of the list
+    pthread_rwlock_unlock(keyNode->mutex_par_hashTable);
+    pthread_rwlock_unlock(&ht->mutex_index[index]);
     return 0;
 }
 
 char* read_pair(HashTable *ht, const char *key) {
     int index = hash(key);
+    pthread_rwlock_rdlock(&ht->mutex_index[index]);
     KeyNode *keyNode = ht->table[index];
     char* value;
 
@@ -78,19 +85,23 @@ char* read_pair(HashTable *ht, const char *key) {
             if(keyNode->value !=NULL){
                 value = strdup(keyNode->value);
                 pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
+                pthread_rwlock_unlock(&ht->mutex_index[index]);
                 return value; // Return copy of the value if found
             }
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable);    //damos unlock
+            pthread_rwlock_unlock(&ht->mutex_index[index]);
             return NULL;
         }
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
         keyNode = keyNode->next; // Move to the next node
     }
+    pthread_rwlock_unlock(&ht->mutex_index[index]);
     return NULL; // Key not found
 }
 
 int delete_pair(HashTable *ht, const char *key) {
-    int index = hash(key);
+    int index = hash(key); 
+    pthread_rwlock_wrlock(&ht->mutex_index[index]);
     KeyNode *keyNode = ht->table[index];
 
     // Search for the key node
@@ -101,6 +112,7 @@ int delete_pair(HashTable *ht, const char *key) {
 
             if(keyNode->value==NULL){
                 pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
+                pthread_rwlock_unlock(&ht->mutex_index[index]);
                 return 1;
             }
             // Key found; delete this node
@@ -109,13 +121,13 @@ int delete_pair(HashTable *ht, const char *key) {
             free(keyNode->value);
             keyNode->value=NULL;
             pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //damos unlock
-            
+            pthread_rwlock_unlock(&ht->mutex_index[index]);
             return 0; // Exit the function
         }
         pthread_rwlock_unlock(keyNode->mutex_par_hashTable); //da unlock
         keyNode = keyNode->next; // Move to the next node
     }
-    
+    pthread_rwlock_unlock(&ht->mutex_index[index]);
     return 1;
 }
 

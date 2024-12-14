@@ -158,6 +158,7 @@ int kvs_delete(int fd_out, size_t num_pairs, char keys[][MAX_STRING_SIZE]) {
 /// @param fd_out O descritor de file para onde a saída será escrita.
 void kvs_show(int fd_out) {
   for (int i = 0; i < TABLE_SIZE; i++) {
+    pthread_rwlock_wrlock(&kvs_table->mutex_index[i]);
     KeyNode *keyNode = kvs_table->table[i];
     while (keyNode != NULL) {
       // Imprime cada par chave-valor
@@ -170,7 +171,9 @@ void kvs_show(int fd_out) {
       pthread_rwlock_unlock(keyNode->mutex_par_hashTable);  //damos unlock
       keyNode = keyNode->next;  // Move para o próximo nó
     }
+    pthread_rwlock_unlock(&kvs_table->mutex_index[i]);
   }
+  //pthread_rwlock_unlock(kvs_table->mutex_hashTable); 
 }
 
 /// Faz um backup do KVS para o ficheiro

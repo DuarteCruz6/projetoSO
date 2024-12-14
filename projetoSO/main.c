@@ -26,7 +26,8 @@ typedef struct {
                                             //a acontecer ao mesmo tempo
     pthread_rwlock_t* mutex_active_backups; //mutex do tipo write/read para o número de backups 
                                             //a acontecer ao mesmo tempo
-    int* active_threads;  //ponteiro para o número de threads a acontecer ao mesmo tempo
+    int* threads_ativas;  //ponteiro para o número de threads a acontecer ao mesmo tempo
+    int* backups_ativos;
 } thread_args;
 
 
@@ -274,7 +275,7 @@ void *thread_work(void *arguments){
   }
 
   //processar os .job
-  process_job_file(job_input_path,job_output_path,args.active_threads,args.mutex_active_backups);
+  process_job_file(job_input_path,job_output_path,args.backups_ativos,args.mutex_active_backups);
   // Espera que todos os processos filhos terminem
   
   for (int i = 0; i < MAX_BACKUPS; ++i) {
@@ -284,7 +285,7 @@ void *thread_work(void *arguments){
   pthread_rwlock_wrlock(args.mutex_active_threads); //da lock do tipo write ao mutex do numero de threads ativas pq vamos
                                                     //mexer na variavel entao nao queremos que nenhuma outra thread 
                                                     //leia/escreva nela
-  args.active_threads--;  //tiramos 1 ao numero de threads ativas (este argumento é um ponteiro)
+  (*args.threads_ativas)--;  //tiramos 1 ao numero de threads ativas (este argumento é um ponteiro)
   pthread_rwlock_unlock(args.mutex_active_threads); //da unlock ao mutex
 
   //frees a coisas que usaram memoria dinamica
@@ -393,7 +394,10 @@ void create_threads(const char *directory) {
     closedir(dir);
     return;
   }
+
+  *backups_a_decorrer=0;
   int* active_threads = malloc(sizeof(int));
+
   if (active_threads == NULL) {
     fprintf(stderr, "Memory allocation failed for active_threads\n");
     free(lista_ficheiros);
@@ -402,7 +406,8 @@ void create_threads(const char *directory) {
     closedir(dir);
     return;
   }
-
+  
+  *active_threads=0;
   //cria os locks do tipo read and write para o numero de backups e threads ativos 
   //pois nao queremos que varias threads mudem o valor destas variaveis ao mesmo tempo
   //nem que leiam o valor desta variavel ao mesmo tempo que outra thread muda o seu valor
@@ -451,13 +456,14 @@ void create_threads(const char *directory) {
       }
       args_thread->job_input_path= strdup(job_input_path); //guarda a diretoria do .job
       args_thread->num_thread = thread_count; //guarda o numero total de threads 
-      args_thread->active_threads=backups_a_decorrer; //guarda um ponteiro para o numero de backups a decorrer ao mesmo tempo
+      args_thread->threads_ativas=active_threads; //guarda um ponteiro para o numero de backups a decorrer ao mesmo tempo
+      args_thread->backups_ativos= backups_a_decorrer;
       args_thread->mutex_active_backups= mutex_backups_a_decorrer;  //guarda o mutex para a variavel do numero de backups ao mesmo tempo
       args_thread->mutex_active_threads= mutex_threads_a_decorrer;  //guarda o mutex para a variavel do numero de threads ao mesmo tempo
       while(1) {
         pthread_rwlock_rdlock(mutex_threads_a_decorrer);  //da lock do tipo read ao numero de threads a acontecer pois nao queremos que nenhuma
                                                           //thread mude o valor desta variavel, mas queremos que leiam
-        if (*active_threads < MAX_THREADS) {
+        if ((*active_threads) < MAX_THREADS) {
           //podemos criar uma nova thread pois ainda n atingimos o maximo de threads ao mesmo tempo
           pthread_rwlock_unlock(mutex_threads_a_decorrer);  //da unlock pois precisamos de dar lock do tipo write
           pthread_rwlock_wrlock(mutex_threads_a_decorrer);  //da lock do tipo write pq vamos mudar o valor da variavel
@@ -469,9 +475,6 @@ void create_threads(const char *directory) {
         pthread_rwlock_unlock(mutex_threads_a_decorrer);//damos unlock ao numero de threads a acontecer pois pode ser precisa noutra thread
         //we can add a wait function if we want
       }
-      pthread_rwlock_wrlock(args_thread->mutex_active_threads); //da lock do tipo write porque vamos mudar o valor da variavel
-      (*active_threads)++;                                      //aumentamos o numero de threads ativas
-      pthread_rwlock_unlock(args_thread->mutex_active_threads); //damos unlock pois ja alteramos o valor
       if (pthread_create(&lista_threads[thread_count], NULL, thread_work, args_thread) != 0) {//criamos uma thread que vai fazer a funcao 
                                                                                               //thread_work cujos argumentos sao args_thread
         fprintf(stderr, "Failed to create thread\n");
