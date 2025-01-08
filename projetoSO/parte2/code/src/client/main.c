@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "parser.h"
@@ -29,7 +31,24 @@ int main(int argc, char *argv[]) {
   strncat(resp_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
   strncat(notif_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
 
-  // TODO open pipes
+  int req_pipe, resp_pipe, notif_pipe;
+  // Abrir os pipes de requests, responses, notifications
+  req_pipe = open(req_pipe_path, O_WRONLY);
+  resp_pipe = open(resp_pipe_path, O_WRONLY);
+  notif_pipe = open(notif_pipe_path, O_WRONLY);
+
+  if (req_pipe == -1) {
+      fprintf(stderr, "Failed to open the request pipe\n");
+      return 1;
+  }
+  if (resp_pipe == -1) {
+      fprintf(stderr, "Failed to open the response pipe\n");
+      return 1;
+  }
+  if (notif_pipe == -1) {
+      fprintf(stderr, "Failed to open the notification pipe\n");
+      return 1;
+  }
 
   while (1) {
     switch (get_next(STDIN_FILENO)) {

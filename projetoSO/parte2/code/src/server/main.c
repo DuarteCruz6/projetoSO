@@ -27,6 +27,7 @@ size_t active_backups = 0; // Number of active backups
 size_t max_backups;        // Maximum allowed simultaneous backups
 size_t max_threads;        // Maximum allowed simultaneous threads
 char *jobs_directory = NULL;
+char *nome_do_FIFO_de_registo = NULL; // named pipe através do qual os clientes se ligam ao servidor
 
 int filter_job_files(const struct dirent *entry) {
   const char *dot = strrchr(entry->d_name, '.');
@@ -154,7 +155,7 @@ static int run_job(int in_fd, int out_fd, char *filename) {
                 "  DELETE [key,key2,...]\n"
                 "  SHOW\n"
                 "  WAIT <delay_ms>\n"
-                "  BACKUP\n" // Not implemented
+                "  BACKUP\n" 
                 "  HELP\n");
 
       break;
@@ -276,12 +277,13 @@ static void dispatch_threads(DIR *dir) {
 }
 
 int main(int argc, char **argv) {
-  if (argc < 4) {
+  if (argc < 5) {
     write_str(STDERR_FILENO, "Usage: ");
     write_str(STDERR_FILENO, argv[0]);
     write_str(STDERR_FILENO, " <jobs_dir>");
     write_str(STDERR_FILENO, " <max_threads>");
     write_str(STDERR_FILENO, " <max_backups> \n");
+    write_str(STDERR_FILENO, " <nome_do_FIFO_de_registo> \n");
     return 1;
   }
 
@@ -296,6 +298,8 @@ int main(int argc, char **argv) {
   }
 
   max_threads = strtoul(argv[2], &endptr, 10);
+
+  nome_do_FIFO_de_registo = argv[4];
 
   if (*endptr != '\0') {
     fprintf(stderr, "Invalid max_threads value\n");
