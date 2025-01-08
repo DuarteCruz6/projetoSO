@@ -13,6 +13,7 @@
 #include "operations.h"
 #include "parser.h"
 #include "pthread.h"
+#include "src/common/constants.h"
 
 struct SharedData {
   DIR *dir;
@@ -27,7 +28,8 @@ size_t active_backups = 0; // Number of active backups
 size_t max_backups;        // Maximum allowed simultaneous backups
 size_t max_threads;        // Maximum allowed simultaneous threads
 char *jobs_directory = NULL;
-char *nome_do_FIFO_de_registo = NULL; // named pipe através do qual os clientes se ligam ao servidor
+char *nome_fifo = NULL;
+int server_fifo;
 
 int filter_job_files(const struct dirent *entry) {
   const char *dot = strrchr(entry->d_name, '.');
@@ -155,7 +157,7 @@ static int run_job(int in_fd, int out_fd, char *filename) {
                 "  DELETE [key,key2,...]\n"
                 "  SHOW\n"
                 "  WAIT <delay_ms>\n"
-                "  BACKUP\n" 
+                "  BACKUP\n" // Not implemented
                 "  HELP\n");
 
       break;
@@ -237,8 +239,14 @@ static void *get_file(void *arguments) {
   pthread_exit(NULL);
 }
 
+static void *readFifo(){
+  //ler FIFO
+}
+
+
 static void dispatch_threads(DIR *dir) {
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
+  pthread_t *threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
 
   if (threads == NULL) {
     fprintf(stderr, "Failed to allocate memory for threads\n");
@@ -259,6 +267,23 @@ static void dispatch_threads(DIR *dir) {
   }
 
   // ler do FIFO de registo
+  for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
+    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readFifo,NULL) !=
+        0) {
+      fprintf(stderr, "Failed to create thread gestora %zu\n", thread_gestora);
+      free(threads_gestoras);
+      return;
+    }
+  }
+
+
+  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
+    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
+      fprintf(stderr, "Failed to join thread gestora %u\n", thread_gestora);
+      free(threads_gestoras);
+      return;
+    }
+  }
 
   for (unsigned int i = 0; i < max_threads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
@@ -283,11 +308,13 @@ int main(int argc, char **argv) {
     write_str(STDERR_FILENO, " <jobs_dir>");
     write_str(STDERR_FILENO, " <max_threads>");
     write_str(STDERR_FILENO, " <max_backups> \n");
-    write_str(STDERR_FILENO, " <nome_do_FIFO_de_registo> \n");
+    write_str(STDERR_FILENO, " <nome_FIFO_de_registo> \n");
     return 1;
   }
 
   jobs_directory = argv[1];
+  nome_fifo = argv[4];
+
 
   char *endptr;
   max_backups = strtoul(argv[3], &endptr, 10);
@@ -298,8 +325,6 @@ int main(int argc, char **argv) {
   }
 
   max_threads = strtoul(argv[2], &endptr, 10);
-
-  nome_do_FIFO_de_registo = argv[4];
 
   if (*endptr != '\0') {
     fprintf(stderr, "Invalid max_threads value\n");
@@ -324,6 +349,17 @@ int main(int argc, char **argv) {
   DIR *dir = opendir(argv[1]);
   if (dir == NULL) {
     fprintf(stderr, "Failed to open directory: %s\n", argv[1]);
+    return 0;
+  }
+
+  //criar FIFO
+  if (mkfifo(nome_fifo, 0666) == -1) {
+      fprintf(stderr, "Failed to create FIFO: %s\n", argv[4]);
+      exit(EXIT_FAILURE);
+  }
+  server_fifo = open(nome_fifo, O_RDONLY);
+  if (server_fifo == -1) {
+    fprintf(stderr, "Failed to open fifo: %s\n", nome_fifo);
     return 0;
   }
 

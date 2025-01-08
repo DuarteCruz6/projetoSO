@@ -1,88 +1,102 @@
 #include "api.h"
+#include <stdio.h>
+#include <fcntl.h>
 
 #include "src/common/constants.h"
 #include "src/common/protocol.h"
 
-int server_pipe;
-char req_pipe_simples[40], resp_pipe_simples[40], notif_pipe_simples[40];
-int req_pipe, resp_pipe, notif_pipe
-
-void pad_string(char *str, size_t length) {
-  size_t current_length = strlen(str);
-  if (current_length < length) {
-    memset(str+current_length,"\0",length-current_length);
-    str[length-1] = '\0'; // Assegurar que termina com \0
+//manda request
+void createMessage(char *req_pipe_path, char *message){
+  int pipe_req = open(req_pipe_path, O_WRONLY);
+  if (write(pipe_req, message, strlen(message) + 1) == -1) { // +1 para incluir o '\0'
+    fprintf(stderr, "Error writing to pipe request");
+    return;
   }
+}
+
+//recebe a resposta do pipe
+void getResponse(char *resp_pipe_path){
+  // abrir pipe de response para leitura
+  int pipe_resp = open(resp_pipe_path, O_RDONLY);
+  if (pipe_resp == -1) {
+      fprintf(stderr, "Error reading pipe response");
+      return 1;
+  }
+
+  // Ler a mensagem do pipe (bloqueante)
+  char buffer[2];
+  ssize_t bytes_read = read(pipe_resp, buffer, sizeof(buffer));
+  if (bytes_read == -1) {
+      fprintf(stderr, "Error reading pipe response");
+      return 1;
+  }
+  int result;
+  sprintf(buffer, "%d", result);
+  return result; 
 }
 
 int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path, char const *server_pipe_path) {
-
-  // create request, response and notification pipes and connect to server pipe
+  // create pipes and connect
   if (mkfifo(req_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Error creating the request pipe\n");
+    fprintf(stderr, "Failed to create request pipe\n");
     return 1;
   }
   if (mkfifo(resp_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Error creating the response pipe\n");
+    fprintf(stderr, "Failed to create response pipe\n");
     return 1;
   }
   if (mkfifo(notif_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Error creating the notification pipe\n");
+    fprintf(stderr, "Failed to create notification pipe\n");
     return 1;
-  } 
-
-  server_pipe = open(server_pipe_path, O_WRONLY);
-  if (fd == -1) {
-      fprintf(stderr, "Error connecting to the server pipe\n");
-      return 1;
   }
-  strcpy(req_pipe_simples,req_pipe_path);
-  strcpy(resp_pipe_simples,resp_pipe_path);
-  strcpy(notif_pipe_simples,notif_pipe_path);
 
-  // Preencher até 40 caracteres
-  pad_string(req_pipe_simples, sizeof(req_pipe_simples));
-  pad_string(resp_pipe_simples, sizeof(resp_pipe_simples));
-  pad_string(notif_pipe_simples, sizeof(notif_pipe_simples));
-
-  // fazer pedido ao server atraveś do pipe
   char message[128];
-  snprintf(message, sizeof(message), "1 %s %s %s", req_pipe_simples, resp_pipe_simples, notif_pipe_simples);
-  write_message_to_server_pipe(message)
+  //construir mensagem
+  snprintf(message, 128, "%d %s %s %s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
-  //esperar pela resposta
-
+  createMessage(req_pipe_path,message);
+  
+  int response = getResponse(resp_pipe_path);
+  if(response!=0){
+    fprintf(stderr, "Failed to connect the client\n");
+    return 1;
+  }
   return 0;
 }
 
 int kvs_disconnect(void) {
   // close pipes and unlink pipe files
-  write_message_to_server_pipe("2")
-
-  //esperar pela resposta do server
-
-  //fechar os pipes
-  close(req_pipe);
-  close(resp_pipe);
-  close(notif_pipe);
-
   return 0;
 }
 
-int kvs_subscribe(const char *key) {
+int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key) {
   // send subscribe message to request pipe and wait for response in response
   // pipe
+  char message[44];
+  //construir mensagem
+  snprintf(message, 44, "%d %s", OP_CODE_SUBSCRIBE ,key);
+  createMessage(req_pipe_path,message);
+  int response = getResponse(resp_pipe_path);
+  if(response!=0){
+    fprintf(stderr, "Failed to subscribe the client\n");
+    return 1;
+  }
+
   return 0;
 }
 
-int kvs_unsubscribe(const char *key) {
+int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key) {
   // send unsubscribe message to request pipe and wait for response in response
   // pipe
+  char message[44];
+  //construir mensagem
+  snprintf(message, 44, "%d %s", OP_CODE_UNSUBSCRIBE ,key);
+  createMessage(req_pipe_path,message);
+  int response = getResponse(resp_pipe_path);
+  if(response!=0){
+    fprintf(stderr, "Failed to unsubscribe the client\n");
+    return 1;
+  }
   return 0;
-}
-
-int write_message_to_server_pipe(const char *message){
-  //write message to server pipe
-  write(server_pipe, message, sizeof(char) * (strlen(message)+1)); // Enviar mensagem
 }
