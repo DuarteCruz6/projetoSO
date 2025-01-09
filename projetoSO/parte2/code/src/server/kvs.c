@@ -31,6 +31,22 @@ struct HashTable *create_hash_table() {
   return ht;
 }
 
+void notificarSubs(KeyNode *keyNode, char *newValue){
+  Subscribers *currentSub = keyNode->subscribers;
+  while (currentSub != NULL) {
+    Cliente *cliente = currentSub->cliente;
+    int pipe_notif = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
+    if (pipe_notif == -1) {
+        perror("Erro ao abrir o pipe");
+        return;
+    }
+    char mensagem[256];
+    snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
+    write(pipe_notif, mensagem, strlen(mensagem));
+    currentSub = currentSub->next; //próximo subscritor
+  }
+}
+
 int write_pair(HashTable *ht, const char *key, const char *value) {
   int index = hash(key);
 
@@ -43,6 +59,7 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
       // overwrite value
       free(keyNode->value);
       keyNode->value = strdup(value);
+      notificarSubs(keyNode, value);
       return 0;
     }
     previousNode = keyNode;
@@ -95,6 +112,8 @@ int delete_pair(HashTable *ht, const char *key) {
         prevNode->next =
             keyNode->next; // Link the previous node to the next node
       }
+      notificarSubs(keyNode, "DELETED");
+
       // Free the memory allocated for the key and value
       free(keyNode->key);
       free(keyNode->value);
@@ -116,9 +135,92 @@ void free_table(HashTable *ht) {
       keyNode = keyNode->next;
       free(temp->key);
       free(temp->value);
+      free(temp->subscribers);
       free(temp);
     }
   }
   pthread_rwlock_destroy(&ht->tablelock);
   free(ht);
+}
+
+//1 se errado, 0 se certo
+int addSubscrition(HashTable *ht, Cliente* cliente, char *key){
+  int index = hash(key);
+  Subscribers *newSub = (Subscribers *)malloc(sizeof(Subscribers));
+  if (!newSub) {
+    return 1; // Retorno de erro ao alocar memória
+  }
+  newSub->cliente = cliente;
+  newSub->next = NULL;
+
+  KeyNode *keyNode = ht->table[index];
+  KeyNode *previousNode;
+
+  while (keyNode != NULL) {
+    if (strcmp(keyNode->key, key) == 0) {
+      newSub->next = keyNode->subscribers;
+      keyNode->subscribers = newSub;
+      Subscriptions *newSubscription = (Subscriptions *)malloc(sizeof(Subscriptions));
+      newSubscription->next = cliente->subscricoes;
+      cliente->subscricoes = newSubscription;
+      return 0;
+    }
+    previousNode = keyNode;
+    keyNode = previousNode->next; // Move to the next node
+  }
+  free(newSub);
+  return 1;  
+}
+
+//1 se errado, 0 se certo
+int removeSubscrition(HashTable *ht, Cliente* cliente, char *key){
+  int index = hash(key);
+  KeyNode *keyNode = ht->table[index];
+  KeyNode *previousNode;
+
+  while (keyNode != NULL) {
+    if (strcmp(keyNode->key, key) == 0) {
+      Subscribers *currentSub = keyNode->subscribers;
+      Subscribers *previousSub = NULL;
+      while (currentSub != NULL) {
+        if (strcmp(currentSub->cliente->resp_pipe_path, cliente->resp_pipe_path) == 0 &&
+          strcmp(currentSub->cliente->notif_pipe_path, cliente->notif_pipe_path) == 0 &&
+          strcmp(currentSub->cliente->req_pipe_path, cliente->req_pipe_path) == 0) { {
+            //estamos no cliente certo
+
+            //remover da hashtable
+            if (previousSub == NULL) {
+              keyNode->subscribers = currentSub->next; //remove caso seja o primeiro elemento da lista
+            } else {
+              previousSub->next = currentSub->next; //remove para os outros casos
+            }
+            free(currentSub); //liberta a memoria
+
+            //remover do cliente
+            Subscriptions *currentSubscr = cliente->subscricoes;
+            Subscriptions *prevSubscr = NULL;
+            while (currentSubscr != NULL) {
+              if (currentSubscr->key == keyNode) {
+                if (prevSubscr == NULL) {
+                  cliente->subscricoes = currentSubscr->next; // Remove o primeiro elemento
+                } else {
+                  prevSubscr->next = currentSubscr->next; // Remove o elemento do meio/final
+                }
+                free(currentSubscr); // Libera a memória da associação removida
+                break;
+              }
+              prevSubscr = currentSubscr;
+              currentSubscr = currentSubscr->next;
+            }
+            return 0; // Sucesso na remoção
+        }
+        previousSub = currentSub;
+        currentSub = currentSub->next;
+      }
+    }
+    previousNode = keyNode;
+    keyNode = keyNode->next;
+    }
+  }
+  return 1;  
 }

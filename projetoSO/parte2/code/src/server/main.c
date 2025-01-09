@@ -21,13 +21,19 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
-struct Cliente {
-  char const resp_pipe_path[40];
-  char const notif_pipe_path[40];
-  char const req_pipe_path[40];
+typedef struct Subscriptions{
+  KeyNode *key;
+  Subscriptions *next;
+}Subscriptions;
+
+typedef struct Cliente {
+  char resp_pipe_path[40];
+  char notif_pipe_path[40];
+  char req_pipe_path[40];
+  Subscriptions *subscricoes;
 }Cliente;
 
-Cliente* listaClientes[40];
+Cliente* listaClientes[40] = {NULL};
 int numClientes=0;
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -296,9 +302,9 @@ void iniciar_sessao(char *message){
       }
 
       // Inicializa os campos da estrutura
-      new_cliente->req_pipe_path = pipe_req;
-      new_cliente->resp_pipe_path = pipe_resp;
-      new_cliente->notif_pipe_path = pipe_notif;
+      strcpy(new_cliente->req_pipe_path, pipe_req);
+      strcpy(new_cliente->resp_pipe_path, pipe_resp);
+      strcpy(new_cliente->notif_pipe_path, pipe_notif);
       listaClientes[numClientes] = new_cliente;
       numClientes++;
 
@@ -311,26 +317,93 @@ void iniciar_sessao(char *message){
   printf("Erro ao iniciar sessao de novo cliente.\n");
 }
 
+int subscribeClient(Cliente *cliente, char *message){
+  char key[41];
+  int code;
+  sscanf(message,"%d %s",code, key);
+
+  if (addSubscriber(cliente, key)==0){
+    //a key existe e deu certo
+    return 0;
+  }
+  return 1;
+}
+
+int unsubscribeClient(Cliente *cliente, char *message){
+  char key[41];
+  int code;
+  sscanf(message,"%d %s",code, key);
+
+  if (removeSubscriber(cliente, key)==0){
+    //a subscricao existia e deu certo
+    return 0;
+  }
+  return 1;
+}
+
+int disconnectClient(Cliente *cliente){
+  Subscriptions *currentSubscr = cliente->subscricoes;
+  Subscriptions *prevSubscr = NULL;
+  while (currentSubscr != NULL) {
+    KeyNode *keyNode = currentSubscr->key;
+    Subscribers *currentSub = keyNode->subscribers;
+    Subscribers *prevSub = NULL;
+
+    // Remoção na lista de subscribers associada à chave
+    while (currentSub != NULL) {
+      if (strcmp(currentSub->cliente->resp_pipe_path, cliente->resp_pipe_path) == 0 &&
+        strcmp(currentSub->cliente->notif_pipe_path, cliente->notif_pipe_path) == 0 &&
+        strcmp(currentSub->cliente->req_pipe_path, cliente->req_pipe_path) == 0) {
+        if (prevSub == NULL) {
+          keyNode->subscribers = currentSub->next; // Remove caso seja o primeiro elemento
+        } else {
+          prevSub->next = currentSub->next; // Remove para os outros casos
+        }
+        free(currentSub); // Liberta a memória do subscritor
+        break; // Terminamos a remoção para este subscritor
+      }
+      prevSub = currentSub;
+      currentSub = currentSub->next;
+    }
+    // Próxima associação na lista de subscrições
+    Subscriptions *nextSubscr = currentSubscr->next;
+    free(currentSubscr); // Libera a memória da associação
+    currentSubscr = nextSubscr;
+  }
+
+  cliente->subscricoes = NULL; // Após desconectar, limpar a lista de subscrições
+
+  return 0; // Sucesso
+}
+
 void readClientPipe(void *arguments){
-  char message[128];
+  char message[43];
   Cliente *cliente = (Cliente *)arguments;
-  int response_pipe = open(cliente->req_pipe_path, O_WRONLY);
+  int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
+  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
   while (1) {
-    ssize_t bytes_read = read(response_pipe, &message, sizeof(message));
+    ssize_t bytes_read = read(request_pipe, &message, sizeof(message));
     if (bytes_read > 0){
       int code = message[0];
+      int result;
       if (code==2){
         //disconnect
+        result = disconnectClient(cliente);
 
       }else if (code==3){
         //subscribe
-        
+        result = subscribeClient(cliente, message);
+      
       }else if (code==4){
         //unsubscribe
+        result = unsubscribeClient(cliente, message);
 
       }else{
         //erro
       }
+
+      //escreve se a operacao deu certo (0) ou errado (1)
+      write(response_pipe, result, 2);
       
     } else if (bytes_read == 0) {
       // EOF: O pipe foi fechado

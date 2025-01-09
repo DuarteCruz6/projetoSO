@@ -181,3 +181,31 @@ void kvs_wait(unsigned int delay_ms) {
   struct timespec delay = delay_to_timespec(delay_ms);
   nanosleep(&delay, NULL);
 }
+
+int addSubscriber(Cliente *Cliente, char *key){
+  if (kvs_table == NULL) {
+    fprintf(stderr, "KVS state must be initialized\n");
+    return 1;
+  }
+  pthread_rwlock_rdlock(&kvs_table->tablelock);
+  if(addSubscrition(kvs_table, Cliente, key)!=0){
+    pthread_rwlock_unlock(&kvs_table->tablelock);
+    return 1;
+  }
+  pthread_rwlock_unlock(&kvs_table->tablelock);
+  return 0;
+}
+
+int removeSubscriber(Cliente *Cliente, char *key){
+  if (kvs_table == NULL) {
+    fprintf(stderr, "KVS state must be initialized\n");
+    return 1;
+  }
+  pthread_rwlock_rdlock(&kvs_table->tablelock);
+  if(removeSubscrition(kvs_table, Cliente, key)!=0){
+    pthread_rwlock_unlock(&kvs_table->tablelock);
+    return 1;
+  }
+  pthread_rwlock_unlock(&kvs_table->tablelock);
+  return 0;
+}
