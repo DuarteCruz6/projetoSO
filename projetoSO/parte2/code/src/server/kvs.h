@@ -1,5 +1,6 @@
-#ifndef KEY_VALUE_STORE_H
-#define KEY_VALUE_STORE_H
+#ifndef KVS_H
+#define KVS_H
+
 #define TABLE_SIZE 26
 
 #include <pthread.h>
