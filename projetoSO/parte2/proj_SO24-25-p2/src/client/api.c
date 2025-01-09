@@ -14,8 +14,10 @@ void createMessage(const char *req_pipe_path, char *message){
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write(pipe_req, message, strlen(message) + 1) == -1) { // +1 para incluir o '\0'
     fprintf(stderr, "Error writing to pipe request");
+    close(pipe_req);
     return;
   }
+  close(pipe_req);
 }
 
 //recebe a resposta do pipe
@@ -30,6 +32,7 @@ int getResponse(const char *resp_pipe_path){
   // Ler a mensagem do pipe (bloqueante)
   char buffer[4];
   ssize_t bytes_read = read(pipe_resp, buffer, sizeof(buffer));
+  close(pipe_resp);
   if (bytes_read == -1) {
       fprintf(stderr, "Error reading pipe response");
       return 1;

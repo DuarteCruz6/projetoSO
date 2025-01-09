@@ -342,8 +342,8 @@ void *readClientPipe(void *arguments){
   char message[43];
   Cliente *cliente = (Cliente *)arguments;
   int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
-  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
   ssize_t bytes_read = read(request_pipe, &message, sizeof(message));
+  close(request_pipe);
   if (bytes_read > 0){
     int code = message[0];
     int result;
@@ -367,7 +367,9 @@ void *readClientPipe(void *arguments){
     //escreve se a operacao deu certo (0) ou errado (1)
     char response[4];
     snprintf(response,4,"%d %d", code, result);
+    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
     write(response_pipe, response, 2);
+    close(response_pipe);
       
   } else if (bytes_read == 0) {
     // EOF: O pipe foi fechado
