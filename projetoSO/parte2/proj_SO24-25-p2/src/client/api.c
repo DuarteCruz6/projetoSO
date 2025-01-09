@@ -1,12 +1,14 @@
 #include "api.h"
 #include <stdio.h>
 #include <fcntl.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "src/common/constants.h"
 #include "src/common/protocol.h"
 
 //manda request
-void createMessage(char *req_pipe_path, char *message){
+void createMessage(const char *req_pipe_path, char *message){
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write(pipe_req, message, strlen(message) + 1) == -1) { // +1 para incluir o '\0'
     fprintf(stderr, "Error writing to pipe request");
@@ -15,7 +17,7 @@ void createMessage(char *req_pipe_path, char *message){
 }
 
 //recebe a resposta do pipe
-int getResponse(char *resp_pipe_path){
+int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
   int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1) {

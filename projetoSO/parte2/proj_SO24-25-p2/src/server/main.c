@@ -344,7 +344,7 @@ int disconnectClient(Cliente *cliente){
   return 0; // Sucesso
 }
 
-static void *readServerPipe(){
+void *readServerPipe(){
   //ler FIFO
   char message[128];
   while (1) {
@@ -370,7 +370,7 @@ static void *readServerPipe(){
   return;
 }
 
-void readClientPipe(void *arguments){
+void *readClientPipe(void *arguments){
   char message[43];
   Cliente *cliente = (Cliente *)arguments;
   int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
@@ -397,8 +397,8 @@ void readClientPipe(void *arguments){
       }
 
       //escreve se a operacao deu certo (0) ou errado (1)
-      char response[3];
-      snprintf(response,3,"%d %d", code, result);
+      char response[4];
+      snprintf(response,4,"%d %d", code, result);
       write(response_pipe, response, 2);
       
     } else if (bytes_read == 0) {
