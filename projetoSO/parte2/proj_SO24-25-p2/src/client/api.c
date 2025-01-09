@@ -41,7 +41,9 @@ int getResponse(const char *resp_pipe_path){
   sscanf(buffer, "%d%d", &code, &result);
 
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
-  printf("Server returned %d for operation: %s",result,operations[result-1]);
+  char string[256];
+  snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[result-1]);
+  write_str(STDOUT_FILENO,string);
   return result; 
 }
 

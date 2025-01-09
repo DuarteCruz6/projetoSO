@@ -128,7 +128,7 @@ void *thread_secundaria_work(void *arguments){
   
   if (success == 1) {
     buffer[256] = '\0'; // Assegurar que o buffer é uma string válida
-    printf("Notificação recebida: %s\n", buffer);
+    write_str(STDOUT_FILENO,buffer);
   } else if (success == 0) {
     // EOF, caso o escritor feche a pipe
     return NULL;
