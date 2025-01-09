@@ -33,7 +33,7 @@ int getResponse(const char *resp_pipe_path){
       return 1;
   }
   int code, result;
-  sprintf(buffer, "%d %d", code, result);
+  sscanf(buffer, "%d %d", &code, &result);
 
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   printf("Server returned %d for operation: %s",result,operations[result-1]);

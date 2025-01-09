@@ -11,7 +11,6 @@
 #include "src/common/io.h"
 
 char *server_pipe_path= NULL;
-char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
 struct ThreadPrincipalData {
   char req_pipe_path[40];
@@ -33,10 +32,15 @@ void pad_string(char *str, size_t length) {
 
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
 static void *thread_principal_work(void *arguments){
-  struct ThreadPrincipalData *thread_data = (struct SharedData *)arguments;
-  char req_pipe[40] = thread_data->req_pipe_path;
-  char resp_pipe[40] = thread_data->resp_pipe_path;
-  char notif_pipe[40] = thread_data->notif_pipe_path;
+  struct ThreadPrincipalData *thread_data = (struct ThreadPrincipalData *)arguments;
+  char req_pipe[40];
+  strcpy(req_pipe, thread_data->req_pipe_path);
+
+  char resp_pipe[40];
+  strcpy(resp_pipe, thread_data->resp_pipe_path);
+
+  char notif_pipe[40];
+  strcpy(notif_pipe, thread_data->notif_pipe_path);
 
   char keys[MAX_NUMBER_SUB][MAX_STRING_SIZE] = {0};
   unsigned int delay_ms;
@@ -45,7 +49,7 @@ static void *thread_principal_work(void *arguments){
   while (1) {
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
-      if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe)) != 0) {
+      if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
         fprintf(stderr, "Failed to disconnect to the server\n");
         pthread_exit(NULL);
         return 1;
@@ -200,6 +204,8 @@ int main(int argc, char *argv[]) {
   strncat(req_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
   strncat(resp_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
   strncat(notif_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
+
+  char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
   strcpy(req_pipe, req_pipe_path);
   strcpy(resp_pipe, resp_pipe_path);
