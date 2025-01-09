@@ -13,10 +13,14 @@
 char *server_pipe_path= NULL;
 char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
-struct ThreadPrincipal {
+struct ThreadPrincipalData {
+  char req_pipe_path[40];
+  char resp_pipe_path[40];
+  char notif_pipe_path[40];
 };
 
-struct ThreadSecundaria {
+struct ThreadSecundariaData {
+  char notif_pipe_path[40];
 };
 
 void pad_string(char *str, size_t length) {
@@ -28,14 +32,20 @@ void pad_string(char *str, size_t length) {
 }
 
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
-void thread_principal_work(){
+static void *thread_principal_work(void *arguments){
+  struct ThreadPrincipalData *thread_data = (struct SharedData *)arguments;
+  char req_pipe[40] = thread_data->req_pipe_path;
+  char resp_pipe[40] = thread_data->resp_pipe_path;
+  char notif_pipe[40] = thread_data->notif_pipe_path;
+
   char keys[MAX_NUMBER_SUB][MAX_STRING_SIZE] = {0};
   unsigned int delay_ms;
   size_t num;
+
   while (1) {
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
-      if (kvs_disconnect() != 0) {
+      if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe)) != 0) {
         fprintf(stderr, "Failed to disconnect to the server\n");
         pthread_exit(NULL);
         return 1;
@@ -52,7 +62,7 @@ void thread_principal_work(){
         continue;
       }
 
-      if (kvs_subscribe(keys[0])) {
+      if (kvs_subscribe(req_pipe, resp_pipe, keys[0])) {
         fprintf(stderr, "Command subscribe failed\n");
       }
 
@@ -65,7 +75,7 @@ void thread_principal_work(){
         continue;
       }
 
-      if (kvs_unsubscribe(keys[0])) {
+      if (kvs_unsubscribe(req_pipe, resp_pipe, keys[0])) {
         fprintf(stderr, "Command subscribe failed\n");
       }
 
@@ -122,26 +132,53 @@ void thread_secundaria_work(){
 //criar as 2 threads por cliente:
     //principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
     //secundaria: recebe as notificacoes e imprime o resultado para o stdout
-void create_threads(){
-  pthread_t *threads = malloc(2 * sizeof(pthread_t));
-  if (threads == NULL) {
-    fprintf(stderr, "Failed to allocate memory for threads\n");
+void create_threads(const char req_pipe_path, const char resp_pipe_path, const char notif_pipe_path){
+  
+  //principal
+  pthread_t *thread_principal = malloc(sizeof(pthread_t));
+  pthread_t *thread_secundaria = malloc(sizeof(pthread_t));
+  if (thread_principal == NULL) {
+    fprintf(stderr, "Failed to allocate memory for thread\n");
     return;
   }
+  if (thread_secundaria == NULL) {
+    fprintf(stderr, "Failed to allocate memory for thread\n");
+    return;
+  }
+  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path};
+  struct ThreadSecundariaData threadSecundaria_data = {notif_pipe_path};
 
   //principal
-  if (pthread_create(&threads[0], NULL, thread_principal_work, NULL)!=0) {
+  if (pthread_create(&thread_principal[0], NULL, thread_principal_work, (void *)&threadPrincipal_data)!=0) {
     fprintf(stderr, "Failed to create thread %d\n", 1);
-    free(threads);
+    free(thread_principal);
     return;
   }
 
   //secundaria
-  if (pthread_create(&threads[1], NULL, thread_secundaria_work, NULL)!=0) {
+  if (pthread_create(&thread_secundaria[0], NULL, thread_secundaria_work, (void *)&threadSecundaria_data)!=0) {
     fprintf(stderr, "Failed to create thread %d\n", 1);
-    free(threads);
+    free(thread_secundaria);
     return;
   }
+
+  //espera pela principal
+  if (pthread_join(thread_principal[0], NULL) != 0) {
+    fprintf(stderr, "Failed to join thread gestora\n");
+    free(thread_principal);
+    return;
+  }
+  
+  //espera pela secundaria
+  if (pthread_join(thread_secundaria[0], NULL) != 0) {
+    fprintf(stderr, "Failed to join thread\n");
+    free(thread_secundaria);
+    return;
+  }
+  
+
+  free(thread_principal);
+  free(thread_secundaria);
 }
 
 
@@ -178,6 +215,6 @@ int main(int argc, char *argv[]) {
   if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
     return 1;
   }
-  create_threads();
+  create_threads(req_pipe_path, resp_pipe_path, notif_pipe_path);
 
 }

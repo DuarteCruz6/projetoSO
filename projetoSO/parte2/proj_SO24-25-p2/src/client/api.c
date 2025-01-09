@@ -26,7 +26,7 @@ int getResponse(const char *resp_pipe_path){
   }
 
   // Ler a mensagem do pipe (bloqueante)
-  char buffer[2];
+  char buffer[4];
   ssize_t bytes_read = read(pipe_resp, buffer, sizeof(buffer));
   if (bytes_read == -1) {
       fprintf(stderr, "Error reading pipe response");
@@ -73,7 +73,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
 int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path) {
   // close pipes and unlink pipe files
-  char code[1];
+  char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
   createMessage(req_pipe_path,code);
   int response = getResponse(resp_pipe_path);
