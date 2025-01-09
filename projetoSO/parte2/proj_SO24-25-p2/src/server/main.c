@@ -22,6 +22,10 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
+struct SharedDataGestoras {
+  Cliente* cliente;
+};
+
 Cliente* listaClientes[40] = {NULL};
 int numClientes=0;
 
@@ -363,6 +367,7 @@ static void *readServerPipe(){
     }
    
   }
+  return;
 }
 
 void readClientPipe(void *arguments){
@@ -392,9 +397,9 @@ void readClientPipe(void *arguments){
       }
 
       //escreve se a operacao deu certo (0) ou errado (1)
-      char message[3];
-      snprintf(message,3,"%d %d", code, result);
-      write(response_pipe, message, 2);
+      char response[3];
+      snprintf(response,3,"%d %d", code, result);
+      write(response_pipe, response, 2);
       
     } else if (bytes_read == 0) {
       // EOF: O pipe foi fechado
@@ -431,9 +436,12 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
+  
+
   // ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,listaClientes[thread_gestora]) !=
+    struct SharedDataGestoras threadGestoras_data = {listaClientes[thread_gestora]};
+    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)&threadGestoras_data) !=
         0) {
       fprintf(stderr, "Failed to create thread gestora %zu\n", thread_gestora);
       free(threads_gestoras);

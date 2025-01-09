@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include "string.h"
 
@@ -32,20 +34,20 @@ struct HashTable *create_hash_table() {
   return ht;
 }
 
-void notificarSubs(KeyNode *keyNode, char *newValue){
+int notificarSubs(KeyNode *keyNode,const char *newValue){
   Subscribers *currentSub = keyNode->subscribers;
   while (currentSub != NULL) {
     Cliente *cliente = currentSub->cliente;
     int pipe_notif = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
     if (pipe_notif == -1) {
-        perror("Erro ao abrir o pipe");
-        return;
+        return 1;
     }
     char mensagem[256];
     snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
     write(pipe_notif, mensagem, strlen(mensagem));
     currentSub = currentSub->next; //próximo subscritor
   }
+  return 0;
 }
 
 int write_pair(HashTable *ht, const char *key, const char *value) {
@@ -60,8 +62,7 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
       // overwrite value
       free(keyNode->value);
       keyNode->value = strdup(value);
-      notificarSubs(keyNode, value);
-      return 0;
+      return notificarSubs(keyNode, value);
     }
     previousNode = keyNode;
     keyNode = previousNode->next; // Move to the next node
