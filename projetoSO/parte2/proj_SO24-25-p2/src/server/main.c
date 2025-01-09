@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 
 #include "constants.h"
 #include "io.h"
@@ -311,7 +312,7 @@ int unsubscribeClient(Cliente *cliente, char *message){
 
 int disconnectClient(Cliente *cliente){
   Subscriptions *currentSubscr = cliente->subscricoes;
-  Subscriptions *prevSubscr = NULL;
+
   while (currentSubscr != NULL) {
     KeyNode *keyNode = currentSubscr->key;
     Subscribers *currentSub = keyNode->subscribers;
@@ -347,26 +348,25 @@ int disconnectClient(Cliente *cliente){
 void *readServerPipe(){
   //ler FIFO
   char message[128];
-  while (1) {
-    ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
-    if (bytes_read > 0){
-      int code = message[0];
-      if (code==1){
-        iniciar_sessao(message);
-      }else{
-        
-      }
+  ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
+  if (bytes_read > 0){
+    int code = message[0];
+    if (code==1){
+      iniciar_sessao(message);
+    }else{
       
-    } else if (bytes_read == 0) {
-      // EOF: O pipe foi fechado
-      break;
-    } else {
-      // Erro ao ler
-      fprintf(stderr, "Erro ao ler do pipe de requests\n");
-      break;
     }
-   
+    
+  } else if (bytes_read == 0) {
+    // EOF: O pipe foi fechado
+    break;
+  } else {
+    // Erro ao ler
+    fprintf(stderr, "Erro ao ler do pipe de requests\n");
+    break;
   }
+  
+  
   return NULL;
 }
 
@@ -375,41 +375,41 @@ void *readClientPipe(void *arguments){
   Cliente *cliente = (Cliente *)arguments;
   int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
   int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-  while (1) {
-    ssize_t bytes_read = read(request_pipe, &message, sizeof(message));
-    if (bytes_read > 0){
-      int code = message[0];
-      int result;
-      if (code==2){
-        //disconnect
-        result = disconnectClient(cliente);
+  ssize_t bytes_read = read(request_pipe, &message, sizeof(message));
+  if (bytes_read > 0){
+    int code = message[0];
+    int result;
+    
+    if (code==2){
+      //disconnect
+      result = disconnectClient(cliente);
 
-      }else if (code==3){
-        //subscribe
-        result = subscribeClient(cliente, message);
-      
-      }else if (code==4){
-        //unsubscribe
-        result = unsubscribeClient(cliente, message);
+    }else if (code==3){
+      //subscribe
+      result = subscribeClient(cliente, message);
 
-      }else{
-        //erro
-      }
+    }else if (code==4){
+      //unsubscribe
+      result = unsubscribeClient(cliente, message);
 
-      //escreve se a operacao deu certo (0) ou errado (1)
-      char response[4];
-      snprintf(response,4,"%d %d", code, result);
-      write(response_pipe, response, 2);
-      
-    } else if (bytes_read == 0) {
-      // EOF: O pipe foi fechado
-      break;
-    } else {
-      // Erro ao ler
-      fprintf(stderr, "Erro ao ler do pipe de requests\n");
-      break;
+    }else{
+      //erro
     }
+            
+    //escreve se a operacao deu certo (0) ou errado (1)
+    char response[4];
+    snprintf(response,4,"%d %d", code, result);
+    write(response_pipe, response, 2);
+      
+  } else if (bytes_read == 0) {
+    // EOF: O pipe foi fechado
+  return NULL;
+  } else {
+    // Erro ao ler
+    fprintf(stderr, "Erro ao ler do pipe de requests\n");
+    return NULL;
   }
+  
   return NULL;
 }
 

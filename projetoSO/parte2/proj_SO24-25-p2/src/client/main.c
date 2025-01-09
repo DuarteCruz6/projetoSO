@@ -118,23 +118,23 @@ void *thread_secundaria_work(void *arguments){
   strcpy(notif_pipe, thread_data->notif_pipe_path);
 
   int pipe_notif = open(notif_pipe, O_RDONLY);
-    if (pipe_notif == -1) {
-      fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
-      return NULL;
-    }
-    char buffer[256];
-    while (1) { // Loop infinito para ler notificações
-      ssize_t bytes_read = read(pipe_notif, buffer, sizeof(buffer) - 1);
-      if (bytes_read > 0) {
-        buffer[bytes_read] = '\0'; // Assegurar que o buffer é uma string válida
-        printf("Notificação recebida: %s\n", buffer);
-      } else if (bytes_read == 0) {
-        // EOF, caso o escritor feche a pipe
-        break;
-      } else {
-        fprintf(stderr, "Erro ao ler a pipe de notificacoes");
-      }
-    }
+  if (pipe_notif == -1) {
+    fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
+    return NULL;
+  }
+  char buffer[256];
+  ssize_t bytes_read = read(pipe_notif, buffer, sizeof(buffer) - 1);
+  if (bytes_read > 0) {
+    buffer[bytes_read] = '\0'; // Assegurar que o buffer é uma string válida
+    printf("Notificação recebida: %s\n", buffer);
+  } else if (bytes_read == 0) {
+    // EOF, caso o escritor feche a pipe
+    break;
+  } else {
+    fprintf(stderr, "Erro ao ler a pipe de notificacoes");
+  }
+  
+  return NULL;
 }
 
 //criar as 2 threads por cliente:
@@ -201,13 +201,10 @@ int main(int argc, char *argv[]) {
   char resp_pipe_path[256] = "/tmp/resp";
   char notif_pipe_path[256] = "/tmp/notif";
 
-  strncat(req_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
-  strncat(resp_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
-  strncat(notif_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
-
-  strncat(req_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
-  strncat(resp_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
-  strncat(notif_pipe_path, argv[1], strlen(argv[1]) * sizeof(char));
+  //adicionar id do cliente ao nome dos pipes
+  strncat(req_pipe_path, argv[1], strlen(argv[2]) * sizeof(char));
+  strncat(resp_pipe_path, argv[1], strlen(argv[2]) * sizeof(char));
+  strncat(notif_pipe_path, argv[1], strlen(argv[2]) * sizeof(char));
 
   char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 

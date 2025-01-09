@@ -3,6 +3,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/stat.h>
+
 
 #include "src/common/constants.h"
 #include "src/common/protocol.h"
@@ -81,12 +83,23 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
     fprintf(stderr, "Failed to disconnect the client\n");
     return 1;
   }
-  int req_pipe = open(req_pipe_path, O_WRONLY);
-  int resp_pipe = open(resp_pipe_path, O_RDONLY);
-  int notif_pipe = open(notif_pipe_path, O_RDONLY);
-  close(req_pipe);
-  close(resp_pipe);
-  close(notif_pipe);
+
+  // Apagar os pipes
+  if (unlink(req_pipe_path) == -1) {
+    perror("Erro ao apagar o pipe");
+    fprintf(stderr, "Failed to close request pipe\n");
+    return 1;
+  }
+  if (unlink(resp_pipe_path) == -1) {
+    perror("Erro ao apagar o pipe");
+    fprintf(stderr, "Failed to close request pipe\n");
+    return 1;
+  }
+  if (unlink(notif_pipe_path) == -1) {
+    perror("Erro ao apagar o pipe");
+    fprintf(stderr, "Failed to close request pipe\n");
+    return 1;
+  }
 
   return 0;
 }
