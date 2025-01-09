@@ -6,6 +6,16 @@
 #include <pthread.h>
 #include <stddef.h>
 
+typedef struct Subscribers {
+  Cliente *cliente;
+  Subscribers *next; // Apontador para o próximo cliente na lista
+} Subscribers;
+
+typedef struct Subscriptions{
+  KeyNode *key;
+  Subscriptions *next;
+}Subscriptions;
+
 typedef struct Cliente {
   char resp_pipe_path[40];
   char notif_pipe_path[40];

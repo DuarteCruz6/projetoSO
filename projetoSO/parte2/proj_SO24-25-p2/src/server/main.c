@@ -22,16 +22,6 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
-typedef struct Subscribers {
-  Cliente *cliente;
-  Subscribers *next; // Apontador para o próximo cliente na lista
-} Subscribers;
-
-typedef struct Subscriptions{
-  KeyNode *key;
-  Subscriptions *next;
-}Subscriptions;
-
 Cliente* listaClientes[40] = {NULL};
 int numClientes=0;
 
