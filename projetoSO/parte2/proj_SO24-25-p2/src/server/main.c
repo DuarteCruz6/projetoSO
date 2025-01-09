@@ -34,11 +34,6 @@ typedef struct KeyNode {
   struct KeyNode *next;
 } KeyNode;
 
-typedef struct HashTable {
-  KeyNode *table[TABLE_SIZE];
-  pthread_rwlock_t tablelock;
-} HashTable;
-
 typedef struct Subscriptions{
   KeyNode *key;
   Subscriptions *next;
