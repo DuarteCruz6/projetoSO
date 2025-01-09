@@ -57,7 +57,9 @@ static int entry_files(const char *dir, struct dirent *entry, char *in_path,
   }
 
   if (strlen(entry->d_name) + strlen(dir) + 2 > MAX_JOB_FILE_NAME_SIZE) {
-    fprintf(stderr, "%s/%s\n", dir, entry->d_name);
+    write_str(STDERR_FILENO,dir);
+    write_str(STDERR_FILENO, "/");
+    write_str(STDERR_FILENO, entry->d_name);
     return 1;
   }
 
@@ -188,7 +190,7 @@ static void *get_file(void *arguments) {
   char *dir_name = thread_data->dir_name;
 
   if (pthread_mutex_lock(&thread_data->directory_mutex) != 0) {
-    fprintf(stderr, "Thread failed to lock directory_mutex\n");
+    write_str(STDERR_FILENO, "Thread failed to lock directory_mutex\n");
     return NULL;
   }
 
@@ -200,7 +202,7 @@ static void *get_file(void *arguments) {
     }
 
     if (pthread_mutex_unlock(&thread_data->directory_mutex) != 0) {
-      fprintf(stderr, "Thread failed to unlock directory_mutex\n");
+      write_str(STDERR_FILENO, "Thread failed to unlock directory_mutex\n");
       return NULL;
     }
 
@@ -227,7 +229,7 @@ static void *get_file(void *arguments) {
 
     if (out) {
       if (closedir(dir) == -1) {
-        fprintf(stderr, "Failed to close directory\n");
+        write_str(STDERR_FILENO, "Failed to close directory\n");
         return 0;
       }
 
@@ -235,13 +237,13 @@ static void *get_file(void *arguments) {
     }
 
     if (pthread_mutex_lock(&thread_data->directory_mutex) != 0) {
-      fprintf(stderr, "Thread failed to lock directory_mutex\n");
+      write_str(STDERR_FILENO, "Thread failed to lock directory_mutex\n");
       return NULL;
     }
   }
 
   if (pthread_mutex_unlock(&thread_data->directory_mutex) != 0) {
-    fprintf(stderr, "Thread failed to unlock directory_mutex\n");
+    write_str(STDERR_FILENO, "Thread failed to unlock directory_mutex\n");
     return NULL;
   }
 
@@ -254,15 +256,15 @@ void iniciar_sessao(char *message){
   if (sscanf(message, "%d %s %s %s", &code, pipe_req, pipe_resp, pipe_notif) == 4) {
     int response_pipe = open(pipe_resp, O_WRONLY);
     if (response_pipe == -1) {
-      fprintf(stderr,"Erro ao abrir o pipe de response");
+      write_str(STDERR_FILENO,"Erro ao abrir o pipe de response");
       return;
     }
     if(code==1){
       Cliente *new_cliente = malloc(sizeof(Cliente));
       if (new_cliente == NULL) {
-        fprintf(stderr, "Erro ao alocar memória para novo cliente\n");
+        write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
         if (write(response_pipe, "1", 2) == -1) {
-          fprintf(stderr,"Erro ao enviar pedido de subscrição");
+          write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
         }
         return;
       }
@@ -277,7 +279,7 @@ void iniciar_sessao(char *message){
 
       //manda que deu sucesso
       if (write(response_pipe, "0", 2) == -1) {
-        fprintf(stderr,"Erro ao enviar pedido de subscrição");
+        write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
         return;
       }
       return;
@@ -330,7 +332,7 @@ void *readServerPipe(){
     return NULL;
   } else {
     // Erro ao ler
-    fprintf(stderr, "Erro ao ler do pipe de requests\n");
+    write_str(STDERR_FILENO, "Erro ao ler do pipe de requests\n");
     return NULL;
   }
   
@@ -376,7 +378,7 @@ void *readClientPipe(void *arguments){
   return NULL;
   } else {
     // Erro ao ler
-    fprintf(stderr, "Erro ao ler do pipe de requests\n");
+    write_str(STDERR_FILENO, "Erro ao ler do pipe de requests\n");
     return NULL;
   }
   
@@ -389,7 +391,7 @@ static void dispatch_threads(DIR *dir) {
   pthread_t *threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
 
   if (threads == NULL) {
-    fprintf(stderr, "Failed to allocate memory for threads\n");
+    write_str(STDERR_FILENO, "Failed to allocate memory for threads\n");
     return;
   }
 
@@ -399,7 +401,8 @@ static void dispatch_threads(DIR *dir) {
   for (size_t i = 0; i < max_threads; i++) {
     if (pthread_create(&threads[i], NULL, get_file, (void *)&thread_data) !=
         0) {
-      fprintf(stderr, "Failed to create thread %zu\n", i);
+      write_str(STDERR_FILENO, "Failed to create thread");
+      write_uint(STDERR_FILENO,(int) i);
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
       return;
@@ -413,7 +416,8 @@ static void dispatch_threads(DIR *dir) {
     struct SharedDataGestoras threadGestoras_data = {listaClientes[thread_gestora]};
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)&threadGestoras_data) !=
         0) {
-      fprintf(stderr, "Failed to create thread gestora %zu\n", thread_gestora);
+      write_str(STDERR_FILENO, "Failed to create thread gestora");
+      write_uint(STDERR_FILENO, (int) thread_gestora);
       free(threads_gestoras);
       return;
     }
@@ -424,7 +428,8 @@ static void dispatch_threads(DIR *dir) {
 
   for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
     if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
-      fprintf(stderr, "Failed to join thread gestora %u\n", thread_gestora);
+      write_str(STDERR_FILENO, "Failed to join thread gestora ");
+      write_uint(STDERR_FILENO, (int) thread_gestora);
       free(threads_gestoras);
       return;
     }
@@ -432,7 +437,8 @@ static void dispatch_threads(DIR *dir) {
 
   for (unsigned int i = 0; i < max_threads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
-      fprintf(stderr, "Failed to join thread %u\n", i);
+      write_str(STDERR_FILENO, "Failed to join thread");
+      write_uint(STDERR_FILENO, (int) i);
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
       return;
@@ -440,7 +446,7 @@ static void dispatch_threads(DIR *dir) {
   }
 
   if (pthread_mutex_destroy(&thread_data.directory_mutex) != 0) {
-    fprintf(stderr, "Failed to destroy directory_mutex\n");
+    write_str(STDERR_FILENO, "Failed to destroy directory_mutex\n");
   }
 
   free(threads);
@@ -465,14 +471,14 @@ int main(int argc, char **argv) {
   max_backups = strtoul(argv[3], &endptr, 10);
 
   if (*endptr != '\0') {
-    fprintf(stderr, "Invalid max_proc value\n");
+    write_str(STDERR_FILENO, "Invalid max_proc value\n");
     return 1;
   }
 
   max_threads = strtoul(argv[2], &endptr, 10);
 
   if (*endptr != '\0') {
-    fprintf(stderr, "Invalid max_threads value\n");
+    write_str(STDERR_FILENO, "Invalid max_threads value\n");
     return 1;
   }
 
@@ -493,25 +499,27 @@ int main(int argc, char **argv) {
 
   DIR *dir = opendir(argv[1]);
   if (dir == NULL) {
-    fprintf(stderr, "Failed to open directory: %s\n", argv[1]);
+    write_str(STDERR_FILENO, "Failed to open directory: ");
+    write_str(STDERR_FILENO, argv[1]);
     return 0;
   }
 
   //criar FIFO
   if (mkfifo(nome_fifo, 0666) == -1) {
-      fprintf(stderr, "Failed to create FIFO: %s\n", argv[4]);
-      exit(EXIT_FAILURE);
+      write_str(STDERR_FILENO, "Failed to create FIFO: ");
+      write_str(STDERR_FILENO, argv[4]);
   }
   server_fifo = open(nome_fifo, O_RDONLY);
   if (server_fifo == -1) {
-    fprintf(stderr, "Failed to open fifo: %s\n", nome_fifo);
+    write_str(STDERR_FILENO, "Failed to open fifo: ");
+    write_str(STDERR_FILENO, nome_fifo);
     return 0;
   }
 
   dispatch_threads(dir);
 
   if (closedir(dir) == -1) {
-    fprintf(stderr, "Failed to close directory\n");
+    write_str(STDERR_FILENO, "Failed to close directory\n");
     return 0;
   }
 
