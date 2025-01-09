@@ -144,7 +144,7 @@ void free_table(HashTable *ht) {
 }
 
 //1 se errado, 0 se certo
-int addSubscrition(HashTable *ht, Cliente* cliente, char *key){
+int addSubscription(HashTable *ht, Cliente* cliente, char *key){
   int index = hash(key);
   Subscribers *newSub = (Subscribers *)malloc(sizeof(Subscribers));
   if (!newSub) {
@@ -173,7 +173,7 @@ int addSubscrition(HashTable *ht, Cliente* cliente, char *key){
 }
 
 //1 se errado, 0 se certo
-int removeSubscrition(HashTable *ht, Cliente* cliente, char *key){
+int removeSubscription(HashTable *ht, Cliente* cliente, char *key){
   int index = hash(key);
   KeyNode *keyNode = ht->table[index];
   KeyNode *previousNode;

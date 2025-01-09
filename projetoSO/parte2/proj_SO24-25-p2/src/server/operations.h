@@ -62,4 +62,7 @@ void set_n_current_backups(int _n_current_backups);
 // @return n_current_backups
 int get_n_current_backups();
 
+int addSubscriber(Cliente *Cliente, char *key);
+int removeSubscriber(Cliente *Cliente, char *key);
+
 #endif // KVS_OPERATIONS_H
