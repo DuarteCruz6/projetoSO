@@ -359,11 +359,11 @@ void *readServerPipe(){
     
   } else if (bytes_read == 0) {
     // EOF: O pipe foi fechado
-    break;
+    return NULL;
   } else {
     // Erro ao ler
     fprintf(stderr, "Erro ao ler do pipe de requests\n");
-    break;
+    return NULL;
   }
   
   
