@@ -129,7 +129,7 @@ void *thread_secundaria_work(void *arguments){
     printf("Notificação recebida: %s\n", buffer);
   } else if (bytes_read == 0) {
     // EOF, caso o escritor feche a pipe
-    break;
+    return NULL;
   } else {
     fprintf(stderr, "Erro ao ler a pipe de notificacoes");
   }

@@ -86,18 +86,15 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
 
   // Apagar os pipes
   if (unlink(req_pipe_path) == -1) {
-    perror("Erro ao apagar o pipe");
     fprintf(stderr, "Failed to close request pipe\n");
     return 1;
   }
   if (unlink(resp_pipe_path) == -1) {
-    perror("Erro ao apagar o pipe");
-    fprintf(stderr, "Failed to close request pipe\n");
+    fprintf(stderr, "Failed to close response pipe\n");
     return 1;
   }
   if (unlink(notif_pipe_path) == -1) {
-    perror("Erro ao apagar o pipe");
-    fprintf(stderr, "Failed to close request pipe\n");
+    fprintf(stderr, "Failed to close notification pipe\n");
     return 1;
   }
 
