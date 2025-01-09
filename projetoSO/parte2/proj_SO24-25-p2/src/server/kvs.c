@@ -35,9 +35,9 @@ struct HashTable *create_hash_table() {
 }
 
 int notificarSubs(KeyNode *keyNode,const char *newValue){
-  Subscribers *currentSub = keyNode->subscribers;
+  Subscribers *currentSub = keyNode->head_subscribers;
   while (currentSub != NULL) {
-    Cliente *cliente = currentSub->cliente;
+    Cliente *cliente = currentSub->subscriber;
     int pipe_notif = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
     if (pipe_notif == -1) {
         return 1;
@@ -137,7 +137,7 @@ void free_table(HashTable *ht) {
       keyNode = keyNode->next;
       free(temp->key);
       free(temp->value);
-      free(temp->subscribers);
+      free(temp->head_subscribers);
       free(temp);
     }
   }
@@ -152,7 +152,7 @@ int addSubscription(HashTable *ht, Cliente* cliente, char *key){
   if (!newSub) {
     return 1; // Retorno de erro ao alocar memória
   }
-  newSub->cliente = cliente;
+  newSub->subscriber = cliente;
   newSub->next = NULL;
 
   KeyNode *keyNode = ht->table[index];
@@ -160,11 +160,13 @@ int addSubscription(HashTable *ht, Cliente* cliente, char *key){
 
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
-      newSub->next = keyNode->subscribers;
-      keyNode->subscribers = newSub;
+      //encontramos a chave correta
+    
+      newSub->next = keyNode->head_subscribers;
+      keyNode->head_subscribers = newSub;
       Subscriptions *newSubscription = (Subscriptions *)malloc(sizeof(Subscriptions));
-      newSubscription->next = cliente->subscricoes;
-      cliente->subscricoes = newSubscription;
+      newSubscription->next = cliente->head_subscricoes;
+      cliente->head_subscricoes = newSubscription;
       return 0;
     }
     previousNode = keyNode;
@@ -174,55 +176,70 @@ int addSubscription(HashTable *ht, Cliente* cliente, char *key){
   return 1;  
 }
 
-//1 se errado, 0 se certo
+//remove subscricao da estrutura cliente
+//0 se certo, 1 se errado
 int removeSubscription(HashTable *ht, Cliente* cliente, char *key){
-  int index = hash(key);
-  KeyNode *keyNode = ht->table[index];
-  KeyNode *previousNode;
+  Subscriptions *subscricao_atual = cliente->head_subscricoes;
+  Subscriptions *subscricao_prev = NULL;
 
-  while (keyNode != NULL) {
-    if (strcmp(keyNode->key, key) == 0) {
-      Subscribers *currentSub = keyNode->subscribers;
-      Subscribers *previousSub = NULL;
-      while (currentSub != NULL) {
-        if (strcmp(currentSub->cliente->resp_pipe_path, cliente->resp_pipe_path) == 0 &&
-          strcmp(currentSub->cliente->notif_pipe_path, cliente->notif_pipe_path) == 0 &&
-          strcmp(currentSub->cliente->req_pipe_path, cliente->req_pipe_path) == 0) { {
-            //estamos no cliente certo
+  //percorre a lista das subscricoes até encontrar a que queremos
+  while(subscricao_atual!=NULL){
+    //verifica se é a que queremos
+    KeyNode *par_atual = subscricao_atual->par;
+    if(strcmp(par_atual->key,key)==0){
+      //encontramos a que queremos
+      if (removeSubscriberTable(par_atual, cliente)==0){
+        //retira a ligacao
+        Subscriptions *subscricao_prox = subscricao_atual->next;
 
-            //remover da hashtable
-            if (previousSub == NULL) {
-              keyNode->subscribers = currentSub->next; //remove caso seja o primeiro elemento da lista
-            } else {
-              previousSub->next = currentSub->next; //remove para os outros casos
-            }
-            free(currentSub); //liberta a memoria
-
-            //remover do cliente
-            Subscriptions *currentSubscr = cliente->subscricoes;
-            Subscriptions *prevSubscr = NULL;
-            while (currentSubscr != NULL) {
-              if (currentSubscr->key == keyNode) {
-                if (prevSubscr == NULL) {
-                  cliente->subscricoes = currentSubscr->next; // Remove o primeiro elemento
-                } else {
-                  prevSubscr->next = currentSubscr->next; // Remove o elemento do meio/final
-                }
-                free(currentSubscr); // Libera a memória da associação removida
-                break;
-              }
-              prevSubscr = currentSubscr;
-              currentSubscr = currentSubscr->next;
-            }
-            return 0; // Sucesso na remoção
+        if(subscricao_prev!=NULL){
+          subscricao_prev->next = subscricao_prox;
+        }else{
+          cliente->head_subscricoes=subscricao_prox;
         }
-        previousSub = currentSub;
-        currentSub = currentSub->next;
+        free(subscricao_atual);
+        return 0;
       }
+      return 1;
+    }else{
+      //ainda nao encontrou
+      subscricao_prev=subscricao_atual;
+      subscricao_atual=subscricao_atual->next;
     }
-    previousNode = keyNode;
-    keyNode = keyNode->next;
+    
+  }
+  return 1;
+}
+
+//remove cliente dos followers na estrutura da chave 
+//0 se certo, 1 se errado
+int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado){
+  Subscribers *subscriber_atual = par->head_subscribers;
+  Subscribers *subscriber_prev = NULL;
+
+  //percorre a lista de todos os followers do par
+  while(subscriber_atual!=NULL){
+    Cliente *cliente_atual = subscriber_atual->subscriber;
+    //verifica se é o que queremos
+    if(cliente_atual->id == cliente_desejado->id){
+      //é o cliente que queremos
+      Subscribers *subscriber_prox = subscriber_atual->next;
+
+      if(subscriber_prev!=NULL){
+        //nao é o primeiro da lista
+        subscriber_prev->next = subscriber_prox;
+      }else{
+        //é o primeiro da lista
+        par->head_subscribers = subscriber_prox;
+      }
+      free(subscriber_atual);
+      return 0;
+    }else{
+      //ainda nao encontrou
+      subscriber_prev = subscriber_atual;
+      subscriber_atual = subscriber_atual->next;
     }
   }
-  return 1;  
+  //nao encontrou 
+  return 1;
 }

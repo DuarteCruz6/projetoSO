@@ -268,11 +268,12 @@ void iniciar_sessao(char *message){
       }
 
       // Inicializa os campos da estrutura
+      numClientes++;
+      new_cliente->id = numClientes;
       strcpy(new_cliente->req_pipe_path, pipe_req);
       strcpy(new_cliente->resp_pipe_path, pipe_resp);
       strcpy(new_cliente->notif_pipe_path, pipe_notif);
       listaClientes[numClientes] = new_cliente;
-      numClientes++;
 
       //manda que deu sucesso
       if (write(response_pipe, "0", 2) == -1) {
@@ -285,6 +286,8 @@ void iniciar_sessao(char *message){
   printf("Erro ao iniciar sessao de novo cliente.\n");
   return;
 }
+
+
 
 int subscribeClient(Cliente *cliente, char *message){
   char key[41];
@@ -308,41 +311,6 @@ int unsubscribeClient(Cliente *cliente, char *message){
     return 0;
   }
   return 1;
-}
-
-int disconnectClient(Cliente *cliente){
-  Subscriptions *currentSubscr = cliente->subscricoes;
-
-  while (currentSubscr != NULL) {
-    KeyNode *keyNode = currentSubscr->key;
-    Subscribers *currentSub = keyNode->subscribers;
-    Subscribers *prevSub = NULL;
-
-    // Remoção na lista de subscribers associada à chave
-    while (currentSub != NULL) {
-      if (strcmp(currentSub->cliente->resp_pipe_path, cliente->resp_pipe_path) == 0 &&
-        strcmp(currentSub->cliente->notif_pipe_path, cliente->notif_pipe_path) == 0 &&
-        strcmp(currentSub->cliente->req_pipe_path, cliente->req_pipe_path) == 0) {
-        if (prevSub == NULL) {
-          keyNode->subscribers = currentSub->next; // Remove caso seja o primeiro elemento
-        } else {
-          prevSub->next = currentSub->next; // Remove para os outros casos
-        }
-        free(currentSub); // Liberta a memória do subscritor
-        break; // Terminamos a remoção para este subscritor
-      }
-      prevSub = currentSub;
-      currentSub = currentSub->next;
-    }
-    // Próxima associação na lista de subscrições
-    Subscriptions *nextSubscr = currentSubscr->next;
-    free(currentSubscr); // Libera a memória da associação
-    currentSubscr = nextSubscr;
-  }
-
-  cliente->subscricoes = NULL; // Após desconectar, limpar a lista de subscrições
-
-  return 0; // Sucesso
 }
 
 void *readServerPipe(){

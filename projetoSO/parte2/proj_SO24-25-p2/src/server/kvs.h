@@ -6,15 +6,21 @@
 #include <pthread.h>
 #include <stddef.h>
 
+typedef struct Subscriptions{
+  struct KeyNode *par;
+  struct Subscriptions *next;
+}Subscriptions;
+
 typedef struct Cliente {
+  int id;
   char resp_pipe_path[40];
   char notif_pipe_path[40];
   char req_pipe_path[40];
-  struct Subscriptions *subscricoes;
+  struct Subscriptions *head_subscricoes;
 }Cliente;
 
 typedef struct Subscribers {
-  Cliente *cliente;
+  Cliente *subscriber;
   struct Subscribers *next; // Apontador para o próximo cliente na lista
 } Subscribers;
 
@@ -22,14 +28,9 @@ typedef struct Subscribers {
 typedef struct KeyNode {
   char *key;
   char *value;
-  Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
+  Subscribers *head_subscribers; //lista ligada de clientes subscritos a esta chave
   struct KeyNode *next;
 } KeyNode;
-
-typedef struct Subscriptions{
-  KeyNode *key;
-  struct Subscriptions *next;
-}Subscriptions;
 
 typedef struct HashTable {
   KeyNode *table[TABLE_SIZE];
@@ -68,5 +69,9 @@ void free_table(HashTable *ht);
 int addSubscription(HashTable *ht, Cliente* cliente, char *key);
 
 int removeSubscription(HashTable *ht, Cliente* cliente, char *key);
+
+int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado);
+
+int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado);
 
 #endif // KVS_H
