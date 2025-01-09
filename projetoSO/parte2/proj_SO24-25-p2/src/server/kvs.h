@@ -15,7 +15,7 @@ typedef struct Cliente {
 
 typedef struct Subscribers {
   Cliente *cliente;
-  Subscribers *next; // Apontador para o próximo cliente na lista
+  struct Subscribers *next; // Apontador para o próximo cliente na lista
 } Subscribers;
 
 
@@ -28,7 +28,7 @@ typedef struct KeyNode {
 
 typedef struct Subscriptions{
   KeyNode *key;
-  Subscriptions *next;
+  struct Subscriptions *next;
 }Subscriptions;
 
 typedef struct HashTable {

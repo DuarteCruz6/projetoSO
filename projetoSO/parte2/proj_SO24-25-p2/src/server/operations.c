@@ -182,13 +182,13 @@ void kvs_wait(unsigned int delay_ms) {
   nanosleep(&delay, NULL);
 }
 
-int addSubscriber(Cliente *Cliente, char *key){
+int addSubscriber(Cliente *cliente, char *key){
   if (kvs_table == NULL) {
     fprintf(stderr, "KVS state must be initialized\n");
     return 1;
   }
   pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(addSubscription(kvs_table, Cliente, key)!=0){
+  if(addSubscription(kvs_table, cliente, key)!=0){
     pthread_rwlock_unlock(&kvs_table->tablelock);
     return 1;
   }
@@ -196,13 +196,13 @@ int addSubscriber(Cliente *Cliente, char *key){
   return 0;
 }
 
-int removeSubscriber(Cliente *Cliente, char *key){
+int removeSubscriber(Cliente *cliente, char *key){
   if (kvs_table == NULL) {
     fprintf(stderr, "KVS state must be initialized\n");
     return 1;
   }
   pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(removeSubscription(kvs_table, Cliente, key)!=0){
+  if(removeSubscription(kvs_table, cliente, key)!=0){
     pthread_rwlock_unlock(&kvs_table->tablelock);
     return 1;
   }
