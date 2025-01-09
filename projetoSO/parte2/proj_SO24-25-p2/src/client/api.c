@@ -73,7 +73,9 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
 int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path) {
   // close pipes and unlink pipe files
-  createMessage(req_pipe_path,OP_CODE_DISCONNECT);
+  char code[1];
+  sprintf(code, "%d", OP_CODE_DISCONNECT);
+  createMessage(req_pipe_path,code);
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     fprintf(stderr, "Failed to disconnect the client\n");

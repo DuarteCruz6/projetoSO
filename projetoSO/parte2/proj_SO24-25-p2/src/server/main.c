@@ -367,7 +367,7 @@ void *readServerPipe(){
     }
    
   }
-  return;
+  return NULL;
 }
 
 void *readClientPipe(void *arguments){
@@ -409,8 +409,8 @@ void *readClientPipe(void *arguments){
       fprintf(stderr, "Erro ao ler do pipe de requests\n");
       break;
     }
-   
   }
+  return NULL;
 }
 
 
