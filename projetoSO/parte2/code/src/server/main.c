@@ -258,7 +258,7 @@ static void *get_file(void *arguments) {
 void iniciar_sessao(char *message){
   int code;
   char pipe_req[40], pipe_resp[40], pipe_notif[40];
-  if (sscanf(message, "%d %s %s %s", code, pipe_req, pipe_resp, pipe_notif) == 4) {
+  if (sscanf(message, "%d %s %s %s", &code, pipe_req, pipe_resp, pipe_notif) == 4) {
     int response_pipe = open(pipe_resp, O_WRONLY);
     if (response_pipe == -1) {
       fprintf(stderr,"Erro ao abrir o pipe de response");
@@ -268,7 +268,7 @@ void iniciar_sessao(char *message){
       Cliente *new_cliente = malloc(sizeof(Cliente));
       if (new_cliente == NULL) {
         fprintf(stderr, "Erro ao alocar memória para novo cliente\n");
-        if (write(response_pipe, 1, 1) == -1) {
+        if (write(response_pipe, "1", 2) == -1) {
           fprintf(stderr,"Erro ao enviar pedido de subscrição");
         }
         return;
@@ -282,7 +282,7 @@ void iniciar_sessao(char *message){
       numClientes++;
 
       //manda que deu sucesso
-      if (write(response_pipe, 0, 1) == -1) {
+      if (write(response_pipe, "0", 2) == -1) {
         fprintf(stderr,"Erro ao enviar pedido de subscrição");
         return;
       }
@@ -296,7 +296,7 @@ void iniciar_sessao(char *message){
 int subscribeClient(Cliente *cliente, char *message){
   char key[41];
   int code;
-  sscanf(message,"%d %s",code, key);
+  sscanf(message,"%d %s",&code, key);
 
   if (addSubscriber(cliente, key)==0){
     //a key existe e deu certo
@@ -308,7 +308,7 @@ int subscribeClient(Cliente *cliente, char *message){
 int unsubscribeClient(Cliente *cliente, char *message){
   char key[41];
   int code;
-  sscanf(message,"%d %s",code, key);
+  sscanf(message,"%d %s",&code, key);
 
   if (removeSubscriber(cliente, key)==0){
     //a subscricao existia e deu certo
