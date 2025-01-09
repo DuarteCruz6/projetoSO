@@ -13,13 +13,13 @@
 char *server_pipe_path= NULL;
 
 struct ThreadPrincipalData {
-  char req_pipe_path[40];
-  char resp_pipe_path[40];
-  char notif_pipe_path[40];
+  const char *req_pipe_path;
+  const char *resp_pipe_path;
+  const char *notif_pipe_path;
 };
 
 struct ThreadSecundariaData {
-  char notif_pipe_path[40];
+  const char *notif_pipe_path;
 };
 
 void pad_string(char *str, size_t length) {
@@ -120,7 +120,7 @@ void *thread_secundaria_work(void *arguments){
   int pipe_notif = open(notif_pipe, O_RDONLY);
     if (pipe_notif == -1) {
       fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
-      return;
+      return NULL;
     }
     char buffer[256];
     while (1) { // Loop infinito para ler notificações
