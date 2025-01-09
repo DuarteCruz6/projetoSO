@@ -255,41 +255,13 @@ static void *get_file(void *arguments) {
   pthread_exit(NULL);
 }
 
-static void *readServerPipe(){
-  //ler FIFO
-  char message[128];
-  while (1) {
-    ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
-    if (bytes_read > 0){
-      int code = message[0];
-      if (code==1){
-        iniciar_sessao(message);
-      }else{
-        
-      }
-      
-    } else if (bytes_read == 0) {
-      // EOF: O pipe foi fechado
-      break;
-    } else {
-      // Erro ao ler
-      fprintf(stderr, "Erro ao ler do pipe de requests\n");
-      break;
-    }
-   
-  }
-}
-
 void iniciar_sessao(char *message){
   int code;
   char pipe_req[40], pipe_resp[40], pipe_notif[40];
   if (sscanf(message, "%d %s %s %s", code, pipe_req, pipe_resp, pipe_notif) == 4) {
     int response_pipe = open(pipe_resp, O_WRONLY);
     if (response_pipe == -1) {
-      perror("Erro ao abrir o pipe de requests");
-      if (write(response_pipe, 1, 1) == -1) {
-        perror("Erro ao enviar pedido de subscrição");
-      }
+      fprintf(stderr,"Erro ao abrir o pipe de response");
       return;
     }
     if(code==1){
@@ -297,7 +269,7 @@ void iniciar_sessao(char *message){
       if (new_cliente == NULL) {
         fprintf(stderr, "Erro ao alocar memória para novo cliente\n");
         if (write(response_pipe, 1, 1) == -1) {
-          perror("Erro ao enviar pedido de subscrição");
+          fprintf(stderr,"Erro ao enviar pedido de subscrição");
         }
         return;
       }
@@ -311,11 +283,14 @@ void iniciar_sessao(char *message){
 
       //manda que deu sucesso
       if (write(response_pipe, 0, 1) == -1) {
-        perror("Erro ao enviar pedido de subscrição");
+        fprintf(stderr,"Erro ao enviar pedido de subscrição");
+        return;
       }
+      return;
     }
   }
   printf("Erro ao iniciar sessao de novo cliente.\n");
+  return;
 }
 
 int subscribeClient(Cliente *cliente, char *message){
@@ -375,6 +350,31 @@ int disconnectClient(Cliente *cliente){
   cliente->subscricoes = NULL; // Após desconectar, limpar a lista de subscrições
 
   return 0; // Sucesso
+}
+
+static void *readServerPipe(){
+  //ler FIFO
+  char message[128];
+  while (1) {
+    ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
+    if (bytes_read > 0){
+      int code = message[0];
+      if (code==1){
+        iniciar_sessao(message);
+      }else{
+        
+      }
+      
+    } else if (bytes_read == 0) {
+      // EOF: O pipe foi fechado
+      break;
+    } else {
+      // Erro ao ler
+      fprintf(stderr, "Erro ao ler do pipe de requests\n");
+      break;
+    }
+   
+  }
 }
 
 void readClientPipe(void *arguments){
