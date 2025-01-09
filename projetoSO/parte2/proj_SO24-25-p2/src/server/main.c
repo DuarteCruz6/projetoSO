@@ -251,40 +251,49 @@ static void *get_file(void *arguments) {
 }
 
 void iniciar_sessao(char *message){
-  int code;
-  char pipe_req[40], pipe_resp[40], pipe_notif[40];
-  if (sscanf(message, "%d %s %s %s", &code, pipe_req, pipe_resp, pipe_notif) == 4) {
-    int response_pipe = open(pipe_resp, O_WRONLY);
-    if (response_pipe == -1) {
-      write_str(STDERR_FILENO,"Erro ao abrir o pipe de response");
-      return;
-    }
-    if(code==1){
-      Cliente *new_cliente = malloc(sizeof(Cliente));
-      if (new_cliente == NULL) {
-        write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-        if (write(response_pipe, "1", 2) == -1) {
-          write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
-        }
-        return;
-      }
+  char first_char = message[0];
+  int code = atoi(&first_char);
+  char pipe_req[41], pipe_resp[41], pipe_notif[41];
+  strncpy(pipe_req, &message[1], 40); // Copiar os primeiros 40 caracteres após o número
+  pipe_req[40] = '\0';             // Adicionar terminador nulo
+  strncpy(pipe_resp, &message[41], 40); // Copiar os próximos 40 caracteres
+  pipe_resp[40] = '\0';              // Adicionar terminador nulo
+  strncpy(pipe_notif, &message[81], 40); // Copiar os últimos 40 caracteres
+  pipe_notif[40] = '\0';  
 
-      // Inicializa os campos da estrutura
-      numClientes++;
-      new_cliente->id = numClientes;
-      strcpy(new_cliente->req_pipe_path, pipe_req);
-      strcpy(new_cliente->resp_pipe_path, pipe_resp);
-      strcpy(new_cliente->notif_pipe_path, pipe_notif);
-      listaClientes[numClientes] = new_cliente;
-
-      //manda que deu sucesso
-      if (write(response_pipe, "0", 2) == -1) {
-        write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
-        return;
-      }
-      return;
-    }
+  int response_pipe = open(pipe_resp, O_WRONLY);
+  if (response_pipe == -1) {
+    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response");
+    return;
   }
+  if(code==1){
+    Cliente *new_cliente = malloc(sizeof(Cliente));
+    if (new_cliente == NULL) {
+      write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
+      char message = "1";
+      if (write_all(response_pipe, message, 1) == -1) {
+        write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
+      }
+      return;
+    }
+
+    // Inicializa os campos da estrutura
+    numClientes++;
+    new_cliente->id = numClientes;
+    strcpy(new_cliente->req_pipe_path, pipe_req);
+    strcpy(new_cliente->resp_pipe_path, pipe_resp);
+    strcpy(new_cliente->notif_pipe_path, pipe_notif);
+    listaClientes[numClientes] = new_cliente;
+
+    //manda que deu sucesso
+    char message = "0";
+    if (write_all(response_pipe, message, 1) == -1) {
+      write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
+      return;
+    }
+    return;
+  }
+  
   printf("Erro ao iniciar sessao de novo cliente.\n");
   return;
 }
@@ -294,7 +303,7 @@ void iniciar_sessao(char *message){
 int subscribeClient(Cliente *cliente, char *message){
   char key[41];
   int code;
-  sscanf(message,"%d %s",&code, key);
+  sscanf(message,"%d%s",&code, key);
 
   if (addSubscriber(cliente, key)==0){
     //a key existe e deu certo
@@ -306,7 +315,7 @@ int subscribeClient(Cliente *cliente, char *message){
 int unsubscribeClient(Cliente *cliente, char *message){
   char key[41];
   int code;
-  sscanf(message,"%d %s",&code, key);
+  sscanf(message,"%d%s",&code, key);
 
   if (removeSubscriber(cliente, key)==0){
     //a subscricao existia e deu certo
@@ -317,26 +326,27 @@ int unsubscribeClient(Cliente *cliente, char *message){
 
 void *readServerPipe(){
   //ler FIFO
+  int erro=0;
   char message[128];
-  ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
-  if (bytes_read > 0){
-    int code = message[0];
-    if (code==1){
-      iniciar_sessao(message);
-    }else{
-      
+  while(1){
+    int success = read_all(server_fifo,&message, 128, erro);
+    if (success > 1){
+      int code = message[0];
+      if (code==1){
+        iniciar_sessao(message);
+      }else{
+        write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
+        return NULL;
+      }
+    } else if (success == 0) {
+      // EOF: O pipe foi fechado
+      return NULL;
+    } else {
+      // Erro ao ler
+      write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
+      return NULL;
     }
-    
-  } else if (bytes_read == 0) {
-    // EOF: O pipe foi fechado
-    return NULL;
-  } else {
-    // Erro ao ler
-    write_str(STDERR_FILENO, "Erro ao ler do pipe de requests\n");
-    return NULL;
   }
-  
-  
   return NULL;
 }
 
@@ -344,9 +354,9 @@ void *readClientPipe(void *arguments){
   char message[43];
   Cliente *cliente = (Cliente *)arguments;
   int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
-  ssize_t bytes_read = read(request_pipe, &message, sizeof(message));
+  int success = read_all(request_pipe,&message, 43, NULL);
   close(request_pipe);
-  if (bytes_read > 0){
+  if (success > 0){
     int code = message[0];
     int result;
     
@@ -367,13 +377,18 @@ void *readClientPipe(void *arguments){
     }
             
     //escreve se a operacao deu certo (0) ou errado (1)
-    char response[4];
-    snprintf(response,4,"%d %d", code, result);
+    char response[3];
+    snprintf(response,3,"%d%d", code, result);
     int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    write(response_pipe, response, 2);
-    close(response_pipe);
+    int success = write_all(response_pipe, response, 3);
+    if(success==1){
+      close(response_pipe);
+    }else{
+      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+    }
+    
       
-  } else if (bytes_read == 0) {
+  } else if (success == 0) {
     // EOF: O pipe foi fechado
   return NULL;
   } else {
@@ -509,7 +524,7 @@ int main(int argc, char **argv) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
       write_str(STDERR_FILENO, argv[4]);
   }
-  server_fifo = open(nome_fifo, O_RDONLY);
+  server_fifo = open(nome_fifo, O_RDWR);
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);

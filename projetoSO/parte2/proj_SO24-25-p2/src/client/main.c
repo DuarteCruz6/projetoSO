@@ -122,20 +122,25 @@ void *thread_secundaria_work(void *arguments){
     fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
+  while(1){
   char buffer[256];
-  ssize_t bytes_read = read(pipe_notif, buffer, sizeof(buffer) - 1);
-  close(pipe_notif);
-  if (bytes_read > 0) {
-    buffer[bytes_read] = '\0'; // Assegurar que o buffer é uma string válida
+  int success = read_all(pipe_notif, buffer, 256, NULL);
+  
+  if (success == 1) {
+    buffer[256] = '\0'; // Assegurar que o buffer é uma string válida
     printf("Notificação recebida: %s\n", buffer);
-  } else if (bytes_read == 0) {
+  } else if (success == 0) {
     // EOF, caso o escritor feche a pipe
     return NULL;
   } else {
+    close(pipe_notif);
     fprintf(stderr, "Erro ao ler a pipe de notificacoes");
+    return NULL;
+  }
+  close(pipe_notif);
+  return NULL;
   }
   
-  return NULL;
 }
 
 //criar as 2 threads por cliente:

@@ -44,7 +44,10 @@ int notificarSubs(KeyNode *keyNode,const char *newValue){
     }
     char mensagem[256];
     snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
-    write(pipe_notif, mensagem, strlen(mensagem));
+    if(write_all(pipe_notif, mensagem, 256)!=1){
+      //erro
+      return 1;
+    }
     currentSub = currentSub->next; //próximo subscritor
   }
   return 0;
