@@ -5,24 +5,6 @@
 
 #include <pthread.h>
 #include <stddef.h>
-#include "main.c"
-
-typedef struct Subscribers {
-  Cliente *cliente;
-  Subscribers *next; // Apontador para o próximo cliente na lista
-} Subscribers;
-
-typedef struct KeyNode {
-  char *key;
-  char *value;
-  Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
-  struct KeyNode *next;
-} KeyNode;
-
-typedef struct HashTable {
-  KeyNode *table[TABLE_SIZE];
-  pthread_rwlock_t tablelock;
-} HashTable;
 
 /// Creates a new KVS hash table.
 /// @return Newly created hash table, NULL on failure
@@ -55,6 +37,6 @@ void free_table(HashTable *ht);
 
 int addSubscription(HashTable *ht, Cliente* cliente, char *key);
 
-int removeSubscription(HashTable *ht, Cliente* cliente, char *key){
+int removeSubscription(HashTable *ht, Cliente* cliente, char *key);
 
 #endif // KVS_H

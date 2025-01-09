@@ -22,6 +22,23 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
+typedef struct Subscribers {
+  Cliente *cliente;
+  Subscribers *next; // Apontador para o próximo cliente na lista
+} Subscribers;
+
+typedef struct KeyNode {
+  char *key;
+  char *value;
+  Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
+  struct KeyNode *next;
+} KeyNode;
+
+typedef struct HashTable {
+  KeyNode *table[TABLE_SIZE];
+  pthread_rwlock_t tablelock;
+} HashTable;
+
 typedef struct Subscriptions{
   KeyNode *key;
   Subscriptions *next;
