@@ -6,6 +6,20 @@
 #include <pthread.h>
 #include <stddef.h>
 
+typedef struct Cliente {
+  char resp_pipe_path[40];
+  char notif_pipe_path[40];
+  char req_pipe_path[40];
+  Subscriptions *subscricoes;
+}Cliente;
+
+typedef struct KeyNode {
+  char *key;
+  char *value;
+  Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
+  struct KeyNode *next;
+} KeyNode;
+
 typedef struct HashTable {
   KeyNode *table[TABLE_SIZE];
   pthread_rwlock_t tablelock;

@@ -27,24 +27,10 @@ typedef struct Subscribers {
   Subscribers *next; // Apontador para o próximo cliente na lista
 } Subscribers;
 
-typedef struct KeyNode {
-  char *key;
-  char *value;
-  Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
-  struct KeyNode *next;
-} KeyNode;
-
 typedef struct Subscriptions{
   KeyNode *key;
   Subscriptions *next;
 }Subscriptions;
-
-typedef struct Cliente {
-  char resp_pipe_path[40];
-  char notif_pipe_path[40];
-  char req_pipe_path[40];
-  Subscriptions *subscricoes;
-}Cliente;
 
 Cliente* listaClientes[40] = {NULL};
 int numClientes=0;
