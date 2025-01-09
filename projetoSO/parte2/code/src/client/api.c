@@ -55,7 +55,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   snprintf(message, 128, "%d %s %s %s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
-  createMessage(req_pipe_path,message);
+  createMessage(server_pipe_path,message);
   
   int response = getResponse(resp_pipe_path);
   if(response!=0){

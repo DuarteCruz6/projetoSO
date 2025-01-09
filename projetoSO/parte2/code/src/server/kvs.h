@@ -5,9 +5,15 @@
 #include <pthread.h>
 #include <stddef.h>
 
+typedef struct Client {
+  int client_id;
+  struct Client *next; //lista ligada para múltiplos clientes
+} Client;
+
 typedef struct KeyNode {
   char *key;
   char *value;
+  Client *subscribers; //lista ligada de clientes subscritos a esta chave
   struct KeyNode *next;
 } KeyNode;
 

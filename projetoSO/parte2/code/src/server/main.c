@@ -21,6 +21,15 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
+struct Cliente {
+  char const resp_pipe_path[40];
+  char const notif_pipe_path[40];
+  char const req_pipe_path[40];
+}Cliente;
+
+Cliente* listaClientes[40];
+int numClientes=0;
+
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t n_current_backups_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -239,8 +248,100 @@ static void *get_file(void *arguments) {
   pthread_exit(NULL);
 }
 
-static void *readFifo(){
+static void *readServerPipe(){
   //ler FIFO
+  char message[128];
+  while (1) {
+    ssize_t bytes_read = read(server_fifo, &message, sizeof(message));
+    if (bytes_read > 0){
+      int code = message[0];
+      if (code==1){
+        iniciar_sessao(message);
+      }else{
+        
+      }
+      
+    } else if (bytes_read == 0) {
+      // EOF: O pipe foi fechado
+      break;
+    } else {
+      // Erro ao ler
+      fprintf(stderr, "Erro ao ler do pipe de requests\n");
+      break;
+    }
+   
+  }
+}
+
+void iniciar_sessao(char *message){
+  int code;
+  char pipe_req[40], pipe_resp[40], pipe_notif[40];
+  if (sscanf(message, "%d %s %s %s", code, pipe_req, pipe_resp, pipe_notif) == 4) {
+    int response_pipe = open(pipe_resp, O_WRONLY);
+    if (response_pipe == -1) {
+      perror("Erro ao abrir o pipe de requests");
+      if (write(response_pipe, 1, 1) == -1) {
+        perror("Erro ao enviar pedido de subscrição");
+      }
+      return;
+    }
+    if(code==1){
+      Cliente *new_cliente = malloc(sizeof(Cliente));
+      if (new_cliente == NULL) {
+        fprintf(stderr, "Erro ao alocar memória para novo cliente\n");
+        if (write(response_pipe, 1, 1) == -1) {
+          perror("Erro ao enviar pedido de subscrição");
+        }
+        return;
+      }
+
+      // Inicializa os campos da estrutura
+      new_cliente->req_pipe_path = pipe_req;
+      new_cliente->resp_pipe_path = pipe_resp;
+      new_cliente->notif_pipe_path = pipe_notif;
+      listaClientes[numClientes] = new_cliente;
+      numClientes++;
+
+      //manda que deu sucesso
+      if (write(response_pipe, 0, 1) == -1) {
+        perror("Erro ao enviar pedido de subscrição");
+      }
+    }
+  }
+  printf("Erro ao iniciar sessao de novo cliente.\n");
+}
+
+void readClientPipe(void *arguments){
+  char message[128];
+  Cliente *cliente = (Cliente *)arguments;
+  int response_pipe = open(cliente->req_pipe_path, O_WRONLY);
+  while (1) {
+    ssize_t bytes_read = read(response_pipe, &message, sizeof(message));
+    if (bytes_read > 0){
+      int code = message[0];
+      if (code==2){
+        //disconnect
+
+      }else if (code==3){
+        //subscribe
+        
+      }else if (code==4){
+        //unsubscribe
+
+      }else{
+        //erro
+      }
+      
+    } else if (bytes_read == 0) {
+      // EOF: O pipe foi fechado
+      break;
+    } else {
+      // Erro ao ler
+      fprintf(stderr, "Erro ao ler do pipe de requests\n");
+      break;
+    }
+   
+  }
 }
 
 
@@ -266,9 +367,9 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
-  // ler do FIFO de registo
+  // ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readFifo,NULL) !=
+    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,listaClientes[thread_gestora]) !=
         0) {
       fprintf(stderr, "Failed to create thread gestora %zu\n", thread_gestora);
       free(threads_gestoras);
@@ -276,6 +377,8 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
+  //inicia sessão dos clientes
+  readServerPipe();
 
   for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
     if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
