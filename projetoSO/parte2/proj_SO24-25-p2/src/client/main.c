@@ -52,12 +52,12 @@ static void *thread_principal_work(void *arguments){
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
         fprintf(stderr, "Failed to disconnect to the server\n");
         pthread_exit(NULL);
-        return 1;
+        return NULL;
       }
       // TODO: end notifications thread
       printf("Disconnected from server\n");
       pthread_exit(NULL);
-      return 0;
+      return NULL;
 
     case CMD_SUBSCRIBE:
       num = parse_list(STDIN_FILENO, keys, 1, MAX_STRING_SIZE);
@@ -112,7 +112,11 @@ static void *thread_principal_work(void *arguments){
 }
 
 //thread secundaria: recebe as notificacoes e imprime o resultado para o stdout
-void thread_secundaria_work(){
+void *thread_secundaria_work(void *arguments){
+  struct ThreadSecundariaData *thread_data = (struct ThreadSecundariaData *)arguments;
+  char notif_pipe[40];
+  strcpy(notif_pipe, thread_data->notif_pipe_path);
+
   int pipe_notif = open(notif_pipe, O_RDONLY);
     if (pipe_notif == -1) {
       fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
@@ -136,7 +140,7 @@ void thread_secundaria_work(){
 //criar as 2 threads por cliente:
     //principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
     //secundaria: recebe as notificacoes e imprime o resultado para o stdout
-void create_threads(const char req_pipe_path, const char resp_pipe_path, const char notif_pipe_path){
+void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const char *notif_pipe_path){
   
   //principal
   pthread_t *thread_principal = malloc(sizeof(pthread_t));
@@ -218,9 +222,9 @@ int main(int argc, char *argv[]) {
 
   // TODO open pipes
 
-  if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
+  if (kvs_connect(req_pipe, resp_pipe, notif_pipe, server_pipe_path)==1){
     return 1;
   }
-  create_threads(req_pipe_path, resp_pipe_path, notif_pipe_path);
+  create_threads(req_pipe, resp_pipe, notif_pipe);
 
 }
