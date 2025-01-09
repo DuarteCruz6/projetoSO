@@ -68,9 +68,7 @@ void free_table(HashTable *ht);
 
 int addSubscription(HashTable *ht, Cliente* cliente, char *key);
 
-int removeSubscription(HashTable *ht, Cliente* cliente, char *key);
-
-int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado);
+int removeSubscription(Cliente* cliente, char *key);
 
 int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado);
 

@@ -178,7 +178,7 @@ int addSubscription(HashTable *ht, Cliente* cliente, char *key){
 
 //remove subscricao da estrutura cliente
 //0 se certo, 1 se errado
-int removeSubscription(HashTable *ht, Cliente* cliente, char *key){
+int removeSubscription(Cliente* cliente, char *key){
   Subscriptions *subscricao_atual = cliente->head_subscricoes;
   Subscriptions *subscricao_prev = NULL;
 

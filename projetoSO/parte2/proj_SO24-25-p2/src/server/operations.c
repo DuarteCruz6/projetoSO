@@ -202,7 +202,7 @@ int removeSubscriber(Cliente *cliente, char *key){
     return 1;
   }
   pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(removeSubscription(kvs_table, cliente, key)!=0){
+  if(removeSubscription(cliente, key)!=0){
     pthread_rwlock_unlock(&kvs_table->tablelock);
     return 1;
   }
@@ -216,7 +216,7 @@ int disconnectClient(Cliente *cliente){
   while (subscricao_atual!=NULL){
     KeyNode *par = subscricao_atual->par;
     char *key = par->key;
-    if(removeSubscription(kvs_table, cliente, key)==1){
+    if(removeSubscription(cliente, key)==1){
       return 1;
     }
     subscricao_atual = subscricao_atual->next;

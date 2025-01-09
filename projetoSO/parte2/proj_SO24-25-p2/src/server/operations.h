@@ -65,5 +65,6 @@ int get_n_current_backups();
 
 int addSubscriber(Cliente *Cliente, char *key);
 int removeSubscriber(Cliente *Cliente, char *key);
+int disconnectClient(Cliente *cliente);
 
 #endif // KVS_OPERATIONS_H
