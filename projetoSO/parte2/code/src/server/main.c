@@ -13,6 +13,7 @@
 #include "operations.h"
 #include "parser.h"
 #include "pthread.h"
+#include "kvs.h"
 #include "src/common/constants.h"
 
 struct SharedData {
@@ -403,7 +404,9 @@ void readClientPipe(void *arguments){
       }
 
       //escreve se a operacao deu certo (0) ou errado (1)
-      write(response_pipe, result, 2);
+      char message[3];
+      snprintf(message,3,"%d %d", code, result);
+      write(response_pipe, message, 2);
       
     } else if (bytes_read == 0) {
       // EOF: O pipe foi fechado

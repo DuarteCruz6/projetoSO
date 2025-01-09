@@ -11,7 +11,7 @@
 #include "src/common/io.h"
 
 char *server_pipe_path= NULL;
-char req_pipe[40], resp_pipe[40], notif_pipe[40];
+char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
 struct ThreadPrincipal {
 };
@@ -137,7 +137,7 @@ void create_threads(){
   }
 
   //secundaria
-  if (pthread_create(&threads[0], NULL, thread_secundaria_work, NULL)!=0) {
+  if (pthread_create(&threads[1], NULL, thread_secundaria_work, NULL)!=0) {
     fprintf(stderr, "Failed to create thread %d\n", 1);
     free(threads);
     return;
@@ -175,8 +175,9 @@ int main(int argc, char *argv[]) {
 
   // TODO open pipes
 
-  kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path);
-
+  if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
+    return 1;
+  }
   create_threads();
 
 }

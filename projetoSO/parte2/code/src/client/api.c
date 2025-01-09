@@ -15,7 +15,7 @@ void createMessage(char *req_pipe_path, char *message){
 }
 
 //recebe a resposta do pipe
-void getResponse(char *resp_pipe_path){
+int getResponse(char *resp_pipe_path){
   // abrir pipe de response para leitura
   int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1) {
@@ -30,8 +30,11 @@ void getResponse(char *resp_pipe_path){
       fprintf(stderr, "Error reading pipe response");
       return 1;
   }
-  int result;
-  sprintf(buffer, "%d", result);
+  int code, result;
+  sprintf(buffer, "%d %d", code, result);
+
+  char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
+  printf("Server returned %d for operation: %s",result,operations[result-1]);
   return result; 
 }
 
@@ -65,8 +68,22 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int kvs_disconnect(void) {
+int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
+                char const *notif_pipe_path) {
   // close pipes and unlink pipe files
+  createMessage(req_pipe_path,OP_CODE_DISCONNECT);
+  int response = getResponse(resp_pipe_path);
+  if(response!=0){
+    fprintf(stderr, "Failed to disconnect the client\n");
+    return 1;
+  }
+  int req_pipe = open(req_pipe_path, O_WRONLY);
+  int resp_pipe = open(resp_pipe_path, O_RDONLY);
+  int notif_pipe = open(notif_pipe_path, O_RDONLY);
+  close(req_pipe);
+  close(resp_pipe);
+  close(notif_pipe);
+
   return 0;
 }
 
