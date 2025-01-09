@@ -124,6 +124,7 @@ void *thread_secundaria_work(void *arguments){
   }
   char buffer[256];
   ssize_t bytes_read = read(pipe_notif, buffer, sizeof(buffer) - 1);
+  close(pipe_notif);
   if (bytes_read > 0) {
     buffer[bytes_read] = '\0'; // Assegurar que o buffer é uma string válida
     printf("Notificação recebida: %s\n", buffer);
