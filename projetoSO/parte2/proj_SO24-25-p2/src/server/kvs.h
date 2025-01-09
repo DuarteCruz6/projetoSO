@@ -6,22 +6,18 @@
 #include <pthread.h>
 #include <stddef.h>
 
+typedef struct Cliente {
+  char resp_pipe_path[40];
+  char notif_pipe_path[40];
+  char req_pipe_path[40];
+  struct Subscriptions *subscricoes;
+}Cliente;
+
 typedef struct Subscribers {
   Cliente *cliente;
   Subscribers *next; // Apontador para o próximo cliente na lista
 } Subscribers;
 
-typedef struct Subscriptions{
-  KeyNode *key;
-  Subscriptions *next;
-}Subscriptions;
-
-typedef struct Cliente {
-  char resp_pipe_path[40];
-  char notif_pipe_path[40];
-  char req_pipe_path[40];
-  Subscriptions *subscricoes;
-}Cliente;
 
 typedef struct KeyNode {
   char *key;
@@ -29,6 +25,11 @@ typedef struct KeyNode {
   Subscribers *subscribers; //lista ligada de clientes subscritos a esta chave
   struct KeyNode *next;
 } KeyNode;
+
+typedef struct Subscriptions{
+  KeyNode *key;
+  Subscriptions *next;
+}Subscriptions;
 
 typedef struct HashTable {
   KeyNode *table[TABLE_SIZE];
