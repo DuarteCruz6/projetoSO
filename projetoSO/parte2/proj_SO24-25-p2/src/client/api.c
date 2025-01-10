@@ -78,6 +78,13 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
+int unlinkPipes(char* pipe_path){
+  if (unlink(pipe_path) == -1) {
+    return 1;
+  }
+  return 0;
+}
+
 int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path) {
   // close pipes and unlink pipe files
@@ -91,19 +98,18 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   }
 
   // Apagar os pipes
-  if (unlink(req_pipe_path) == -1) {
+  if(unlinkPipes(req_pipe_path)!=0){
     write_str(STDERR_FILENO, "Failed to close request pipe\n");
     return 1;
   }
-  if (unlink(resp_pipe_path) == -1) {
+  if(unlinkPipes(resp_pipe_path)!=0){
     write_str(STDERR_FILENO, "Failed to close response pipe\n");
     return 1;
   }
-  if (unlink(notif_pipe_path) == -1) {
+  if(unlinkPipes(notif_pipe_path)!=0){
     write_str(STDERR_FILENO, "Failed to close notification pipe\n");
     return 1;
   }
-
   return 0;
 }
 

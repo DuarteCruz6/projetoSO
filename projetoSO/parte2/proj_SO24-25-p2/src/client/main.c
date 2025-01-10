@@ -4,13 +4,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "parser.h"
 #include "src/client/api.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
+#include "src/common/sinalSIGUSR1.h"
 
 char *server_pipe_path= NULL;
+bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
 
 struct ThreadPrincipalData {
   const char *req_pipe_path;
@@ -46,17 +49,16 @@ static void *thread_principal_work(void *arguments){
   unsigned int delay_ms;
   size_t num;
 
-  while (1) {
+  while (!sinalSegurancaLancado) {
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
         write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
-        pthread_exit(NULL);
         return NULL;
       }
       //pthread_cancel(thread_data->thread_secundaria); //cancelar a thread secundaria
       printf("Disconnected from server\n");
-      pthread_exit(NULL);
+      deuDisconnect = true;
       return NULL;
 
     case CMD_SUBSCRIBE:
@@ -122,7 +124,7 @@ void *thread_secundaria_work(void *arguments){
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
-  while(1){
+  while(!deuDisconnect && !sinalSegurancaLancado){ //trabalha até dar disconnect
     char buffer[256];
     int success = read_all(pipe_notif, buffer, 256, NULL);
 

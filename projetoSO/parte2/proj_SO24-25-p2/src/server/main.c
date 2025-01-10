@@ -11,6 +11,7 @@
 #include <stdbool.h>
 #include <semaphore.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "constants.h"
 #include "io.h"
@@ -19,6 +20,7 @@
 #include "kvs.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
+#include "src/common/sinalSIGUSR1.h"
 
 struct SharedData {
   DIR *dir;
@@ -39,6 +41,7 @@ typedef struct BufferUserConsumer {
 
 int numClientes=0;
 sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao de um cliente, -1 quando uma thread vai buscar um cliente
+sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 
@@ -352,7 +355,40 @@ int unsubscribeClient(Cliente *cliente, char *message){
   return 1;
 }
 
+// Função para tratar SIGUSR1
+int sinalDetetado() {
+  //tem de eliminar todas as subscricoes de todos os clientes e encerrar os seus pipes
+  sinalSegurancaLancado = true;
+  User *userAtual = bufferThreads->headUser;
+  while (userAtual!=NULL){
+    Cliente* cliente = userAtual->cliente;
+    disconnectClient(cliente); //remove as suas subscricoes
+    removeClientFromBuffer(cliente); //remover do buffer
+    // Apagar os pipes do cliente
+    if (unlinkPipes(cliente->req_pipe_path)!=0){
+      write_str(STDERR_FILENO, "Failed to close request pipe\n");
+      return 1;
+    }
+    if (unlinkPipes(cliente->resp_pipe_path)!=0){
+      write_str(STDERR_FILENO, "Failed to close response pipe\n");
+      return 1;
+    }
+    if (unlinkPipes(cliente->notif_pipe_path)!=0){
+      write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+      return 1;
+    }
+    free(cliente);
+    userAtual=userAtual->nextUser;
+  }
+  return 0;
+}
+
 void *readServerPipe(){
+  // Desbloquear SIGUSR1 apenas nesta thread
+  pthread_sigmask(SIG_UNBLOCK, &sinalSeguranca, NULL);
+  // Registar o manipulador de sinal
+  signal(SIGUSR1, sinalDetetado);
+
   //ler FIFO
   int erro=0;
   char message[128];
@@ -424,7 +460,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
 //so acaba quando o client der disconnect
 int manageClient(Cliente *cliente){
   char message[43];
-  while(1){
+  while(!sinalSegurancaLancado){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
     if(request_pipe==-1){
       return 1;
@@ -497,11 +533,17 @@ static void dispatch_threads(DIR *dir) {
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
   pthread_t *threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
 
+  //bloqueia o sinal SIGUSR1 em todas as threads
+  sigemptyset(&sinalSeguranca);
+  sigaddset(&sinalSeguranca, SIGUSR1);
+  pthread_sigmask(SIG_BLOCK, &sinalSeguranca, NULL);
+
   if (threads == NULL) {
     write_str(STDERR_FILENO, "Failed to allocate memory for threads\n");
     return;
   }
 
+  //threads dos .job
   struct SharedData thread_data = {dir, jobs_directory,
                                    PTHREAD_MUTEX_INITIALIZER};
 
