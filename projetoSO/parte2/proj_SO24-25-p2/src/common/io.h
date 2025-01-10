@@ -31,4 +31,6 @@ void delay(unsigned int time_ms);
 /// @param str The string to write.
 void write_str(int fd, const char *str);
 
+int unlinkPipes(char* pipe_path);
+
 #endif // COMMON_IO_H

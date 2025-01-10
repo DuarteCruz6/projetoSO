@@ -96,3 +96,10 @@ void write_str(int fd, const char *str) {
     len -= (size_t)written;
   }
 }
+
+int unlinkPipes(char* pipe_path){
+  if (unlink(pipe_path) == -1) {
+    return 1;
+  }
+  return 0;
+}

@@ -78,13 +78,6 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int unlinkPipes(char* pipe_path){
-  if (unlink(pipe_path) == -1) {
-    return 1;
-  }
-  return 0;
-}
-
 int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path) {
   // close pipes and unlink pipe files

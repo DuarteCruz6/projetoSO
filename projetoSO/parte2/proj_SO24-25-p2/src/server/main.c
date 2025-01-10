@@ -355,8 +355,32 @@ int unsubscribeClient(Cliente *cliente, char *message){
   return 1;
 }
 
+void removeClientFromBuffer(Cliente *cliente){
+  pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
+  User *user_atual = bufferThreads->headUser;
+  if(user_atual->cliente->id == cliente->id){
+    //este user era a cabeca da lista
+    bufferThreads->headUser = user_atual->nextUser;
+    free(user_atual);
+    return;
+  }else{
+    //este user esta no meio da lista
+    User* prev_user= NULL;
+    while(user_atual->cliente->id != cliente->id && user_atual->nextUser!=NULL){
+      //ainda nao encontramos o que queriamos entao passamos para o proximo
+      prev_user=user_atual;
+      user_atual=user_atual->nextUser;
+    }
+    //encontramos o que queriamos
+    prev_user->nextUser = user_atual->nextUser; //muda a ligacao antigo->atual->futuro para antigo->futuro
+    free(user_atual);
+    return;
+  }
+
+}
+
 // Função para tratar SIGUSR1
-int sinalDetetado() {
+void sinalDetetado() {
   //tem de eliminar todas as subscricoes de todos os clientes e encerrar os seus pipes
   sinalSegurancaLancado = true;
   User *userAtual = bufferThreads->headUser;
@@ -367,20 +391,20 @@ int sinalDetetado() {
     // Apagar os pipes do cliente
     if (unlinkPipes(cliente->req_pipe_path)!=0){
       write_str(STDERR_FILENO, "Failed to close request pipe\n");
-      return 1;
+      return;
     }
     if (unlinkPipes(cliente->resp_pipe_path)!=0){
       write_str(STDERR_FILENO, "Failed to close response pipe\n");
-      return 1;
+      return;
     }
     if (unlinkPipes(cliente->notif_pipe_path)!=0){
       write_str(STDERR_FILENO, "Failed to close notification pipe\n");
-      return 1;
+      return;
     }
     free(cliente);
     userAtual=userAtual->nextUser;
   }
-  return 0;
+  return;
 }
 
 void *readServerPipe(){
@@ -412,30 +436,6 @@ void *readServerPipe(){
     }
   }
   return NULL;
-}
-
-void removeClientFromBuffer(Cliente* cliente){
-  pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
-  User *user_atual = bufferThreads->headUser;
-  if(user_atual->cliente->id == cliente->id){
-    //este user era a cabeca da lista
-    bufferThreads->headUser = user_atual->nextUser;
-    free(user_atual);
-    return;
-  }else{
-    //este user esta no meio da lista
-    User* prev_user= NULL;
-    while(user_atual->cliente->id != cliente->id && user_atual->nextUser!=NULL){
-      //ainda nao encontramos o que queriamos entao passamos para o proximo
-      prev_user=user_atual;
-      user_atual=user_atual->nextUser;
-    }
-    //encontramos o que queriamos
-    prev_user->nextUser = user_atual->nextUser; //muda a ligacao antigo->atual->futuro para antigo->futuro
-    free(user_atual);
-    return;
-  }
-
 }
 
 int sendOperationResult(int code, int result, Cliente* cliente){
