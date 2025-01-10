@@ -8,12 +8,14 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <stdbool.h>
+#include <semaphore.h>
+#include <pthread.h>
 
 #include "constants.h"
 #include "io.h"
 #include "operations.h"
 #include "parser.h"
-#include "pthread.h"
 #include "kvs.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
@@ -28,8 +30,22 @@ struct SharedDataGestoras {
   Cliente* cliente;
 };
 
-Cliente* listaClientes[40] = {NULL};
+typedef struct User{
+  Cliente* cliente; //ponteiro para a estrutura cliente para user os pipes
+  bool usedFlag;  //flag para saber se uma thread ja o esta a usar ou nao
+  User* nextUser; //ponteiro para o proximo user
+}User;
+
+typedef struct BufferUserConsumer {
+  User* headUser; //ponteiro para a cabeca da linked list de users
+  pthread_mutex_t buffer_mutex; //read and write block para ter a certeza q 2 threads n vao ao mesmo tempo
+}BufferUserConsumer; 
+
 int numClientes=0;
+sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao de um cliente, -1 quando uma thread vai buscar um cliente
+
+BufferUserConsumer* bufferThreads; //buffer utilizador - consumidor
+
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t n_current_backups_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -284,7 +300,21 @@ void iniciar_sessao(char *message){
     strcpy(new_cliente->req_pipe_path, pipe_req);
     strcpy(new_cliente->resp_pipe_path, pipe_resp);
     strcpy(new_cliente->notif_pipe_path, pipe_notif);
-    listaClientes[numClientes] = new_cliente;
+    User *new_user = malloc(sizeof(User));
+    new_user->cliente = new_cliente;
+    new_user->usedFlag = false;
+    new_user ->nextUser = NULL;
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //da lock ao buffer pois vamos escrever nele
+    if(bufferThreads->headUser==NULL){
+      //buffer tava vazio
+      bufferThreads->headUser = new_user;
+    }else{
+      User *user_atual = bufferThreads->headUser; //vai ao primeiro user
+      new_user->nextUser = user_atual; 
+      bufferThreads->headUser = new_user; //adiciona o novo user ao inicio do buffer
+    }
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex);
+    sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
 
     //manda que deu sucesso
     char response[2] = "0";
@@ -351,7 +381,32 @@ void *readServerPipe(){
   return NULL;
 }
 
+void removeClientFromBuffer(Cliente* cliente){
+  pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
+  User *user_atual = bufferThreads->headUser;
+  if(user_atual->cliente->id == cliente->id){
+    //este user era a cabeca da lista
+    bufferThreads->headUser = user_atual->nextUser;
+    free(user_atual);
+    return;
+  }else{
+    //este user esta no meio da lista
+    User* prev_user= NULL;
+    while(user_atual->cliente->id != cliente->id && user_atual->nextUser!=NULL){
+      //ainda nao encontramos o que queriamos entao passamos para o proximo
+      prev_user=user_atual;
+      user_atual=user_atual->nextUser;
+    }
+    //encontramos o que queriamos
+    prev_user->nextUser = user_atual->nextUser; //muda a ligacao antigo->atual->futuro para antigo->futuro
+    free(user_atual);
+    return;
+  }
+
+}
+
 void *readClientPipe(void *arguments){
+  sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
   char message[43];
   Cliente *cliente = (Cliente *)arguments;
   int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
@@ -364,6 +419,10 @@ void *readClientPipe(void *arguments){
     if (code==2){
       //disconnect
       result = disconnectClient(cliente);
+      if (result==0){
+        //tirar do buffer
+        removeClientFromBuffer(cliente);
+      }
 
     }else if (code==3){
       //subscribe
@@ -401,6 +460,15 @@ void *readClientPipe(void *arguments){
   return NULL;
 }
 
+//retira o primeiro cliente que nao tem thread associada e retorna-o
+Cliente* getClientForThread(){
+  User* user_atual = bufferThreads->headUser;
+  while (user_atual->usedFlag){
+    user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa
+  }
+  user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
+  return user_atual->cliente; //retorna o cliente que vai ser usado
+}
 
 static void dispatch_threads(DIR *dir) {
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
@@ -429,7 +497,9 @@ static void dispatch_threads(DIR *dir) {
 
   //cria S threads ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    struct SharedDataGestoras threadGestoras_data = {listaClientes[thread_gestora]};
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //lock pois vamos ler do buffer
+    struct SharedDataGestoras threadGestoras_data = {getClientForThread()};          
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //unlock do buffer
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)&threadGestoras_data) !=
         0) {
       write_str(STDERR_FILENO, "Failed to create thread gestora");
@@ -532,6 +602,11 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  sem_init(&semaforoBuffer, 0, MAX_SESSION_COUNT); //inicializar semaforo a 0 e vai até S
+  bufferThreads = malloc(sizeof(BufferUserConsumer)); //inicializar o buffer das threads
+  bufferThreads->headUser = NULL;
+  bufferThreads->buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
+
   dispatch_threads(dir);
 
   if (closedir(dir) == -1) {
@@ -544,8 +619,12 @@ int main(int argc, char **argv) {
     active_backups--;
   }
 
-  close(server_fifo);
+  
   kvs_terminate();
+  close(server_fifo);
+  pthread_mutex_destroy(&bufferThreads->buffer_mutex);
+  sem_destroy(&semaforoBuffer);
+  free(bufferThreads);
 
   return 0;
 }
