@@ -16,6 +16,7 @@ struct ThreadPrincipalData {
   const char *req_pipe_path;
   const char *resp_pipe_path;
   const char *notif_pipe_path;
+  pthread_t *thread_secundaria;
 };
 
 struct ThreadSecundariaData {
@@ -54,7 +55,7 @@ static void *thread_principal_work(void *arguments){
         pthread_exit(NULL);
         return NULL;
       }
-      // TODO: end notifications thread
+      pthread_cancel(thread_data->thread_secundaria); //cancelar a thread secundaria
       printf("Disconnected from server\n");
       pthread_exit(NULL);
       return NULL;
@@ -123,22 +124,22 @@ void *thread_secundaria_work(void *arguments){
     return NULL;
   }
   while(1){
-  char buffer[256];
-  int success = read_all(pipe_notif, buffer, 256, NULL);
-  
-  if (success == 1) {
-    buffer[256] = '\0'; // Assegurar que o buffer é uma string válida
-    write_str(STDOUT_FILENO,buffer);
-  } else if (success == 0) {
-    // EOF, caso o escritor feche a pipe
-    return NULL;
-  } else {
+    char buffer[256];
+    int success = read_all(pipe_notif, buffer, 256, NULL);
+
+    if (success == 1) {
+      buffer[256] = '\0'; // Assegurar que o buffer é uma string válida
+      write_str(STDOUT_FILENO,buffer);
+    } else if (success == 0) {
+      // EOF, caso o escritor feche a pipe
+      return NULL;
+    } else {
+      close(pipe_notif);
+      write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
+      return NULL;
+    }
     close(pipe_notif);
-    write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
     return NULL;
-  }
-  close(pipe_notif);
-  return NULL;
   }
   
 }
@@ -158,7 +159,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     write_str(STDERR_FILENO, "Failed to allocate memory for thread\n");
     return;
   }
-  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path};
+  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path, thread_secundaria};
   struct ThreadSecundariaData threadSecundaria_data = {notif_pipe_path};
 
   //principal
@@ -222,7 +223,6 @@ int main(int argc, char *argv[]) {
   pad_string(resp_pipe, sizeof(resp_pipe));
   pad_string(notif_pipe, sizeof(notif_pipe));
 
-  // TODO open pipes
 
   if (kvs_connect(req_pipe, resp_pipe, notif_pipe, server_pipe_path)==1){
     return 1;

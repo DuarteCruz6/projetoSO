@@ -51,15 +51,15 @@ int getResponse(const char *resp_pipe_path){
 int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path, char const *server_pipe_path) {
   // create pipes and connect
-  if (mkfifo(req_pipe_path, 0666) == -1) {
+  if (mkfifo(req_pipe_path, 0777) == -1) {
     write_str(STDERR_FILENO, "Failed to create request pipe\n");
     return 1;
   }
-  if (mkfifo(resp_pipe_path, 0666) == -1) {
+  if (mkfifo(resp_pipe_path, 0777) == -1) {
     write_str(STDERR_FILENO, "Failed to create response pipe\n");
     return 1;
   }
-  if (mkfifo(notif_pipe_path, 0666) == -1) {
+  if (mkfifo(notif_pipe_path, 0777) == -1) {
     write_str(STDERR_FILENO, "Failed to create notification pipe\n");
     return 1;
   }
