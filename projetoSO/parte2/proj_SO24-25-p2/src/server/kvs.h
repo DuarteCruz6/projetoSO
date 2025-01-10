@@ -17,6 +17,7 @@ typedef struct Cliente {
   char notif_pipe_path[40];
   char req_pipe_path[40];
   struct Subscriptions *head_subscricoes;
+  int num_subscricoes;
 }Cliente;
 
 typedef struct Subscribers {

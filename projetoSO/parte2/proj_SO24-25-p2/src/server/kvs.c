@@ -8,6 +8,7 @@
 
 #include "string.h"
 #include "src/common/io.h"
+#include "src/common/constants.h"
 
 // Hash function based on key initial.
 // @param key Lowercase alphabetical string.
@@ -170,6 +171,9 @@ KeyNode *getKeyNode(HashTable *ht,char *key){
 //adiciona subscricao à estrutura cliente
 //0 se certo, 1 se errado
 int addSubscription(HashTable *ht,Cliente *cliente, char *key){
+  if(cliente->num_subscricoes>=MAX_NUMBER_SUB){
+    return 1;
+  }
   Subscriptions *subsCliente = cliente->head_subscricoes;
   Subscriptions *newSub = malloc(sizeof(Subscriptions));
   KeyNode *par = getKeyNode(ht,key);
@@ -178,6 +182,7 @@ int addSubscription(HashTable *ht,Cliente *cliente, char *key){
       newSub->next = subsCliente; //mete a nova Sub no inicio da lista
       newSub->par = par; //guarda o keynode na sub
       cliente->head_subscricoes = newSub; //guarda a novaSub como cabeca da lista
+      cliente->num_subscricoes++;
       return 0;
     }
     return 1;
@@ -222,6 +227,7 @@ int removeSubscription(Cliente *cliente, char *key){
           cliente->head_subscricoes=subscricao_prox;
         }
         free(subscricao_atual);
+        cliente->num_subscricoes--;
         return 0;
       }
       return 1;
