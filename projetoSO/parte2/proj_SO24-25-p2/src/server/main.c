@@ -518,10 +518,10 @@ int manageClient(Cliente *cliente){
 //retira o primeiro cliente que nao tem thread associada e retorna-o
 Cliente* getClientForThread(){
   User* user_atual = bufferThreads->headUser;
-  while (user_atual->usedFlag && user_atual->nextUser!=NULL){
-    user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa ou entao ate nao haver mais nenhum cliente disponivel
-  }
   if(user_atual!=NULL){
+    while (user_atual->usedFlag && user_atual->nextUser!=NULL){
+      user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa ou entao ate nao haver mais nenhum cliente disponivel
+    }
     user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
     return user_atual->cliente; //retorna o cliente que vai ser usado
   }
