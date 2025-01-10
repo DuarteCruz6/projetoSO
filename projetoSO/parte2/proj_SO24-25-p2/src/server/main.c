@@ -33,7 +33,7 @@ struct SharedDataGestoras {
 typedef struct User{
   Cliente* cliente; //ponteiro para a estrutura cliente para user os pipes
   bool usedFlag;  //flag para saber se uma thread ja o esta a usar ou nao
-  User* nextUser; //ponteiro para o proximo user
+  struct User* nextUser; //ponteiro para o proximo user
 }User;
 
 typedef struct BufferUserConsumer {
