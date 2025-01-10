@@ -155,7 +155,6 @@ KeyNode *getKeyNode(HashTable *ht,char *key){
 
   KeyNode *keyNode = ht->table[index];
   KeyNode *previousNode;
-  char *value;
 
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
