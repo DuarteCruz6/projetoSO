@@ -332,25 +332,31 @@ void iniciar_sessao(char *message){
 
 
 int subscribeClient(Cliente *cliente, char *message){
-  char key[41];
-  int code;
-  sscanf(message,"%d%s",&code, key);
+  if(!sinalSegurancaLancado){
+    char key[41];
+    int code;
+    sscanf(message,"%d%s",&code, key);
 
-  if (addSubscriber(cliente, key)==0){
-    //a key existe e deu certo
-    return 0;
+    if (addSubscriber(cliente, key)==0){
+      //a key existe e deu certo
+      return 0;
+    }
+    return 1;
   }
   return 1;
 }
 
 int unsubscribeClient(Cliente *cliente, char *message){
-  char key[41];
-  int code;
-  sscanf(message,"%d%s",&code, key);
+  if(!sinalSegurancaLancado){
+    char key[41];
+    int code;
+    sscanf(message,"%d%s",&code, key);
 
-  if (removeSubscriber(cliente, key)==0){
-    //a subscricao existia e deu certo
-    return 0;
+    if (removeSubscriber(cliente, key)==0){
+      //a subscricao existia e deu certo
+      return 0;
+    }
+    return 1;
   }
   return 1;
 }
@@ -439,25 +445,28 @@ void *readServerPipe(){
 }
 
 int sendOperationResult(int code, int result, Cliente* cliente){
-  //escreve se a operacao deu certo (0) ou errado (1)
-  char response[3];
-  snprintf(response,3,"%d%d", code, result);
-  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-  if(response_pipe==-1){
-    //erro a abrir o pipe de respostas
-    return 1;
+  if(!sinalSegurancaLancado){
+    //escreve se a operacao deu certo (0) ou errado (1)
+    char response[3];
+    snprintf(response,3,"%d%d", code, result);
+    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+    if(response_pipe==-1){
+      //erro a abrir o pipe de respostas
+      return 1;
+    }
+    int success = write_all(response_pipe, response, 3);
+    if(success==1){
+      close(response_pipe);
+      return 0;
+    }else{
+      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+      return 1;
+    }
   }
-  int success = write_all(response_pipe, response, 3);
-  if(success==1){
-    close(response_pipe);
-    return 0;
-  }else{
-    write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-    return 1;
-  }
+  return 1;
 }
 
-//so acaba quando o client der disconnect
+//so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
   char message[43];
   while(!sinalSegurancaLancado){ //trabalha enquanto o sinal SIGUSR1 nao for detetado

@@ -11,6 +11,7 @@
 #include "constants.h"
 #include "io.h"
 #include "src/common/io.h"
+#include "src/common/sinalSIGUSR1.h"
 #include "kvs.h"
 
 static struct HashTable *kvs_table = NULL;
@@ -188,43 +189,52 @@ void kvs_wait(unsigned int delay_ms) {
 }
 
 int addSubscriber(Cliente *cliente, char *key){
-  if (kvs_table == NULL) {
-    write_str(STDERR_FILENO, "KVS state must be initialized\n");
-    return 1;
-  }
-  pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(addSubscription(kvs_table,cliente, key)!=0){
+  if(!sinalSegurancaLancado){
+    if (kvs_table == NULL) {
+      write_str(STDERR_FILENO, "KVS state must be initialized\n");
+      return 1;
+    }
+    pthread_rwlock_rdlock(&kvs_table->tablelock);
+    if(addSubscription(kvs_table,cliente, key)!=0){
+      pthread_rwlock_unlock(&kvs_table->tablelock);
+      return 1;
+    }
     pthread_rwlock_unlock(&kvs_table->tablelock);
-    return 1;
+    return 0;
   }
-  pthread_rwlock_unlock(&kvs_table->tablelock);
-  return 0;
+  return 1;
 }
 
 int removeSubscriber(Cliente *cliente, char *key){
-  if (kvs_table == NULL) {
-    write_str(STDERR_FILENO, "KVS state must be initialized\n");
-    return 1;
-  }
-  pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(removeSubscription(cliente, key)!=0){
+  if(!sinalSegurancaLancado){
+    if (kvs_table == NULL) {
+      write_str(STDERR_FILENO, "KVS state must be initialized\n");
+      return 1;
+    }
+    pthread_rwlock_rdlock(&kvs_table->tablelock);
+    if(removeSubscription(cliente, key)!=0){
+      pthread_rwlock_unlock(&kvs_table->tablelock);
+      return 1;
+    }
     pthread_rwlock_unlock(&kvs_table->tablelock);
-    return 1;
+    return 0;
   }
-  pthread_rwlock_unlock(&kvs_table->tablelock);
-  return 0;
+  return 1;
 }
 
 int disconnectClient(Cliente *cliente){
-  Subscriptions *subscricao_atual = cliente->head_subscricoes;
-  //remover todas as suas subscricoes 
-  while (subscricao_atual!=NULL){
-    KeyNode *par = subscricao_atual->par;
-    char *key = par->key;
-    if(removeSubscription(cliente, key)==1){
-      return 1;
+  if(!sinalSegurancaLancado){
+    Subscriptions *subscricao_atual = cliente->head_subscricoes;
+    //remover todas as suas subscricoes 
+    while (subscricao_atual!=NULL){
+      KeyNode *par = subscricao_atual->par;
+      char *key = par->key;
+      if(removeSubscription(cliente, key)==1){
+        return 1;
+      }
+      subscricao_atual = subscricao_atual->next;
     }
-    subscricao_atual = subscricao_atual->next;
+    return 0;
   }
-  return 0;
+  return 1;
 }
