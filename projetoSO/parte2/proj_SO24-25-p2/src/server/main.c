@@ -469,19 +469,6 @@ int manageClient(Cliente *cliente){
   return 0;
 }
 
-//quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
-//so acaba quando o server morre (??)
-void *readClientPipe(void *arguments){
-  while(1){
-    sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
-    Cliente *cliente = getClientForThread();
-    if(manageClient(cliente)==1){
-      //deu erro a ler cliente
-      return NULL;
-    }
-  }
-}
-
 //retira o primeiro cliente que nao tem thread associada e retorna-o
 Cliente* getClientForThread(){
   User* user_atual = bufferThreads->headUser;
@@ -490,6 +477,19 @@ Cliente* getClientForThread(){
   }
   user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
   return user_atual->cliente; //retorna o cliente que vai ser usado
+}
+
+//quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
+//so acaba quando o server morre (??)
+void *readClientPipe(){
+  while(1){
+    sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
+    Cliente *cliente = getClientForThread();
+    if(manageClient(cliente)==1){
+      //deu erro a ler cliente
+      return NULL;
+    }
+  }
 }
 
 static void dispatch_threads(DIR *dir) {
