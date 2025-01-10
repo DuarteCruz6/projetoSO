@@ -111,6 +111,7 @@ static void *thread_principal_work(void *arguments){
       break;
     }
   }
+  return NULL;
 }
 
 //thread secundaria: recebe as notificacoes e imprime o resultado para o stdout
@@ -142,7 +143,7 @@ void *thread_secundaria_work(void *arguments){
     close(pipe_notif);
     return NULL;
   }
-  
+  return NULL;
 }
 
 //criar as 2 threads por cliente:
