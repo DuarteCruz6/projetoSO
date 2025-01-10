@@ -271,7 +271,7 @@ void iniciar_sessao(char *message){
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-      char response = "1";
+      char response[2] = "1";
       if (write_all(response_pipe, response, 1) == -1) {
         write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       }
@@ -287,7 +287,7 @@ void iniciar_sessao(char *message){
     listaClientes[numClientes] = new_cliente;
 
     //manda que deu sucesso
-    char response = "0";
+    char response[2] = "0";
     if (write_all(response_pipe, response, 1) == -1) {
       write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       return;
@@ -330,7 +330,7 @@ void *readServerPipe(){
   int erro=0;
   char message[128];
   while(1){
-    int success = read_all(server_fifo,&message, 128, erro);
+    int success = read_all(server_fifo,&message, 128, &erro);
     if (success > 1){
       int code = message[0];
       if (code==1){
