@@ -20,7 +20,6 @@
 #include "kvs.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
-#include "src/common/sinalSIGUSR1.h"
 
 struct SharedData {
   DIR *dir;
@@ -42,7 +41,6 @@ typedef struct BufferUserConsumer {
 int numClientes=0;
 sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao de um cliente, -1 quando uma thread vai buscar um cliente
 sigset_t sinalSeguranca; //sinal SIGUSR1
-int sinalSegurancaLancado = 0; //flag SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 

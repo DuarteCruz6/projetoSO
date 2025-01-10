@@ -10,7 +10,6 @@
 #include "src/client/api.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
-#include "src/common/sinalSIGUSR1.h"
 
 char *server_pipe_path= NULL;
 bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
