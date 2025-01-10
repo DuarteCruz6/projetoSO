@@ -3,7 +3,9 @@
 
 #include <stddef.h>
 
-int sinalSegurancaLancado=0;
+void mudarSinalSeguranca();
+
+int getSinalSeguranca();
 
 /// Reads a given number of bytes from a file descriptor. Will block until all
 /// bytes are read, or fail if not all bytes could be read.

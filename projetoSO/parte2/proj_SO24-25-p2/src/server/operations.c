@@ -11,7 +11,6 @@
 #include "constants.h"
 #include "io.h"
 #include "src/common/io.h"
-#include "src/common/sinalSIGUSR1.h"
 #include "kvs.h"
 
 static struct HashTable *kvs_table = NULL;
@@ -189,7 +188,7 @@ void kvs_wait(unsigned int delay_ms) {
 }
 
 int addSubscriber(Cliente *cliente, char *key){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     if (kvs_table == NULL) {
       write_str(STDERR_FILENO, "KVS state must be initialized\n");
       return 1;
@@ -206,7 +205,7 @@ int addSubscriber(Cliente *cliente, char *key){
 }
 
 int removeSubscriber(Cliente *cliente, char *key){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     if (kvs_table == NULL) {
       write_str(STDERR_FILENO, "KVS state must be initialized\n");
       return 1;
@@ -223,7 +222,7 @@ int removeSubscriber(Cliente *cliente, char *key){
 }
 
 int disconnectClient(Cliente *cliente){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     Subscriptions *subscricao_atual = cliente->head_subscricoes;
     //remover todas as suas subscricoes 
     while (subscricao_atual!=NULL){

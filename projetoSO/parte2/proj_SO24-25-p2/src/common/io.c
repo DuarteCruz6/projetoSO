@@ -10,6 +10,20 @@
 
 #include "src/common/constants.h"
 
+int sinalSegurancaLancado=0; //flag para saber se houve um sinal SIGUSR1 lancado ou nao (0-false 1-true)
+
+void mudarSinalSeguranca(){
+  if(sinalSegurancaLancado){
+    sinalSegurancaLancado = 0;
+  }else{
+    sinalSegurancaLancado = 1;
+  }
+}
+
+int getSinalSeguranca(){
+  return sinalSegurancaLancado;
+}
+
 int read_all(int fd, void *buffer, size_t size, int *intr) {
   if (intr != NULL && *intr) {
     return -1;

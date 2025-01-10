@@ -331,7 +331,7 @@ void iniciar_sessao(char *message){
 
 
 int subscribeClient(Cliente *cliente, char *message){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     char key[41];
     int code;
     sscanf(message,"%d%s",&code, key);
@@ -346,7 +346,7 @@ int subscribeClient(Cliente *cliente, char *message){
 }
 
 int unsubscribeClient(Cliente *cliente, char *message){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     char key[41];
     int code;
     sscanf(message,"%d%s",&code, key);
@@ -387,7 +387,7 @@ void removeClientFromBuffer(Cliente *cliente){
 // Função para tratar SIGUSR1
 void sinalDetetado() {
   //tem de eliminar todas as subscricoes de todos os clientes e encerrar os seus pipes
-  sinalSegurancaLancado = 0; //mete como true
+  mudarSinalSeguranca(); //mete como true
   User *userAtual = bufferThreads->headUser;
   while (userAtual!=NULL){
     Cliente* cliente = userAtual->cliente;
@@ -409,7 +409,7 @@ void sinalDetetado() {
     free(cliente);
     userAtual=userAtual->nextUser;
   }
-  sinalSegurancaLancado = 1; //volta a meter como false
+  mudarSinalSeguranca(); //volta a meter como false
   return;
 }
 
@@ -445,7 +445,7 @@ void *readServerPipe(){
 }
 
 int sendOperationResult(int code, int result, Cliente* cliente){
-  if(!sinalSegurancaLancado){
+  if(!getSinalSeguranca()){
     //escreve se a operacao deu certo (0) ou errado (1)
     char response[3];
     snprintf(response,3,"%d%d", code, result);
@@ -469,7 +469,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
   char message[43];
-  while(!sinalSegurancaLancado){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
+  while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
     if(request_pipe==-1){
       return 1;
