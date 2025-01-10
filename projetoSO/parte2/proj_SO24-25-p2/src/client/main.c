@@ -49,7 +49,7 @@ static void *thread_principal_work(void *arguments){
   unsigned int delay_ms;
   size_t num;
 
-  while (!&sinalSegurancaLancado) {
+  while (!*sinalSegurancaLancado) {
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
@@ -125,7 +125,7 @@ void *thread_secundaria_work(void *arguments){
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
-  while(!deuDisconnect && !&sinalSegurancaLancado){ //trabalha até dar disconnect
+  while(!deuDisconnect && !*sinalSegurancaLancado){ //trabalha até dar disconnect
     char buffer[256];
     int success = read_all(pipe_notif, buffer, 256, NULL);
 

@@ -332,7 +332,7 @@ void iniciar_sessao(char *message){
 
 
 int subscribeClient(Cliente *cliente, char *message){
-  if(!&sinalSegurancaLancado){
+  if(!*sinalSegurancaLancado){
     char key[41];
     int code;
     sscanf(message,"%d%s",&code, key);
@@ -347,7 +347,7 @@ int subscribeClient(Cliente *cliente, char *message){
 }
 
 int unsubscribeClient(Cliente *cliente, char *message){
-  if(!&sinalSegurancaLancado){
+  if(!*sinalSegurancaLancado){
     char key[41];
     int code;
     sscanf(message,"%d%s",&code, key);
@@ -446,7 +446,7 @@ void *readServerPipe(){
 }
 
 int sendOperationResult(int code, int result, Cliente* cliente){
-  if(!&sinalSegurancaLancado){
+  if(!*sinalSegurancaLancado){
     //escreve se a operacao deu certo (0) ou errado (1)
     char response[3];
     snprintf(response,3,"%d%d", code, result);
@@ -470,7 +470,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
   char message[43];
-  while(!&sinalSegurancaLancado){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
+  while(!*sinalSegurancaLancado){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
     if(request_pipe==-1){
       return 1;
