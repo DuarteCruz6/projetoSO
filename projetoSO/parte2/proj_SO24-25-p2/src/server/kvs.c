@@ -35,6 +35,7 @@ struct HashTable *create_hash_table() {
   return ht;
 }
 
+//notifica todos os subs do par para informar que houve alteracao
 int notificarSubs(KeyNode *keyNode,const char *newValue){
   Subscribers *currentSub = keyNode->head_subscribers;
   while (currentSub != NULL) {
@@ -149,40 +150,60 @@ void free_table(HashTable *ht) {
   free(ht);
 }
 
-//1 se errado, 0 se certo
-int addSubscription(HashTable *ht, Cliente* cliente, char *key){
+KeyNode *getKeyNode(HashTable *ht,char *key){
   int index = hash(key);
-  Subscribers *newSub = (Subscribers *)malloc(sizeof(Subscribers));
-  if (!newSub) {
-    return 1; // Retorno de erro ao alocar memória
-  }
-  newSub->subscriber = cliente;
-  newSub->next = NULL;
 
   KeyNode *keyNode = ht->table[index];
   KeyNode *previousNode;
+  char *value;
 
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
-      //encontramos a chave correta
-    
-      newSub->next = keyNode->head_subscribers;
-      keyNode->head_subscribers = newSub;
-      Subscriptions *newSubscription = (Subscriptions *)malloc(sizeof(Subscriptions));
-      newSubscription->next = cliente->head_subscricoes;
-      cliente->head_subscricoes = newSubscription;
-      return 0;
+      return keyNode; // Return the keynode if found
     }
     previousNode = keyNode;
     keyNode = previousNode->next; // Move to the next node
   }
-  free(newSub);
-  return 1;  
+
+  return NULL; // Key not found
 }
+
+//adiciona subscricao à estrutura cliente
+//0 se certo, 1 se errado
+int addSubscription(HashTable *ht,Cliente *cliente, char *key){
+  Subscriptions *subsCliente = cliente->head_subscricoes;
+  Subscriptions *newSub = malloc(sizeof(Subscriptions));
+  KeyNode *par = getKeyNode(ht,key);
+  if(newSub!=NULL && par!=NULL){
+    if(addSubscriberTable(cliente, par)==0){
+      newSub->next = subsCliente; //mete a nova Sub no inicio da lista
+      newSub->par = par; //guarda o keynode na sub
+      cliente->head_subscricoes = newSub; //guarda a novaSub como cabeca da lista
+      return 0;
+    }
+    return 1;
+  }
+  return 1;
+}
+
+//adiciona subscritor à estrutura keynode
+//0 se certo, 1 se errado
+int addSubscriberTable(Cliente *cliente, KeyNode *par){
+  Subscribers *subsPar = par->head_subscribers;
+  Subscribers *newSub = malloc(sizeof(Subscribers));
+  if(newSub!=NULL){
+    newSub->subscriber = cliente; //guarda o novo sub
+    newSub->next = subsPar; //mete o novo sub no inicio da lista e faz o link
+    par->head_subscribers = newSub; //guarda o novo Sub como cabeca da lista
+    return 0;
+  }
+  return 1;
+}
+
 
 //remove subscricao da estrutura cliente
 //0 se certo, 1 se errado
-int removeSubscription(Cliente* cliente, char *key){
+int removeSubscription(Cliente *cliente, char *key){
   Subscriptions *subscricao_atual = cliente->head_subscricoes;
   Subscriptions *subscricao_prev = NULL;
 

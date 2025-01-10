@@ -189,7 +189,7 @@ int addSubscriber(Cliente *cliente, char *key){
     return 1;
   }
   pthread_rwlock_rdlock(&kvs_table->tablelock);
-  if(addSubscription(kvs_table, cliente, key)!=0){
+  if(addSubscription(kvs_table,cliente, key)!=0){
     pthread_rwlock_unlock(&kvs_table->tablelock);
     return 1;
   }

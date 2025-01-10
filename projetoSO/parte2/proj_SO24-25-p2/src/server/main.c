@@ -427,7 +427,7 @@ static void dispatch_threads(DIR *dir) {
 
   
 
-  // ler do pipe de registo de cada cliente
+  //cria S threads ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
     struct SharedDataGestoras threadGestoras_data = {listaClientes[thread_gestora]};
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)&threadGestoras_data) !=
@@ -544,6 +544,7 @@ int main(int argc, char **argv) {
     active_backups--;
   }
 
+  close(server_fifo);
   kvs_terminate();
 
   return 0;

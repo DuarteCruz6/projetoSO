@@ -66,10 +66,15 @@ int delete_pair(HashTable *ht, const char *key);
 /// @param ht Hash table to be deleted.
 void free_table(HashTable *ht);
 
-int addSubscription(HashTable *ht, Cliente* cliente, char *key);
+KeyNode *getKeyNode(HashTable *ht,char *key);
 
-int removeSubscription(Cliente* cliente, char *key);
+int addSubscription(HashTable *ht,Cliente* cliente, char *key);
+
+int addSubscriberTable(Cliente *cliente, KeyNode *par);
+
+int removeSubscription(Cliente *cliente, char *key);
 
 int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado);
+
 
 #endif // KVS_H

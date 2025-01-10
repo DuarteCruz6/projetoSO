@@ -148,7 +148,6 @@ void *thread_secundaria_work(void *arguments){
     //secundaria: recebe as notificacoes e imprime o resultado para o stdout
 void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const char *notif_pipe_path){
   
-  //principal
   pthread_t *thread_principal = malloc(sizeof(pthread_t));
   pthread_t *thread_secundaria = malloc(sizeof(pthread_t));
   if (thread_principal == NULL) {
