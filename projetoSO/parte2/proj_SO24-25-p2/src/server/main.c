@@ -518,11 +518,14 @@ int manageClient(Cliente *cliente){
 //retira o primeiro cliente que nao tem thread associada e retorna-o
 Cliente* getClientForThread(){
   User* user_atual = bufferThreads->headUser;
-  while (user_atual->usedFlag){
-    user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa
+  while (user_atual->usedFlag && user_atual->nextUser!=NULL){
+    user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa ou entao ate nao haver mais nenhum cliente disponivel
   }
-  user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
-  return user_atual->cliente; //retorna o cliente que vai ser usado
+  if(user_atual!=NULL){
+    user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
+    return user_atual->cliente; //retorna o cliente que vai ser usado
+  }
+  return NULL;
 }
 
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
@@ -531,9 +534,11 @@ void *readClientPipe(){
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     Cliente *cliente = getClientForThread();
-    if(manageClient(cliente)==1){
-      //deu erro a ler cliente
-      return NULL;
+    if(cliente!=NULL){
+      if(manageClient(cliente)==1){
+        //deu erro a ler cliente
+        return NULL;
+      }
     }
   }
 }
