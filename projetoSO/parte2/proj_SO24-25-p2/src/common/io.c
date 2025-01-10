@@ -14,9 +14,9 @@ int sinalSegurancaLancado=0; //flag para saber se houve um sinal SIGUSR1 lancado
 
 void mudarSinalSeguranca(){
   if(sinalSegurancaLancado){
-    sinalSegurancaLancado = 0;
+    sinalSegurancaLancado = 0; //mete como false
   }else{
-    sinalSegurancaLancado = 1;
+    sinalSegurancaLancado = 1; //mete como true
   }
 }
 
