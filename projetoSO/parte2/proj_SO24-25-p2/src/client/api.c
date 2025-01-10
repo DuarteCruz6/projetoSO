@@ -14,7 +14,7 @@
 void createMessage(const char *req_pipe_path, char *message){
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
-    fprintf(stderr, "Error writing to pipe request");
+    write_str(STDERR_FILENO, "Error writing to pipe request");
     close(pipe_req);
     return;
   }
@@ -26,7 +26,7 @@ int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
   int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1) {
-      fprintf(stderr, "Error reading pipe response");
+      write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
   }
 
@@ -35,7 +35,7 @@ int getResponse(const char *resp_pipe_path){
   int success = read_all(pipe_resp, buffer, 3, NULL);
   close(pipe_resp);
   if (success == -1) {
-      fprintf(stderr, "Error reading pipe response");
+      write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
   }
   int code, result;
@@ -52,15 +52,15 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path, char const *server_pipe_path) {
   // create pipes and connect
   if (mkfifo(req_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Failed to create request pipe\n");
+    write_str(STDERR_FILENO, "Failed to create request pipe\n");
     return 1;
   }
   if (mkfifo(resp_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Failed to create response pipe\n");
+    write_str(STDERR_FILENO, "Failed to create response pipe\n");
     return 1;
   }
   if (mkfifo(notif_pipe_path, 0666) == -1) {
-    fprintf(stderr, "Failed to create notification pipe\n");
+    write_str(STDERR_FILENO, "Failed to create notification pipe\n");
     return 1;
   }
 
@@ -72,7 +72,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   
   int response = getResponse(resp_pipe_path);
   if(response!=0){
-    fprintf(stderr, "Failed to connect the client\n");
+    write_str(STDERR_FILENO, "Failed to connect the client\n");
     return 1;
   }
   return 0;
@@ -86,21 +86,21 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   createMessage(req_pipe_path,code);
   int response = getResponse(resp_pipe_path);
   if(response!=0){
-    fprintf(stderr, "Failed to disconnect the client\n");
+    write_str(STDERR_FILENO, "Failed to disconnect the client\n");
     return 1;
   }
 
   // Apagar os pipes
   if (unlink(req_pipe_path) == -1) {
-    fprintf(stderr, "Failed to close request pipe\n");
+    write_str(STDERR_FILENO, "Failed to close request pipe\n");
     return 1;
   }
   if (unlink(resp_pipe_path) == -1) {
-    fprintf(stderr, "Failed to close response pipe\n");
+    write_str(STDERR_FILENO, "Failed to close response pipe\n");
     return 1;
   }
   if (unlink(notif_pipe_path) == -1) {
-    fprintf(stderr, "Failed to close notification pipe\n");
+    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
     return 1;
   }
 
@@ -116,7 +116,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   createMessage(req_pipe_path,message);
   int response = getResponse(resp_pipe_path);
   if(response!=0){
-    fprintf(stderr, "Failed to subscribe the client\n");
+    write_str(STDERR_FILENO, "Failed to subscribe the client\n");
     return 1;
   }
 
@@ -132,7 +132,7 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   createMessage(req_pipe_path,message);
   int response = getResponse(resp_pipe_path);
   if(response!=0){
-    fprintf(stderr, "Failed to unsubscribe the client\n");
+    write_str(STDERR_FILENO, "Failed to unsubscribe the client\n");
     return 1;
   }
   return 0;

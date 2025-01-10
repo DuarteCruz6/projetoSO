@@ -50,7 +50,7 @@ static void *thread_principal_work(void *arguments){
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
-        fprintf(stderr, "Failed to disconnect to the server\n");
+        write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
         pthread_exit(NULL);
         return NULL;
       }
@@ -62,12 +62,12 @@ static void *thread_principal_work(void *arguments){
     case CMD_SUBSCRIBE:
       num = parse_list(STDIN_FILENO, keys, 1, MAX_STRING_SIZE);
       if (num == 0) {
-        fprintf(stderr, "Invalid command. See HELP for usage\n");
+        write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
         continue;
       }
 
       if (kvs_subscribe(req_pipe, resp_pipe, keys[0])) {
-        fprintf(stderr, "Command subscribe failed\n");
+        write_str(STDERR_FILENO, "Command subscribe failed\n");
       }
 
       break;
@@ -75,19 +75,19 @@ static void *thread_principal_work(void *arguments){
     case CMD_UNSUBSCRIBE:
       num = parse_list(STDIN_FILENO, keys, 1, MAX_STRING_SIZE);
       if (num == 0) {
-        fprintf(stderr, "Invalid command. See HELP for usage\n");
+        write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
         continue;
       }
 
       if (kvs_unsubscribe(req_pipe, resp_pipe, keys[0])) {
-        fprintf(stderr, "Command subscribe failed\n");
+        write_str(STDERR_FILENO, "Command subscribe failed\n");
       }
 
       break;
 
     case CMD_DELAY:
       if (parse_delay(STDIN_FILENO, &delay_ms) == -1) {
-        fprintf(stderr, "Invalid command. See HELP for usage\n");
+        write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
         continue;
       }
 
@@ -98,7 +98,7 @@ static void *thread_principal_work(void *arguments){
       break;
 
     case CMD_INVALID:
-      fprintf(stderr, "Invalid command. See HELP for usage\n");
+      write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
       break;
 
     case CMD_EMPTY:
@@ -119,7 +119,7 @@ void *thread_secundaria_work(void *arguments){
 
   int pipe_notif = open(notif_pipe, O_RDONLY);
   if (pipe_notif == -1) {
-    fprintf(stderr, "Erro ao abrir a pipe de notificacoes");
+    write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
   while(1){
@@ -134,7 +134,7 @@ void *thread_secundaria_work(void *arguments){
     return NULL;
   } else {
     close(pipe_notif);
-    fprintf(stderr, "Erro ao ler a pipe de notificacoes");
+    write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
     return NULL;
   }
   close(pipe_notif);
@@ -151,11 +151,11 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
   pthread_t *thread_principal = malloc(sizeof(pthread_t));
   pthread_t *thread_secundaria = malloc(sizeof(pthread_t));
   if (thread_principal == NULL) {
-    fprintf(stderr, "Failed to allocate memory for thread\n");
+    write_str(STDERR_FILENO, "Failed to allocate memory for thread\n");
     return;
   }
   if (thread_secundaria == NULL) {
-    fprintf(stderr, "Failed to allocate memory for thread\n");
+    write_str(STDERR_FILENO, "Failed to allocate memory for thread\n");
     return;
   }
   struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path};
@@ -163,28 +163,28 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
 
   //principal
   if (pthread_create(&thread_principal[0], NULL, thread_principal_work, (void *)&threadPrincipal_data)!=0) {
-    fprintf(stderr, "Failed to create thread %d\n", 1);
+    write_str(STDERR_FILENO, "Failed to create client main thread");
     free(thread_principal);
     return;
   }
 
   //secundaria
   if (pthread_create(&thread_secundaria[0], NULL, thread_secundaria_work, (void *)&threadSecundaria_data)!=0) {
-    fprintf(stderr, "Failed to create thread %d\n", 1);
+    write_str(STDERR_FILENO, "Failed to create client second thread \n");
     free(thread_secundaria);
     return;
   }
 
   //espera pela principal
   if (pthread_join(thread_principal[0], NULL) != 0) {
-    fprintf(stderr, "Failed to join thread gestora\n");
+    write_str(STDERR_FILENO, "Failed to join thread gestora\n");
     free(thread_principal);
     return;
   }
   
   //espera pela secundaria
   if (pthread_join(thread_secundaria[0], NULL) != 0) {
-    fprintf(stderr, "Failed to join thread\n");
+    write_str(STDERR_FILENO, "Failed to join thread\n");
     free(thread_secundaria);
     return;
   }
@@ -197,7 +197,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    fprintf(stderr, "Usage: %s <client_unique_id> <register_pipe_path>\n",
+    fprintf(STDERR_FILENO, "Usage: %s <client_unique_id> <register_pipe_path>\n",
             argv[0]);
     return 1;
   }
