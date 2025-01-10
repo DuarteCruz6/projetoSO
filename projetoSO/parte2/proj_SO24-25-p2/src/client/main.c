@@ -197,7 +197,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    fprintf(STDERR_FILENO, "Usage: %s <client_unique_id> <register_pipe_path>\n",
+    fprintf(stderr, "Usage: %s <client_unique_id> <register_pipe_path>\n",
             argv[0]);
     return 1;
   }
