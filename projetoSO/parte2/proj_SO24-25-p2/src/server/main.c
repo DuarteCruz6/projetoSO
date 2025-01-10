@@ -44,7 +44,7 @@ typedef struct BufferUserConsumer {
 int numClientes=0;
 sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao de um cliente, -1 quando uma thread vai buscar um cliente
 
-BufferUserConsumer* bufferThreads = {NULL, PTHREAD_MUTEX_INITIALIZER}; //buffer utilizador - consumidor
+BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -603,6 +603,9 @@ int main(int argc, char **argv) {
   }
 
   sem_init(&semaforoBuffer, 0, MAX_SESSION_COUNT); //inicializar semaforo a 0 e vai até S
+  bufferThreads = (BufferUserConsumer*)malloc(sizeof(BufferUserConsumer));
+  bufferThreads->headUser = NULL;
+  pthread_mutex_init(&bufferThreads->buffer_mutex, NULL);
 
   dispatch_threads(dir);
 
