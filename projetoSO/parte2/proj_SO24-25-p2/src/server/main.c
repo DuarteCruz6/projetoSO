@@ -534,7 +534,7 @@ void *readClientPipe(){
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     Cliente *cliente = getClientForThread();
-    if (cliente!=NULL){
+    if(cliente!=NULL){
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         return NULL;
