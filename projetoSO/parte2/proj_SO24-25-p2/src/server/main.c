@@ -388,7 +388,7 @@ void removeClientFromBuffer(Cliente *cliente){
 // Função para tratar SIGUSR1
 void sinalDetetado() {
   //tem de eliminar todas as subscricoes de todos os clientes e encerrar os seus pipes
-  sinalSegurancaLancado = true;
+  sinalSegurancaLancado = 0; //mete como true
   User *userAtual = bufferThreads->headUser;
   while (userAtual!=NULL){
     Cliente* cliente = userAtual->cliente;
@@ -410,6 +410,7 @@ void sinalDetetado() {
     free(cliente);
     userAtual=userAtual->nextUser;
   }
+  sinalSegurancaLancado = 1; //volta a meter como false
   return;
 }
 
