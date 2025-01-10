@@ -26,10 +26,6 @@ struct SharedData {
   pthread_mutex_t directory_mutex;
 };
 
-struct SharedDataGestoras {
-  Cliente* cliente;
-};
-
 typedef struct User{
   Cliente* cliente; //ponteiro para a estrutura cliente para user os pipes
   bool usedFlag;  //flag para saber se uma thread ja o esta a usar ou nao
@@ -405,59 +401,85 @@ void removeClientFromBuffer(Cliente* cliente){
 
 }
 
-void *readClientPipe(void *arguments){
-  sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
-  char message[43];
-  Cliente *cliente = (Cliente *)arguments;
-  int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
-  int success = read_all(request_pipe,&message, 43, NULL);
-  close(request_pipe);
-  if (success > 0){
-    int code = message[0];
-    int result;
-    
-    if (code==2){
-      //disconnect
-      result = disconnectClient(cliente);
-      if (result==0){
-        //tirar do buffer
-        removeClientFromBuffer(cliente);
-      }
-
-    }else if (code==3){
-      //subscribe
-      result = subscribeClient(cliente, message);
-
-    }else if (code==4){
-      //unsubscribe
-      result = unsubscribeClient(cliente, message);
-
-    }else{
-      //erro
-    }
-            
-    //escreve se a operacao deu certo (0) ou errado (1)
-    char response[3];
-    snprintf(response,3,"%d%d", code, result);
-    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    int success2 = write_all(response_pipe, response, 3);
-    if(success2==1){
-      close(response_pipe);
-    }else{
-      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-    }
-    
-      
-  } else if (success == 0) {
-    // EOF: O pipe foi fechado
-  return NULL;
-  } else {
-    // Erro ao ler
-    write_str(STDERR_FILENO, "Erro ao ler do pipe de requests\n");
-    return NULL;
+int sendOperationResult(int code, int result, Cliente* cliente){
+  //escreve se a operacao deu certo (0) ou errado (1)
+  char response[3];
+  snprintf(response,3,"%d%d", code, result);
+  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+  if(response_pipe==-1){
+    //erro a abrir o pipe de respostas
+    return 1;
   }
-  
-  return NULL;
+  int success = write_all(response_pipe, response, 3);
+  if(success==1){
+    close(response_pipe);
+    return 0;
+  }else{
+    write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+    return 1;
+  }
+}
+
+//so acaba quando o client der disconnect
+int manageClient(Cliente *cliente){
+  char message[43];
+  while(1){
+    int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
+    if(request_pipe==-1){
+      return 1;
+    }
+    int success = read_all(request_pipe,&message, 43, NULL);
+    close(request_pipe);
+    if (success > 0){
+      int code = message[0];
+      int result;
+
+      if (code==2){
+        //disconnect
+        result = disconnectClient(cliente);
+        if (result==0){
+          //tirar do buffer
+          removeClientFromBuffer(cliente);
+          if(sendOperationResult(code,result,cliente)==1){
+            //erro a mandar mensagem para o cliente
+            return 1;
+          }
+          break;
+        }
+
+      }else if (code==3){
+        //subscribe
+        result = subscribeClient(cliente, message);
+      }else if (code==4){
+        //unsubscribe
+        result = unsubscribeClient(cliente, message);
+      }else{
+        //leu um codigo inesperado
+        return 1;
+      }
+      if(sendOperationResult(code,result,cliente)==1){
+        //erro a mandar mensagem para o cliente
+        return 1;
+      }
+    }else{
+      //nao leu nada pois houve erro
+      return 1;
+    }
+  }
+  return 0;
+}
+
+//quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
+//so acaba quando o server morre (??)
+void *readClientPipe(void *arguments){
+  while(1){
+    sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
+    Cliente *cliente = getClientForThread();
+    if(manageClient(cliente)==1){
+      //deu erro a ler cliente
+      return NULL;
+    }
+  }
 }
 
 //retira o primeiro cliente que nao tem thread associada e retorna-o
@@ -497,10 +519,9 @@ static void dispatch_threads(DIR *dir) {
 
   //cria S threads ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    pthread_mutex_lock(&bufferThreads->buffer_mutex); //lock pois vamos ler do buffer
-    struct SharedDataGestoras threadGestoras_data = {getClientForThread()};          
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //lock pois vamos ler do buffer        
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //unlock do buffer
-    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)&threadGestoras_data) !=
+    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
         0) {
       write_str(STDERR_FILENO, "Failed to create thread gestora");
       write_uint(STDERR_FILENO, (int) thread_gestora);
