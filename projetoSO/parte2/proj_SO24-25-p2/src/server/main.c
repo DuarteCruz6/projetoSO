@@ -20,6 +20,7 @@
 #include "kvs.h"
 #include "src/common/constants.h"
 #include "src/common/io.h"
+#include "src/common/sinalSIGUSR1.h"
 
 struct SharedData {
   DIR *dir;
