@@ -8,6 +8,7 @@
 
 #include "src/common/constants.h"
 #include "src/common/protocol.h"
+#include "src/common/io.h"
 
 //manda request
 void createMessage(const char *req_pipe_path, char *message){
@@ -80,7 +81,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
 int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path) {
   // close pipes and unlink pipe files
-  char code[1];
+  char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
   createMessage(req_pipe_path,code);
   int response = getResponse(resp_pipe_path);

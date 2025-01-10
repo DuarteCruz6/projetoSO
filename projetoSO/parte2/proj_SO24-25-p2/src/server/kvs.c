@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "string.h"
+#include "src/common/io.h"
 
 // Hash function based on key initial.
 // @param key Lowercase alphabetical string.

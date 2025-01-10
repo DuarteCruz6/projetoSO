@@ -79,3 +79,20 @@ void delay(unsigned int time_ms) {
   struct timespec delay = delay_to_timespec(time_ms);
   nanosleep(&delay, NULL);
 }
+
+void write_str(int fd, const char *str) {
+  size_t len = strlen(str);
+  const char *ptr = str;
+
+  while (len > 0) {
+    ssize_t written = write(fd, ptr, len);
+
+    if (written < 0) {
+      perror("Error writing string");
+      break;
+    }
+
+    ptr += written;
+    len -= (size_t)written;
+  }
+}

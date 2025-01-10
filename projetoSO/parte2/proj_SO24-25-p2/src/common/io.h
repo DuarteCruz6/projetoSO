@@ -26,4 +26,9 @@ int write_all(int fd, const void *buffer, size_t size);
 
 void delay(unsigned int time_ms);
 
+/// Writes a string to the given file descriptor.
+/// @param fd The file descriptor to write to.
+/// @param str The string to write.
+void write_str(int fd, const char *str);
+
 #endif // COMMON_IO_H

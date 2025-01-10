@@ -16,6 +16,7 @@
 #include "pthread.h"
 #include "kvs.h"
 #include "src/common/constants.h"
+#include "src/common/io.h"
 
 struct SharedData {
   DIR *dir;
@@ -270,8 +271,8 @@ void iniciar_sessao(char *message){
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-      char message = "1";
-      if (write_all(response_pipe, message, 1) == -1) {
+      char response = "1";
+      if (write_all(response_pipe, response, 1) == -1) {
         write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       }
       return;
@@ -286,8 +287,8 @@ void iniciar_sessao(char *message){
     listaClientes[numClientes] = new_cliente;
 
     //manda que deu sucesso
-    char message = "0";
-    if (write_all(response_pipe, message, 1) == -1) {
+    char response = "0";
+    if (write_all(response_pipe, response, 1) == -1) {
       write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       return;
     }
@@ -380,8 +381,8 @@ void *readClientPipe(void *arguments){
     char response[3];
     snprintf(response,3,"%d%d", code, result);
     int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    int success = write_all(response_pipe, response, 3);
-    if(success==1){
+    int success2 = write_all(response_pipe, response, 3);
+    if(success2==1){
       close(response_pipe);
     }else{
       write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
