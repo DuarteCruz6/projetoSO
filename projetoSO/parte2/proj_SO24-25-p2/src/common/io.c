@@ -97,7 +97,7 @@ void write_str(int fd, const char *str) {
   }
 }
 
-int unlinkPipes(char* pipe_path){
+int unlinkPipes(const char* pipe_path){
   if (unlink(pipe_path) == -1) {
     return 1;
   }
