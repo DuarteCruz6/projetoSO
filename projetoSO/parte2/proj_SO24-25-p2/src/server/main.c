@@ -615,7 +615,7 @@ int main(int argc, char **argv) {
   //criar FIFO
   char fifo_path[256] = "/tmp/req";
   strcat(fifo_path,nome_fifo);
-  if (mkfifo(nome_fifo, 0666) == -1) {
+  if (mkfifo(nome_fifo, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
       write_str(STDERR_FILENO, argv[4]);
       return 0;
