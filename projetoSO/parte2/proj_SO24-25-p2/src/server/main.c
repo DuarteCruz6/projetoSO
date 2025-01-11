@@ -674,7 +674,8 @@ int main(int argc, char **argv) {
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
-      write_str(STDERR_FILENO, argv[4]);
+      write_str(STDERR_FILENO, fifo_path);
+      write_str(STDERR_FILENO, "\n");
       return 0;
   }
 
@@ -682,6 +683,7 @@ int main(int argc, char **argv) {
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
+    write_str(STDERR_FILENO, "\n");
     return 0;
   }
 
