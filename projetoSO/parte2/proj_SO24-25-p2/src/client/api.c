@@ -103,6 +103,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   if(write_all(server_pipe, message, strlen(message)+1) == -1){
     return 1;
   }
+  close(server_pipe);
   printf("ja criou a mensagem, agora vai recebe la\n");
   
   int response = getResponse(resp_pipe_path);
