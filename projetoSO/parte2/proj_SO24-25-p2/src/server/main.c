@@ -465,7 +465,7 @@ void *readServerPipe(){
     } else if (success == 0) {
       printf("O pipe do server foi fechado\n");
       // EOF: O pipe foi fechado
-      return NULL;
+      //return NULL;
     } else {
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
@@ -698,8 +698,7 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  //server_fifo = open(fifo_path, O_RDWR);
-  server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK);
+  server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
