@@ -484,7 +484,7 @@ void *readServerPipe(){
     if (bytes_read == -1) {
         perror("Erro ao ler FIFO");
         close(server_fifo);
-        return 1;
+        return NULL;
     }
 
     // Adiciona o caractere nulo para encerrar a string

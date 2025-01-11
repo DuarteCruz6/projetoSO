@@ -96,16 +96,24 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("conectou a todos os pipes do cliente, agora vai mandar msg para o do server\n");
   printf("pipe do server: %s\n",server_pipe_path);
 
-  char message[121];
+  char message[122];
   //construir mensagem
-  snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
+  snprintf(message, 122, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
   int server_pipe = open(server_pipe_path, O_WRONLY);
   if(write_all(server_pipe, message, strlen(message)+1) == -1){
     return 1;
   }
   close(server_pipe);
-  printf("ja criou a mensagem, agora vai recebe la\n");
-  
+  printf("ja criou a mensagem %s, agora vai recebe la\n", message);
+
+  printf("sem stor\n");
+  ssize_t bytes_written = write(server_pipe, message, strlen(message));
+  if (bytes_written == -1) {
+      perror("Erro ao escrever no FIFO");
+      close(server_pipe);
+      return 1;
+  }
+  printf("fim sem stor\n");
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to connect the client\n");
