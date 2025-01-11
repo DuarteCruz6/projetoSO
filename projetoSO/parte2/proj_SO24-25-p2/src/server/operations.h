@@ -67,4 +67,8 @@ int addSubscriber(Cliente *Cliente, char *key);
 int removeSubscriber(Cliente *Cliente, char *key);
 int disconnectClient(Cliente *cliente);
 
+void mudarSinalSeguranca();
+
+int getSinalSeguranca();
+
 #endif // KVS_OPERATIONS_H
