@@ -605,7 +605,13 @@ static void dispatch_threads(DIR *dir) {
 
   //inicia sessão dos clientes
   printf("antes de ler o pipe do server\n");
-  readServerPipe();
+  pthread_t *thread_inicioSessao = malloc(sizeof(pthread_t));
+  if (pthread_create(&thread_inicioSessao, NULL, readServerPipe,NULL) !=
+      0) {
+    write_str(STDERR_FILENO, "Failed to create thread inicioSessao");
+    free(threads_gestoras);
+    return;
+  }
   printf("depois de ler o pipe do server\n");
 
   printf("antes do thread join das threads dos .job\n");
@@ -625,9 +631,16 @@ static void dispatch_threads(DIR *dir) {
       write_str(STDERR_FILENO, "Failed to join thread gestora ");
       write_uint(STDERR_FILENO, (int) thread_gestora);
       free(threads_gestoras);
-      return 0;
+      return;
     }
   }
+
+  printf("chegou antes do thread join da thread inicioSessao\n");
+  if (pthread_join(thread_inicioSessao, NULL) != 0) {
+      write_str(STDERR_FILENO, "Failed to join thread inicioSessao ");
+      free(thread_inicioSessao);
+      return;
+    }
 
   if (pthread_mutex_destroy(&thread_data.directory_mutex) != 0) {
     write_str(STDERR_FILENO, "Failed to destroy directory_mutex\n");
