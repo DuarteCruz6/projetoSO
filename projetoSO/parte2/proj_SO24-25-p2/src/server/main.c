@@ -470,6 +470,7 @@ void *readServerPipe(){
 
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
+  printf("a ler a pipe dos clientes\n");
   char message[43];
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
@@ -519,12 +520,14 @@ int manageClient(Cliente *cliente){
 
 //retira o primeiro cliente que nao tem thread associada e retorna-o
 Cliente* getClientForThread(){
+  printf("a ir buscar cliente\n");
   User* user_atual = bufferThreads->headUser;
   if(user_atual!=NULL){
     while (user_atual->usedFlag && user_atual->nextUser!=NULL){
       user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa ou entao ate nao haver mais nenhum cliente disponivel
     }
     user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
+    printf("encontrou cliente\n");
     return user_atual->cliente; //retorna o cliente que vai ser usado
   }
   return NULL;
@@ -533,9 +536,12 @@ Cliente* getClientForThread(){
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
 //so acaba quando o server morre (??)
 void *readClientPipe(){
+  printf("procura para ler a pipe dos clientes\n");
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
@@ -546,6 +552,7 @@ void *readClientPipe(){
 }
 
 static void dispatch_threads(DIR *dir) {
+  printf("vai criar as threads\n");
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
   pthread_t *threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
 

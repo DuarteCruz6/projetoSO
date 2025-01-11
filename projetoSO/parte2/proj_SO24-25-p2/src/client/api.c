@@ -42,6 +42,7 @@ void createMessage(const char *req_pipe_path, char *message){
 //recebe a resposta do pipe
 int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
+  printf("vai receber a msg agora \n");
   int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1) {
       write_str(STDERR_FILENO, "Error reading pipe response");
@@ -50,7 +51,9 @@ int getResponse(const char *resp_pipe_path){
 
   // Ler a mensagem do pipe (bloqueante)
   char buffer[3];
+  printf("vai ler a msg agora \n");
   int success = read_all(pipe_resp, buffer, 3, NULL);
+  printf("leu a msg agora \n");
   close(pipe_resp);
   if (success == -1) {
       write_str(STDERR_FILENO, "Error reading pipe response");
@@ -68,6 +71,7 @@ int getResponse(const char *resp_pipe_path){
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
   snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[result-1]);
+  printf("imprimir: %s\n",string);
   write_str(STDOUT_FILENO,string);
   return result; 
 }
