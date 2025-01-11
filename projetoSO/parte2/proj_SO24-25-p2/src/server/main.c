@@ -599,21 +599,21 @@ static void dispatch_threads(DIR *dir) {
   //inicia sessão dos clientes
   readServerPipe();
 
-  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
-    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
-      write_str(STDERR_FILENO, "Failed to join thread gestora ");
-      write_uint(STDERR_FILENO, (int) thread_gestora);
-      free(threads_gestoras);
-      return;
-    }
-  }
-
   for (unsigned int i = 0; i < max_threads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread");
       write_uint(STDERR_FILENO, (int) i);
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
+      return;
+    }
+  }
+
+  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
+    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
+      write_str(STDERR_FILENO, "Failed to join thread gestora ");
+      write_uint(STDERR_FILENO, (int) thread_gestora);
+      free(threads_gestoras);
       return;
     }
   }
