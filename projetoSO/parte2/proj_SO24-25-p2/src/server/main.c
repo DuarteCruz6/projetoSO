@@ -465,6 +465,7 @@ void *readServerPipe(){
     }
     if (success == 1){
       printf("leu algo\n");
+      printf("mesagem recebida: %s\n",message);
       int code = message[0];
       if (code==1){
         printf("vai iniciar sessao\n");
