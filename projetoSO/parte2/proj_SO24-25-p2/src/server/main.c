@@ -266,6 +266,7 @@ static void *get_file(void *arguments) {
 }
 
 void iniciar_sessao(char *message){
+  printf("vai iniciar sessao ao cliente\n");
   char first_char = message[0];
   int code = atoi(&first_char);
   char pipe_req[41], pipe_resp[41], pipe_notif[41];

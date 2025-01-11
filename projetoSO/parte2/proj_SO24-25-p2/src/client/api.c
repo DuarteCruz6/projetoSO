@@ -28,12 +28,14 @@ void mudarSinalSeguranca(){
 
 //manda request
 void createMessage(const char *req_pipe_path, char *message){
+  printf("vai abrir o pipe para pedir algo\n");
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");
     close(pipe_req);
     return;
   }
+  printf("ja pediu algo\n");
   close(pipe_req);
 }
 
@@ -86,12 +88,15 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
     write_str(STDERR_FILENO, "Failed to create notification pipe\n");
     return 1;
   }
+  printf("conectou a todos os pipes do cliente, agora vai mandar msg para o do server\n");
+  printf("pipe do server: %s\n",server_pipe_path);
 
   char message[121];
   //construir mensagem
   snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
   createMessage(server_pipe_path,message);
+  printf("ja criou a mensagem, agora vai recebe la\n");
   
   int response = getResponse(resp_pipe_path);
   if(response!=0){
