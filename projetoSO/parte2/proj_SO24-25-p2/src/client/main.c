@@ -199,8 +199,9 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    fprintf(stderr, "Usage: %s <client_unique_id> <register_pipe_path>\n",
-            argv[0]);
+    write_str(STDERR_FILENO, "Usage: ");
+    write_str(STDERR_FILENO,argv[0]);
+    write_str(STDERR_FILENO, " <client_unique_id> <register_pipe_path>\n");
     return 1;
   }
 
@@ -212,6 +213,11 @@ int main(int argc, char *argv[]) {
   strncat(req_pipe_path, argv[1], strlen(argv[1]));
   strncat(resp_pipe_path, argv[1], strlen(argv[1]));
   strncat(notif_pipe_path, argv[1], strlen(argv[1]));
+
+  if(strlen(req_pipe_path)>40 || strlen(resp_pipe_path)>40 || strlen(notif_pipe_path)>40){
+    write_str(STDERR_FILENO,"Too big of a lenght for a pipe\n");
+    return 1;
+  }
 
   char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
