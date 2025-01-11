@@ -384,6 +384,28 @@ void removeClientFromBuffer(Cliente *cliente){
 
 }
 
+int sendOperationResult(int code, int result, Cliente* cliente){
+  if(!getSinalSeguranca()){
+    //escreve se a operacao deu certo (0) ou errado (1)
+    char response[3];
+    snprintf(response,3,"%d%d", code, result);
+    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+    if(response_pipe==-1){
+      //erro a abrir o pipe de respostas
+      return 1;
+    }
+    int success = write_all(response_pipe, response, 3);
+    if(success==1){
+      close(response_pipe);
+      return 0;
+    }else{
+      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+      return 1;
+    }
+  }
+  return 1;
+}
+
 // Função para tratar SIGUSR1
 void sinalDetetado() {
   //tem de eliminar todas as subscricoes de todos os clientes e encerrar os seus pipes
@@ -443,28 +465,6 @@ void *readServerPipe(){
     }
   }
   return NULL;
-}
-
-int sendOperationResult(int code, int result, Cliente* cliente){
-  if(!getSinalSeguranca()){
-    //escreve se a operacao deu certo (0) ou errado (1)
-    char response[3];
-    snprintf(response,3,"%d%d", code, result);
-    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    if(response_pipe==-1){
-      //erro a abrir o pipe de respostas
-      return 1;
-    }
-    int success = write_all(response_pipe, response, 3);
-    if(success==1){
-      close(response_pipe);
-      return 0;
-    }else{
-      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-      return 1;
-    }
-  }
-  return 1;
 }
 
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1

@@ -10,6 +10,22 @@
 #include "src/common/protocol.h"
 #include "src/common/io.h"
 
+
+int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->verdadeiro
+
+int getSinalSeguranca(){
+  return sinalSeguranca;
+}
+
+void mudarSinalSeguranca(){
+  if(sinalSeguranca){
+    sinalSeguranca=0;
+  }else{
+    sinalSeguranca=1;
+  }
+  return;
+}
+
 //manda request
 void createMessage(const char *req_pipe_path, char *message){
   int pipe_req = open(req_pipe_path, O_WRONLY);
