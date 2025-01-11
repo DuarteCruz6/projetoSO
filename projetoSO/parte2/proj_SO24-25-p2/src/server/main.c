@@ -293,7 +293,7 @@ void iniciar_sessao(char *message){
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
       char response[2] = "1";
-      if (write_all(response_pipe, response, 1) == -1) {
+      if (write_all(response_pipe, response, 2) == -1) {
         write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       }
       return;
@@ -324,10 +324,11 @@ void iniciar_sessao(char *message){
 
     //manda que deu sucesso
     char response[2] = "0";
-    if (write_all(response_pipe, response, 1) == -1) {
+    if (write_all(response_pipe, response, 2) == -1) {
       write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
       return;
     }
+    ssize_t bytes_written = write(response_pipe, response, strlen(response));
     return;
   }
   
