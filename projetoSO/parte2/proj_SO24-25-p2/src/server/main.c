@@ -465,7 +465,7 @@ void *readServerPipe(){
     } else if (success == 0) {
       printf("O pipe do server foi fechado\n");
       // EOF: O pipe foi fechado
-      //return NULL;
+      return NULL;
     } else {
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");

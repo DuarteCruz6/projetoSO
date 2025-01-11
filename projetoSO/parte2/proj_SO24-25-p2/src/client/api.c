@@ -99,7 +99,13 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
-  createMessage(server_pipe_path,message);
+  //createMessage(server_pipe_path,message);
+  int pipe_server = open(server_pipe_path, O_WRONLY);
+  if (write_all(pipe_server, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
+    write_str(STDERR_FILENO, "Error writing to pipe request");
+    close(pipe_server);
+    return;
+  }
   printf("ja criou a mensagem, agora vai recebe la\n");
   
   int response = getResponse(resp_pipe_path);
