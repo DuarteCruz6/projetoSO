@@ -597,6 +597,7 @@ static void dispatch_threads(DIR *dir) {
   //inicia sessão dos clientes
   readServerPipe();
 
+  printf("antes do thread join das threads dos .job\n");
   for (unsigned int i = 0; i < max_threads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread");
