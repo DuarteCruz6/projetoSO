@@ -697,7 +697,16 @@ int main(int argc, char **argv) {
   }
 
   //criar FIFO
+  //char fifo_path[256] = "tmp/";
   char fifo_path[256] = "../common/tmp/";
+  strcat(fifo_path,nome_fifo);
+  if (mkfifo(fifo_path, 0777) == -1) {
+      write_str(STDERR_FILENO, "Failed to create FIFO: ");
+      write_str(STDERR_FILENO, fifo_path);
+      write_str(STDERR_FILENO, "\n");
+      return 0;
+  }
+
   server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
@@ -706,14 +715,6 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  //char fifo_path[256] = "tmp/";
-  strcat(fifo_path,nome_fifo);
-  if (mkfifo(fifo_path, 0777) == -1) {
-      write_str(STDERR_FILENO, "Failed to create FIFO: ");
-      write_str(STDERR_FILENO, fifo_path);
-      write_str(STDERR_FILENO, "\n");
-      return 0;
-  }
 
   sem_init(&semaforoBuffer, 0, MAX_SESSION_COUNT); //inicializar semaforo a 0 e vai até S
   bufferThreads = (BufferUserConsumer*)malloc(sizeof(BufferUserConsumer));
