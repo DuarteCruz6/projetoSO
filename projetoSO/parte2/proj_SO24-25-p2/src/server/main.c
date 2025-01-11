@@ -43,6 +43,7 @@ sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao 
 sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
+pthread_t *threads_gestoras;
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -561,7 +562,6 @@ void *readClientPipe(){
 static void dispatch_threads(DIR *dir) {
   printf("vai criar as threads\n");
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
-  pthread_t *threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
 
   //bloqueia o sinal SIGUSR1 em todas as threads
   sigemptyset(&sinalSeguranca);
@@ -615,16 +615,6 @@ static void dispatch_threads(DIR *dir) {
       write_uint(STDERR_FILENO, (int) i);
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
-      return;
-    }
-  }
-
-  printf("chegou antes do thread join das gestoras\n");
-  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
-    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
-      write_str(STDERR_FILENO, "Failed to join thread gestora ");
-      write_uint(STDERR_FILENO, (int) thread_gestora);
-      free(threads_gestoras);
       return;
     }
   }
@@ -711,6 +701,8 @@ int main(int argc, char **argv) {
   bufferThreads->headUser = NULL;
   pthread_mutex_init(&bufferThreads->buffer_mutex, NULL);
 
+  threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
+
   dispatch_threads(dir);
 
   if (closedir(dir) == -1) {
@@ -725,6 +717,15 @@ int main(int argc, char **argv) {
 
   
   kvs_terminate();
+  printf("chegou antes do thread join das gestoras\n");
+  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
+    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
+      write_str(STDERR_FILENO, "Failed to join thread gestora ");
+      write_uint(STDERR_FILENO, (int) thread_gestora);
+      free(threads_gestoras);
+      return;
+    }
+  }
   close(server_fifo);
   pthread_mutex_destroy(&bufferThreads->buffer_mutex);
   sem_destroy(&semaforoBuffer);
