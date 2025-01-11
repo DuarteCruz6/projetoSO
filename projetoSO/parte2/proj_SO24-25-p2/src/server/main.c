@@ -261,6 +261,7 @@ static void *get_file(void *arguments) {
     write_str(STDERR_FILENO, "Thread failed to unlock directory_mutex\n");
     return NULL;
   }
+  return NULL;
 }
 
 void iniciar_sessao(char *message){
