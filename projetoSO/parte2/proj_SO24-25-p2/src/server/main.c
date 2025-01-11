@@ -606,7 +606,7 @@ static void dispatch_threads(DIR *dir) {
   //inicia sessão dos clientes
   printf("antes de ler o pipe do server\n");
   pthread_t *thread_inicioSessao = malloc(sizeof(pthread_t));
-  if (pthread_create(&thread_inicioSessao, NULL, readServerPipe,NULL) !=
+  if (pthread_create(thread_inicioSessao, NULL, readServerPipe,NULL) !=
       0) {
     write_str(STDERR_FILENO, "Failed to create thread inicioSessao");
     free(threads_gestoras);
