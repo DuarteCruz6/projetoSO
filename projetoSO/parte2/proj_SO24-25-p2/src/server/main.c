@@ -450,7 +450,7 @@ void *readServerPipe(){
   char message[128];
   while(!getSinalSeguranca()){
     int success = read_all(server_fifo,&message, 128, &erro);
-    if (success > 1){
+    if (success == 1){
       printf("leu algo\n");
       int code = message[0];
       if (code==1){
