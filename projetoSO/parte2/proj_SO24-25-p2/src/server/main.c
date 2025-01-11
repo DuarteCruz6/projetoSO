@@ -527,7 +527,6 @@ Cliente* getClientForThread(){
       user_atual = user_atual->nextUser; //passa ate encontrar um cliente cuja usedFlag seja falsa ou entao ate nao haver mais nenhum cliente disponivel
     }
     user_atual->usedFlag=true; //mete a flag do user como true pois vai ser usado
-    printf("encontrou cliente\n");
     return user_atual->cliente; //retorna o cliente que vai ser usado
   }
   return NULL;
@@ -536,13 +535,14 @@ Cliente* getClientForThread(){
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
 //so acaba quando o server morre (??)
 void *readClientPipe(){
-  printf("procura para ler a pipe dos clientes\n");
   while(1){
+    printf("procura para ler a pipe dos clientes\n");
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
+      printf("encontrou cliente\n");
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         return NULL;
