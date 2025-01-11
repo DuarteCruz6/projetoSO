@@ -277,6 +277,10 @@ void iniciar_sessao(char *message){
   pipe_resp[40] = '\0';              // Adicionar terminador nulo
   strncpy(pipe_notif, &message[80], 40); // Copiar os últimos 40 caracteres
   pipe_notif[40] = '\0';  
+  printf("code: %d\n",code);
+  printf("pipe req: %s\n",pipe_req);
+  printf("pipe resp: %s\n",pipe_resp);
+  printf("pipe notif: %s\n",pipe_notif);
   int response_pipe = open(pipe_resp, O_WRONLY);
   if (response_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
