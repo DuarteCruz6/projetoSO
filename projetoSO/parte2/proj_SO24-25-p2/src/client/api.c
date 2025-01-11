@@ -106,14 +106,14 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   
   printf("ja criou a mensagem %s, com tamanho %d agora vai recebe la\n", message, sizeof(message));
 
-  //printf("sem stor\n");
-  //ssize_t bytes_written = write(server_pipe, message, strlen(message));
-  //if (bytes_written == -1) {
-  //    perror("Erro ao escrever no FIFO");
-  //    close(server_pipe);
-  //    return 1;
-  //}
-  //printf("fim sem stor\n");
+  printf("sem stor\n");
+  ssize_t bytes_written = write(server_pipe, message, strlen(message));
+  if (bytes_written == -1) {
+      perror("Erro ao escrever no FIFO");
+      close(server_pipe);
+      return 1;
+  }
+  printf("fim sem stor\n");
 
   close(server_pipe);
   int response = getResponse(resp_pipe_path);
