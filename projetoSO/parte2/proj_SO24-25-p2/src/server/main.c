@@ -448,8 +448,11 @@ void *readServerPipe(){
   //ler FIFO
   int erro=0;
   char message[122];
-  while(!getSinalSeguranca()&&erro==0){
+  while(erro==0){
     int success = read_all(server_fifo,&message, 121, &erro);
+    if(erro==1){
+      return NULL;
+    }
     if (success == 1){
       printf("leu algo\n");
       int code = message[0];
@@ -461,12 +464,9 @@ void *readServerPipe(){
         write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
         return NULL;
       }
-    } else if (success == 0) {
-      // EOF: O pipe foi fechado
     } else {
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
-      return NULL;
     }
   }
   return NULL;
@@ -705,7 +705,7 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
+  server_fifo = open(fifo_path, O_RDWR); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
