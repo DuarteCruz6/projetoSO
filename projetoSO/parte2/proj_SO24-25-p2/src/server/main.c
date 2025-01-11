@@ -672,13 +672,13 @@ int main(int argc, char **argv) {
   //criar FIFO
   char fifo_path[256] = "/tmp/req";
   strcat(fifo_path,nome_fifo);
-  if (mkfifo(nome_fifo, 0777) == -1) {
+  if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
       write_str(STDERR_FILENO, argv[4]);
       return 0;
   }
 
-  server_fifo = open(nome_fifo, O_RDWR);
+  server_fifo = open(fifo_path, O_RDWR);
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
