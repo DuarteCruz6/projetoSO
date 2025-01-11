@@ -27,16 +27,17 @@ void mudarSinalSeguranca(){
 }
 
 //manda request
-void createMessage(const char *req_pipe_path, char *message){
+int createMessage(const char *req_pipe_path, char *message){
   printf("vai abrir o pipe para pedir algo\n");
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");
     close(pipe_req);
-    return;
+    return 1;
   }
   printf("ja pediu algo\n");
   close(pipe_req);
+  return 0;
 }
 
 //recebe a resposta do pipe
@@ -99,12 +100,8 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
-  //createMessage(server_pipe_path,message);
-  int pipe_server = open(server_pipe_path, O_WRONLY);
-  if (write_all(pipe_server, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
-    write_str(STDERR_FILENO, "Error writing to pipe request");
-    close(pipe_server);
-    return;
+  if(createMessage(server_pipe_path,message)==1){
+    return 1;
   }
   printf("ja criou a mensagem, agora vai recebe la\n");
   
@@ -121,7 +118,9 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   // close pipes and unlink pipe files
   char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
-  createMessage(req_pipe_path,code);
+  if(createMessage(req_pipe_path,code)==1){
+    return 1;
+  }
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to disconnect the client\n");
@@ -150,7 +149,9 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   char message[42];
   //construir mensagem
   snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,key);
-  createMessage(req_pipe_path,message);
+  if(createMessage(req_pipe_path,message)==1){
+    return 1;
+  }
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to subscribe the client\n");
@@ -166,7 +167,9 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   char message[42];
   //construir mensagem
   snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,key);
-  createMessage(req_pipe_path,message);
+  if(createMessage(req_pipe_path,message)==1){
+    return 1;
+  }
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to unsubscribe the client\n");
