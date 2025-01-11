@@ -323,11 +323,11 @@ void iniciar_sessao(char *message){
     sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
 
     //manda que deu sucesso
-    char response[2] = "10";
-    if (write_all(response_pipe, response, 3) == -1) {
-      write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
-      return;
-    }
+    char response[3] = "10";
+    //if (write_all(response_pipe, response, 3) == -1) {
+    //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
+    //  return;
+    //}
     ssize_t bytes_written = write(response_pipe, response, strlen(response));
     return;
   }

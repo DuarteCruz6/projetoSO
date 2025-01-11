@@ -51,9 +51,10 @@ int getResponse(const char *resp_pipe_path){
   }
 
   // Ler a mensagem do pipe (bloqueante)
-  char buffer[2];
+  char buffer[3];
   printf("vai ler a msg agora \n");
   int success = read_all(pipe_resp, buffer, 2, NULL);
+  buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
   close(pipe_resp);
   if (success == -1) {
