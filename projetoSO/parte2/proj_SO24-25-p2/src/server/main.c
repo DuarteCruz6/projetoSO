@@ -447,8 +447,8 @@ void *readServerPipe(){
 
   //ler FIFO
   int erro=0;
-  char message[128];
-  while(!getSinalSeguranca()){
+  char message[129];
+  while(!getSinalSeguranca()&&erro==0){
     int success = read_all(server_fifo,&message, 128, &erro);
     if (success == 1){
       printf("leu algo\n");
