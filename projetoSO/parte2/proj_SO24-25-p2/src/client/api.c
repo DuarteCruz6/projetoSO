@@ -100,7 +100,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
 
-  if(createMessage(server_pipe_path,message)==1){
+  if(write_all(server_pipe_path, message, strlen(message)+1) == -1){
     return 1;
   }
   printf("ja criou a mensagem, agora vai recebe la\n");
