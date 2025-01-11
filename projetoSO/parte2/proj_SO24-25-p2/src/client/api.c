@@ -74,6 +74,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
                 char const *notif_pipe_path, char const *server_pipe_path) {
   // create pipes and connect
   if (mkfifo(req_pipe_path, 0777) == -1) {
+    printf("path: %s\n",req_pipe_path);
     write_str(STDERR_FILENO, "Failed to create request pipe\n");
     return 1;
   }
