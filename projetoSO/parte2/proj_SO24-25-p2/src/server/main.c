@@ -448,10 +448,8 @@ void *readServerPipe(){
   //ler FIFO
   int erro=0;
   char message[128];
-  while(1){
-    printf("vai ler o pipe do server\n");
+  while(!getSinalSeguranca()){
     int success = read_all(server_fifo,&message, 128, &erro);
-    printf("leu o pipe do server\n");
     if (success > 1){
       printf("leu algo\n");
       int code = message[0];
@@ -464,7 +462,6 @@ void *readServerPipe(){
         return NULL;
       }
     } else if (success == 0) {
-      printf("O pipe do server foi fechado\n");
       // EOF: O pipe foi fechado
       return NULL;
     } else {
