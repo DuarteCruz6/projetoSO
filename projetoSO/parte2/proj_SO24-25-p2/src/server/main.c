@@ -44,7 +44,6 @@ sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 pthread_t *threads_gestoras;
-char fifo_path[256] = "../common/tmp/";
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -450,15 +449,7 @@ void *readServerPipe(){
   int erro=0;
   char message[122];
   while(erro==0){
-    server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
-    if (server_fifo == -1) {
-      write_str(STDERR_FILENO, "Failed to open fifo: ");
-      write_str(STDERR_FILENO, nome_fifo);
-      write_str(STDERR_FILENO, "\n");
-      return 0;
-    }
     int success = read_all(server_fifo,&message, 121, &erro);
-    close(server_fifo);
     printf("b\n");
     if(erro==1){
       return NULL;
@@ -706,6 +697,15 @@ int main(int argc, char **argv) {
   }
 
   //criar FIFO
+  char fifo_path[256] = "../common/tmp/";
+  server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
+  if (server_fifo == -1) {
+    write_str(STDERR_FILENO, "Failed to open fifo: ");
+    write_str(STDERR_FILENO, nome_fifo);
+    write_str(STDERR_FILENO, "\n");
+    return 0;
+  }
+
   //char fifo_path[256] = "tmp/";
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
@@ -736,6 +736,7 @@ int main(int argc, char **argv) {
 
   
   kvs_terminate();
+  close(server_fifo);
   pthread_mutex_destroy(&bufferThreads->buffer_mutex);
   sem_destroy(&semaforoBuffer);
   free(bufferThreads);
