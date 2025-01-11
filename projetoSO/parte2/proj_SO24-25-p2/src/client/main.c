@@ -209,9 +209,9 @@ int main(int argc, char *argv[]) {
   char notif_pipe_path[256] = "tmp/notif/";
 
   //adicionar id do cliente ao nome dos pipes
-  strncat(req_pipe_path, argv[1], sizeof(argv[1]));
-  strncat(resp_pipe_path, argv[1], sizeof(argv[1]));
-  strncat(notif_pipe_path, argv[1], sizeof(argv[1]));
+  strncat(req_pipe_path, argv[1], strlen(argv[1]));
+  strncat(resp_pipe_path, argv[1], strlen(argv[1]));
+  strncat(notif_pipe_path, argv[1], strlen(argv[1]));
 
   char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
