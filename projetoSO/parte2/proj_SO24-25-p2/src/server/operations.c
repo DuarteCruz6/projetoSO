@@ -14,6 +14,7 @@
 #include "kvs.h"
 
 static struct HashTable *kvs_table = NULL;
+int sinalSegurancaLancado=0; //flag para saber se houve um sinal SIGUSR1 lancado ou nao (0-false 1-true)
 
 /// Calculates a timespec from a delay in milliseconds.
 /// @param delay_ms Delay in milliseconds.
@@ -186,6 +187,20 @@ void kvs_wait(unsigned int delay_ms) {
   struct timespec delay = delay_to_timespec(delay_ms);
   nanosleep(&delay, NULL);
 }
+
+void mudarSinalSeguranca(){
+  if(sinalSegurancaLancado){
+    sinalSegurancaLancado = 0; //mete como false
+  }else{
+    sinalSegurancaLancado = 1; //mete como true
+  }
+  return;
+}
+
+int getSinalSeguranca(){
+  return sinalSegurancaLancado;
+}
+
 
 int addSubscriber(Cliente *cliente, char *key){
   if(!getSinalSeguranca()){
