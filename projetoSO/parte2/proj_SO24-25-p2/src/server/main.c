@@ -448,8 +448,9 @@ void *readServerPipe(){
   int erro=0;
   char message[128];
   while(1){
-    printf("vai ler o pipe do server\n");
+    printf("vai ler o pipe do server %s\n",server_fifo);
     int success = read_all(server_fifo,&message, 128, &erro);
+    printf("leu o pipe do server\n");
     if (success > 1){
       printf("leu algo\n");
       int code = message[0];
