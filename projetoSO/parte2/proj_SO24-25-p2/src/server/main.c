@@ -609,6 +609,7 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
+  printf("chegou antes do thread join das gestoras\n");
   for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
     if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread gestora ");
