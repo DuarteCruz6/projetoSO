@@ -224,6 +224,8 @@ int main(int argc, char *argv[]) {
   pad_string(resp_pipe, sizeof(resp_pipe));
   pad_string(notif_pipe, sizeof(notif_pipe));
 
+  server_pipe_path = argv[2];
+
 
   if (kvs_connect(req_pipe, resp_pipe, notif_pipe, server_pipe_path)==1){
     return 1;
