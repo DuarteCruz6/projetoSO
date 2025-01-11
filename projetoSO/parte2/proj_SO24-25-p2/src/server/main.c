@@ -447,7 +447,7 @@ void *readServerPipe(){
 
   //ler FIFO
   int erro=0;
-  char message[129];
+  char message[122];
   while(!getSinalSeguranca()&&erro==0){
     int success = read_all(server_fifo,&message, 121, &erro);
     if (success == 1){
@@ -705,7 +705,7 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
+  server_fifo = open(fifo_path, O_RDWR); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
