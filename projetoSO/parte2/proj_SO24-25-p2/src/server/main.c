@@ -449,7 +449,9 @@ void *readServerPipe(){
   int erro=0;
   char message[122];
   while(erro==0){
+    printf("a\n");
     int success = read_all(server_fifo,&message, 121, &erro);
+    printf("b\n");
     if(erro==1){
       return NULL;
     }
@@ -696,7 +698,7 @@ int main(int argc, char **argv) {
   }
 
   //criar FIFO
-  char fifo_path[256] = "tmp/serverPipe/";
+  char fifo_path[256] = "tmp/";
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
