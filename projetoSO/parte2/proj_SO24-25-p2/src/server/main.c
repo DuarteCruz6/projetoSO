@@ -438,24 +438,31 @@ void sinalDetetado() {
 
 void *readServerPipe(){
   // Desbloquear SIGUSR1 apenas nesta thread
+  printf("desbloquear o sinal nesta thread\n");
   pthread_sigmask(SIG_UNBLOCK, &sinalSeguranca, NULL);
   // Registar o manipulador de sinal
+   printf("registar o sinal nesta thread\n");
   signal(SIGUSR1, sinalDetetado);
 
   //ler FIFO
   int erro=0;
   char message[128];
   while(1){
+    printf("vai ler o pipe do server\n");
     int success = read_all(server_fifo,&message, 128, &erro);
     if (success > 1){
+      printf("leu algo\n");
       int code = message[0];
       if (code==1){
+        printf("vai iniciar sessao\n");
         iniciar_sessao(message);
+        printf("iniciou sessao\n");
       }else{
         write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
         return NULL;
       }
     } else if (success == 0) {
+      printf("O pipe do server foi fechado\n");
       // EOF: O pipe foi fechado
       return NULL;
     } else {
@@ -596,7 +603,9 @@ static void dispatch_threads(DIR *dir) {
   }
 
   //inicia sessão dos clientes
+  printf("antes de ler o pipe do server\n");
   readServerPipe();
+  printf("depois de ler o pipe do server\n");
 
   printf("antes do thread join das threads dos .job\n");
   for (unsigned int i = 0; i < max_threads; i++) {
