@@ -204,9 +204,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  char req_pipe_path[256] = "/tmp/req/";
-  char resp_pipe_path[256] = "/tmp/resp/";
-  char notif_pipe_path[256] = "/tmp/notif/";
+  char req_pipe_path[256] = "tmp/req/";
+  char resp_pipe_path[256] = "tmp/resp/";
+  char notif_pipe_path[256] = "tmp/notif/";
 
   //adicionar id do cliente ao nome dos pipes
   strncat(req_pipe_path, argv[1], strlen(argv[2]) * sizeof(char));
