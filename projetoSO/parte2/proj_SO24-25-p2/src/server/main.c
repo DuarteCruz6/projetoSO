@@ -619,6 +619,16 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
+  printf("chegou antes do thread join das gestoras\n");
+  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
+    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
+      write_str(STDERR_FILENO, "Failed to join thread gestora ");
+      write_uint(STDERR_FILENO, (int) thread_gestora);
+      free(threads_gestoras);
+      return 0;
+    }
+  }
+
   if (pthread_mutex_destroy(&thread_data.directory_mutex) != 0) {
     write_str(STDERR_FILENO, "Failed to destroy directory_mutex\n");
   }
@@ -717,15 +727,6 @@ int main(int argc, char **argv) {
 
   
   kvs_terminate();
-  printf("chegou antes do thread join das gestoras\n");
-  for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
-    if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
-      write_str(STDERR_FILENO, "Failed to join thread gestora ");
-      write_uint(STDERR_FILENO, (int) thread_gestora);
-      free(threads_gestoras);
-      return;
-    }
-  }
   close(server_fifo);
   pthread_mutex_destroy(&bufferThreads->buffer_mutex);
   sem_destroy(&semaforoBuffer);
