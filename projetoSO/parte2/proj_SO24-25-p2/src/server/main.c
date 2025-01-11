@@ -605,11 +605,10 @@ static void dispatch_threads(DIR *dir) {
 
   //inicia sessão dos clientes
   printf("antes de ler o pipe do server\n");
-  pthread_t thread_inicioSessao = malloc(sizeof(pthread_t));
-  if (pthread_create(thread_inicioSessao, NULL, readServerPipe,NULL) !=
+  pthread_t thread_inicioSessao;
+  if (pthread_create(&thread_inicioSessao, NULL, readServerPipe,NULL) !=
       0) {
     write_str(STDERR_FILENO, "Failed to create thread inicioSessao");
-    free(thread_inicioSessao);
     return;
   }
   printf("depois de ler o pipe do server\n");
@@ -638,7 +637,6 @@ static void dispatch_threads(DIR *dir) {
   printf("chegou antes do thread join da thread inicioSessao\n");
   if (pthread_join(thread_inicioSessao, NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread inicioSessao ");
-      free(thread_inicioSessao);
       return;
     }
 
