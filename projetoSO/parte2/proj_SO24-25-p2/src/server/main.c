@@ -292,9 +292,9 @@ void iniciar_sessao(char *message){
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-      char response[2] = "1";
+      char response[2] = "11";
       if (write_all(response_pipe, response, 2) == -1) {
-        write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
+        write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
       }
       return;
     }
@@ -323,9 +323,9 @@ void iniciar_sessao(char *message){
     sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
 
     //manda que deu sucesso
-    char response[2] = "0";
+    char response[2] = "10";
     if (write_all(response_pipe, response, 2) == -1) {
-      write_str(STDERR_FILENO,"Erro ao enviar pedido de subscrição");
+      write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
       return;
     }
     ssize_t bytes_written = write(response_pipe, response, strlen(response));
