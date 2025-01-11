@@ -698,7 +698,8 @@ int main(int argc, char **argv) {
       return 0;
   }
 
-  server_fifo = open(fifo_path, O_RDWR);
+  //server_fifo = open(fifo_path, O_RDWR);
+  server_fifo = open(fifo_path, O_RDONLY | O_NONBLOCK);
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
