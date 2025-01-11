@@ -670,7 +670,7 @@ int main(int argc, char **argv) {
   }
 
   //criar FIFO
-  char fifo_path[256] = "/tmp/req/";
+  char fifo_path[256] = "/tmp/serverPipe/";
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
