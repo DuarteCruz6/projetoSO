@@ -41,6 +41,12 @@ int getResponse(const char *resp_pipe_path){
   int code, result;
   sscanf(buffer, "%d%d", &code, &result);
 
+  if(code==5){
+    //sinal de seguranca lancado
+    mudarSinalSeguranca();
+    return 0;
+  }
+
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
   snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[result-1]);

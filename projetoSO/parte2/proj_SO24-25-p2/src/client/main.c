@@ -13,6 +13,7 @@
 
 char *server_pipe_path= NULL;
 bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
+int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->verdadeiro
 
 struct ThreadPrincipalData {
   const char *req_pipe_path;
@@ -30,6 +31,19 @@ void pad_string(char *str, size_t length) {
     memset(str + current_length, ' ', length - current_length);
     str[length - 1] = '\0'; // Assegurar que termina com \0
   }
+}
+
+int getSinalSeguranca(){
+  return sinalSeguranca;
+}
+
+void mudarSinalSeguranca(){
+  if(sinalSeguranca){
+    sinalSeguranca=0;
+  }else{
+    sinalSeguranca=1;
+  }
+  return;
 }
 
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server

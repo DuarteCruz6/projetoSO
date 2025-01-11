@@ -55,6 +55,21 @@ char *jobs_directory = NULL;
 char *nome_fifo = NULL;
 int server_fifo;
 
+int sinalSegurancaLancado=0; //flag para saber se houve um sinal SIGUSR1 lancado ou nao (0-false 1-true)
+
+void mudarSinalSeguranca(){
+  if(sinalSegurancaLancado){
+    sinalSegurancaLancado = 0; //mete como false
+  }else{
+    sinalSegurancaLancado = 1; //mete como true
+  }
+  return;
+}
+
+int getSinalSeguranca(){
+  return sinalSegurancaLancado;
+}
+
 int filter_job_files(const struct dirent *entry) {
   const char *dot = strrchr(entry->d_name, '.');
   if (dot != NULL && strcmp(dot, ".job") == 0) {
@@ -406,6 +421,7 @@ void sinalDetetado() {
       write_str(STDERR_FILENO, "Failed to close notification pipe\n");
       return;
     }
+    sendOperationResult(5,0,cliente);
     free(cliente);
     userAtual=userAtual->nextUser;
   }
