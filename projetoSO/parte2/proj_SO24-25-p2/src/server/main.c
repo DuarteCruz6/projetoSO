@@ -698,7 +698,7 @@ int main(int argc, char **argv) {
   }
 
   //criar FIFO
-  char fifo_path[256] = "tmp/";
+  char fifo_path[256] = "../common/tmp/";
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
