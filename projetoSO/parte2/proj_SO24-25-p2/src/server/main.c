@@ -324,7 +324,7 @@ void iniciar_sessao(char *message){
 
     //manda que deu sucesso
     char response[2] = "10";
-    if (write_all(response_pipe, response, 2) == -1) {
+    if (write_all(response_pipe, response, 3) == -1) {
       write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
       return;
     }
