@@ -277,10 +277,11 @@ void iniciar_sessao(char *message){
   pipe_resp[40] = '\0';              // Adicionar terminador nulo
   strncpy(pipe_notif, &message[81], 40); // Copiar os últimos 40 caracteres
   pipe_notif[40] = '\0';  
-
   int response_pipe = open(pipe_resp, O_WRONLY);
   if (response_pipe == -1) {
-    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response");
+    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
+    write_str(STDERR_FILENO,pipe_resp);
+    write_str(STDERR_FILENO,"\n");
     return;
   }
   if(code==1){
@@ -397,6 +398,12 @@ int sendOperationResult(int code, int result, Cliente* cliente){
       return 1;
     }
     int success = write_all(response_pipe, response, 3);
+    ssize_t bytes_written = write(response_pipe, response, strlen(response));
+    if (bytes_written == -1) {
+        perror("Erro ao escrever no FIFO de resposta\n");
+        close(response_pipe);
+        return 1;
+    }
     if(success==1){
       close(response_pipe);
       return 0;
