@@ -133,8 +133,14 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("pipe do server: %s\n",server_pipe_path);
 
   char message[121];
+  char opCodeStr[2];                      // Buffer para armazenar a string do OP_CODE
+  sprintf(opCodeStr, "%d", OP_CODE_CONNECT);
   //construir mensagem
-  snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
+  strcat(message,opCodeStr);
+  strcat(message,req_pipe_path);
+  strcat(message,resp_pipe_path);
+  strcat(message,notif_pipe_path);
+  printf("len message: %ld\n",strlen(message));
   int server_pipe = open(server_pipe_path, O_WRONLY);
 
   if(write_all(server_pipe, message, 121) == -1){
