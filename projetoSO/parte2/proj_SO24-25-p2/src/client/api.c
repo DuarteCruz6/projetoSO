@@ -17,11 +17,11 @@ int pipe_req;
 int pipe_resp;
 
 void pad_string(char *message,char *str, int length) {
-  for(int i=0; i<length && str[i]!="\0"; i++){
+  for(int i=0; i<length && str[i]!='\0'; i++){
     if(i<strlen(str)){
       message[i] = str[i];
     }else{
-      message[i] = "\0";
+      message[i] = '\0';
     }
   }
 }
