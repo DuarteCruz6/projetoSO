@@ -386,12 +386,12 @@ int unsubscribeClient(Cliente *cliente, char *message){
 }
 
 void removeClientFromBuffer(Cliente *cliente){
-  pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
   User *user_atual = bufferThreads->headUser;
   if(user_atual->cliente->id == cliente->id){
     //este user era a cabeca da lista
     bufferThreads->headUser = user_atual->nextUser;
     free(user_atual);
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
     return;
   }else{
     //este user esta no meio da lista
@@ -449,7 +449,9 @@ void sinalDetetado() {
   while (userAtual!=NULL){
     Cliente* cliente = userAtual->cliente;
     disconnectClient(cliente); //remove as suas subscricoes
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
     removeClientFromBuffer(cliente); //remover do buffer
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
     // Apagar os pipes do cliente
     if (unlinkPipes(cliente->req_pipe_path)!=0){
       write_str(STDERR_FILENO, "Failed to close request pipe\n");
@@ -654,8 +656,6 @@ static void dispatch_threads(DIR *dir) {
 
   //cria S threads ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    pthread_mutex_lock(&bufferThreads->buffer_mutex); //lock pois vamos ler do buffer        
-    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //unlock do buffer
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
         0) {
       write_str(STDERR_FILENO, "Failed to create thread gestora");
