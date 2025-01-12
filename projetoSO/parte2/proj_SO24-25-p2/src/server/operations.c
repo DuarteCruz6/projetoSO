@@ -242,16 +242,6 @@ int disconnectClient(Cliente *cliente){
   if(!getSinalSeguranca()){
     printf("esta no disconnectClient \n");
     Subscriptions *subscricao_atual = cliente->head_subscricoes;
-    if(cliente->head_subscricoes == NULL){
-      printf("head é null\n");
-    }else{
-      printf("head nao é null\n");
-    }
-    if(cliente->head_subscricoes->next == NULL){
-      printf("head next é null\n");
-    }else{
-      printf("head next nao é null\n");
-    }
     //remover todas as suas subscricoes 
     while (subscricao_atual!=NULL){
       printf("ta inscrito nalgo \n");
