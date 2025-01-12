@@ -17,8 +17,12 @@ int pipe_req;
 int pipe_resp;
 
 void pad_string(char *message,char *str, int length) {
+  printf("lenght: %d\n",length);
+  printf("string original _%s_\n",str);
   for(size_t i=0; i<length; i++){
     if(i<strlen(str)){
+      printf("len string _%ld_\n",strlen(str));
+      printf("letra novo _%c_\n",str[i]);
       message[i] = str[i];
     }else{
       //message[i] = '\0';
