@@ -465,7 +465,6 @@ void sinalDetetado() {
       write_str(STDERR_FILENO, "Failed to close notification pipe\n");
       return;
     }
-    sendOperationResult(5,0,cliente);
     free(cliente);
     userAtual=userAtual->nextUser;
   }

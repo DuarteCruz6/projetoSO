@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
-
+#include <errno.h>
 
 #include "src/common/constants.h"
 #include "src/common/protocol.h"
@@ -30,6 +30,13 @@ void mudarSinalSeguranca(){
 int createMessage(const char *req_pipe_path, char *message){
   printf("vai abrir o pipe para pedir _%s_\n",message);
   int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
+  if (pipe_req == -1 && errno == EPIPE ) {
+    mudarSinalSeguranca();
+    return 1;
+  } else if (pipe_req == -1){
+    write_str(STDERR_FILENO, "Error reading pipe response");
+    return 1;
+  }
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");
     close(pipe_req);
@@ -57,15 +64,19 @@ int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
   printf("vai receber a msg agora \n");
   int pipe_resp = open(resp_pipe_path, O_RDONLY);
-  if (pipe_resp == -1) {
-      write_str(STDERR_FILENO, "Error reading pipe response");
-      return 1;
+  if (pipe_resp == -1 && errno == EPIPE ) {
+    mudarSinalSeguranca();
+    return 1;
+  } else if (pipe_resp == -1){
+    write_str(STDERR_FILENO, "Error reading pipe response");
+    return 1;
   }
 
   // Ler a mensagem do pipe (bloqueante)
   char buffer[3];
   printf("vai ler a msg agora \n");
   int success = read_all(pipe_resp, buffer, 2, NULL);
+  
   buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
   close(pipe_resp);
@@ -79,13 +90,6 @@ int getResponse(const char *resp_pipe_path){
   printf("scanneou\n");
   printf("code: %d\n",code);
   printf("result: %d\n",result);
-
-  if(code==5){
-    printf("code = 5 -> houve SIGSUR1\n");
-    //sinal de seguranca lancado
-    mudarSinalSeguranca();
-    return 0;
-  }
 
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
