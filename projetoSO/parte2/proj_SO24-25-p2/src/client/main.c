@@ -235,7 +235,14 @@ int main(int argc, char *argv[]) {
   pad_string(notif_pipe,notif_pipe_path,40);
 
   server_pipe_path = argv[2];
+  printf("req_pipe: _%s_\n",req_pipe);
+  printf("req_pipe_path: _%s_\n",req_pipe_path);
 
+  printf("resp_pipe: _%s_\n",resp_pipe);
+  printf("resp_pipe_path: _%s_\n",resp_pipe_path);
+
+  printf("notif_pipe: _%s_\n",notif_pipe);
+  printf("notif_pipe_path: _%s_\n",notif_pipe_path);
 
   if (kvs_connect(req_pipe, resp_pipe, notif_pipe, server_pipe_path)==1){
     return 1;
