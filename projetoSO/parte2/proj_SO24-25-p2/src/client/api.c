@@ -57,14 +57,18 @@ int getResponse(const char *resp_pipe_path){
   buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
   close(pipe_resp);
+  printf("fechou o pipe de resposta\n");
   if (success == -1) {
       write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
   }
   int code, result;
+  printf("vai scannear o code e o result\n");
   sscanf(buffer, "%d%d", &code, &result);
+  printf("scanneou\n");
 
   if(code==5){
+    printf("code = 5 ->houve SIGSUR1\n");
     //sinal de seguranca lancado
     mudarSinalSeguranca();
     return 0;
@@ -72,6 +76,7 @@ int getResponse(const char *resp_pipe_path){
 
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
+  printf("vai fazer a string para imprimir\n");
   snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[result-1]);
   printf("imprimir: %s\n",string);
   write_str(STDOUT_FILENO,string);
