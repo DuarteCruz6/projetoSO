@@ -125,9 +125,6 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   snprintf(message, 256, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
   int server_pipe = open(server_pipe_path, O_WRONLY);
-  if(write_all(server_pipe, message, strlen(message)+1) == -1){
-    return 1;
-  }
   
   printf("ja criou a mensagem %s, com tamanho %d agora vai recebe la\n", message, sizeof(message));
 
