@@ -281,32 +281,38 @@ void iniciar_sessao(char *message){
   printf("pipe req: %s\n",pipe_req);
   printf("pipe resp: %s\n",pipe_resp);
   printf("pipe notif: %s\n",pipe_notif);
-  int response_pipe = open(pipe_resp, O_WRONLY);
-  printf("abriu o pipe de response do cliente\n");
-  if (response_pipe == -1) {
-    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
-    write_str(STDERR_FILENO,pipe_resp);
-    write_str(STDERR_FILENO,"\n");
-    return;
-  }
   if(code==1){
     printf("codigo era 1\n");
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
       char response[2] = "11";
+      int response_pipe = open(pipe_resp, O_WRONLY);
       if (write_all(response_pipe, response, 2) == -1) {
         write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao\n");
       }
+      close(response_pipe);
       return;
     }
 
     // Inicializa os campos da estrutura
     numClientes++;
     new_cliente->id = numClientes;
-    strcpy(new_cliente->req_pipe_path, pipe_req);
-    strcpy(new_cliente->resp_pipe_path, pipe_resp);
-    strcpy(new_cliente->notif_pipe_path, pipe_notif);
+    new_cliente->response_pipe = open(pipe_resp, O_WRONLY);
+    if (new_cliente->response_pipe == -1){
+      write_str(STDERR_FILENO,"Erro ao abrir o pipe de response\n");
+      return;
+    }
+    new_cliente->request_pipe = open(pipe_req, O_WRONLY);
+    if (new_cliente->request_pipe == -1){
+      write_str(STDERR_FILENO,"Erro ao abrir o pipe de request\n");
+      return;
+    }
+    new_cliente->notif_pipe = open(pipe_notif, O_WRONLY);
+    if (new_cliente->notif_pipe == -1){
+      write_str(STDERR_FILENO,"Erro ao abrir o pipe de notification\n");
+      return;
+    }
     new_cliente->num_subscricoes=0;
     new_cliente->head_subscricoes = NULL;
     User *new_user = malloc(sizeof(User));
@@ -339,7 +345,7 @@ void iniciar_sessao(char *message){
     //  return;
     //}
     printf("vai escrever no pipe response\n");
-    ssize_t bytes_written = write(response_pipe, response, strlen(response));
+    ssize_t bytes_written = write(new_cliente->response_pipe, response, strlen(response));
     printf("escreveu no pipe response\n");
     return;
   }
@@ -415,12 +421,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     char response[3];
     snprintf(response,3,"%d%d", code, result);
     printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
-    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    if(response_pipe==-1){
-      //erro a abrir o pipe de respostas
-      return 1;
-    }
-    int success = write_all(response_pipe, response, strlen(response));
+    int success = write_all(cliente->response_pipe, response, strlen(response));
     //ssize_t bytes_written = write(response_pipe, response, strlen(response));
     //if (bytes_written == -1) {
     //    perror("Erro ao escrever no FIFO de resposta\n");
@@ -431,7 +432,6 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     //  return 0;
     //}
     if(success==1){
-      close(response_pipe);
       return 0;
     }else{
       write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
@@ -537,14 +537,9 @@ int manageClient(Cliente *cliente){
   printf("a ler a pipe dos clientes\n");
   char message[43];
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
-    int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
-    if(request_pipe==-1){
-      return 1;
-    }
     printf("vai ler\n");
-    int success = read_all(request_pipe,&message, 43, NULL);
+    int success = read_all(cliente->request_pipe,&message, 43, NULL);
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
-    close(request_pipe);
     if (success >= 0){
       int code = message[0]- '0';
       int result;
@@ -561,6 +556,9 @@ int manageClient(Cliente *cliente){
             //erro a mandar mensagem para o cliente
             return 1;
           }
+          close(cliente->request_pipe);
+          close(cliente->response_pipe);
+          close(cliente->notif_pipe);
           break;
         }
 
@@ -621,6 +619,7 @@ void *readClientPipe(){
       }
     }
   }
+
 }
 
 static void dispatch_threads(DIR *dir) {
