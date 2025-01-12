@@ -515,7 +515,7 @@ void iniciarSessaoCliente(Cliente *cliente){
   printf("abriu o pipe de response do cliente\n");
   if (response_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
-    write_str(STDERR_FILENO,response_pipe);
+    write_str(STDERR_FILENO,cliente->resp_pipe_path);
     write_str(STDERR_FILENO,"\n");
     return;
   }
@@ -591,7 +591,6 @@ int manageClient(Cliente *cliente){
 
 //retira o primeiro cliente que nao tem thread associada e retorna-o
 Cliente* getClientForThread(){
-  printf("a ir buscar cliente\n");
   User* user_atual = bufferThreads->headUser;
   if(user_atual!=NULL){
     while (user_atual->usedFlag && user_atual->nextUser!=NULL){
@@ -607,7 +606,6 @@ Cliente* getClientForThread(){
 //so acaba quando o server morre (??)
 void *readClientPipe(){
   while(1){
-    printf("procura para ler a pipe dos clientes\n");
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
