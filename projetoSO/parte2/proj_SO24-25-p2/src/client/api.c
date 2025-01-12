@@ -19,7 +19,7 @@ int pipe_resp;
 void pad_string(char *str, size_t length) {
   size_t current_length = strlen(str);
   if (current_length < length) {
-    memset(str + current_length, ' ', length - current_length);
+    memset(str + current_length, '\0', length - current_length);
     str[length - 1] = '\0'; // Assegurar que termina com \0
   }
 }
