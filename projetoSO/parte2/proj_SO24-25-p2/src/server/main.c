@@ -287,7 +287,7 @@ void iniciar_sessao(char *message){
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
       char response[2] = "11";
-      int response_pipe = open(pipe_resp, O_WRONLY);
+      int response_pipe = open(pipe_resp, O_WRONLY | O_NONBLOCK);
       if (write_all(response_pipe, response, 2) == -1) {
         write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao\n");
       }
@@ -299,21 +299,21 @@ void iniciar_sessao(char *message){
     numClientes++;
     new_cliente->id = numClientes;
     printf("vai abrir o pipe de resposta do cliuente \n");
-    new_cliente->response_pipe = open(pipe_resp, O_WRONLY);
+    new_cliente->response_pipe = open(pipe_resp, O_WRONLY | O_NONBLOCK);
     printf("abriu o pipe de resposta do cliuente \n");
     if (new_cliente->response_pipe == -1){
       write_str(STDERR_FILENO,"Erro ao abrir o pipe de response\n");
       return;
     }
     printf("vai abrir o pipe de request do cliuente \n");
-    new_cliente->request_pipe = open(pipe_req, O_RDONLY);
+    new_cliente->request_pipe = open(pipe_req, O_RDONLY | O_NONBLOCK);
     printf("abriu o pipe de request do cliuente \n");
     if (new_cliente->request_pipe == -1){
       write_str(STDERR_FILENO,"Erro ao abrir o pipe de request\n");
       return;
     }
     printf("vai abrir o pipe de notif do cliuente \n");
-    new_cliente->notif_pipe = open(pipe_notif, O_WRONLY);
+    new_cliente->notif_pipe = open(pipe_notif, O_WRONLY | O_NONBLOCK);
     printf("abriu o pipe de notif do cliuente \n");
     if (new_cliente->notif_pipe == -1){
       write_str(STDERR_FILENO,"Erro ao abrir o pipe de notification\n");
