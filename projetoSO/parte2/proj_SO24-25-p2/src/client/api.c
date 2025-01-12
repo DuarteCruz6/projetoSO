@@ -24,6 +24,19 @@ void mudarSinalSeguranca(){
   }else{
     sinalSeguranca=1;
   }
+  //// Apagar os pipes do cliente
+  //  if (unlinkPipes(cliente->req_pipe_path)!=0){
+  //    write_str(STDERR_FILENO, "Failed to close request pipe\n");
+  //    return;
+  //  }
+  //  if (unlinkPipes(cliente->resp_pipe_path)!=0){
+  //    write_str(STDERR_FILENO, "Failed to close response pipe\n");
+  //    return;
+  //  }
+  //  if (unlinkPipes(cliente->notif_pipe_path)!=0){
+  //    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+  //    return;
+  //  }
   return;
 }
 
