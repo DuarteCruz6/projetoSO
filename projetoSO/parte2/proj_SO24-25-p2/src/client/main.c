@@ -230,9 +230,6 @@ int main(int argc, char *argv[]) {
   char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
   // Preencher até 40 caracteres
-  printf("req_pipe_path: _%s_\n",req_pipe_path);
-  printf("resp_pipe_path: _%s_\n",resp_pipe_path);
-  printf("notif_pipe_path: _%s_\n",notif_pipe_path);
   pad_string(req_pipe,req_pipe_path,40);
   pad_string(resp_pipe,resp_pipe_path,40);
   pad_string(notif_pipe,notif_pipe_path,40);

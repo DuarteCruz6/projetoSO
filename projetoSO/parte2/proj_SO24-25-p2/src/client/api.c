@@ -17,19 +17,13 @@ int pipe_req;
 int pipe_resp;
 
 void pad_string(char *message,char *str, int length) {
-  printf("lenght: %d\n",length);
-  printf("string original _%s_\n",str);
   for(size_t i=0; i<length; i++){
     if(i<strlen(str)){
-      printf("%c\n",str[i]);
       message[i] = str[i];
     }else{
-      printf("_");
-      //message[i] = '\0';
-      message[i] = ' ';
+      message[i] = '\0';
     }
   }
-  printf("\n");
   message[length-1]='\0';
 }
 
