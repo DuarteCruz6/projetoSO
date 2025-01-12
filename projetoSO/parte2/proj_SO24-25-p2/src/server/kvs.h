@@ -69,7 +69,7 @@ void free_table(HashTable *ht);
 
 KeyNode *getKeyNode(HashTable *ht,char *key);
 
-void getAllSubsKey(KeyNode *par)
+void getAllSubsKey(KeyNode *par);
 
 int addSubscription(HashTable *ht,Cliente* cliente, char *key);
 

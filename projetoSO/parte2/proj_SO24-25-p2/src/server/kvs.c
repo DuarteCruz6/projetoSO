@@ -170,11 +170,11 @@ KeyNode *getKeyNode(HashTable *ht,char *key){
 
 void getAllSubsKey(KeyNode *par){
   //da print a todos os subs de uma chave
-  printf("subs da chave _%s_: ",par->key);
+  printf("subs da chave _%s_: \n",par->key);
   Subscribers *sub_atual = par->head_subscribers;
-  printf("cabeca da lista _%s_: ",sub_atual);
+  printf("cabeca da lista _%s_: \n",sub_atual);
   while(sub_atual->subscriber != NULL){
-    printf("cliente com id %d ,",sub_atual->subscriber->id);
+    printf("     cliente com id %d \n",sub_atual->subscriber->id);
     sub_atual = sub_atual->next;
   }
   printf(" \n");
