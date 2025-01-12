@@ -14,9 +14,9 @@ typedef struct Subscriptions{
 
 typedef struct Cliente {
   int id;
-  int response_pipe;
-  int request_pipe;
-  int notif_pipe;
+  char resp_pipe_path[40];
+  char notif_pipe_path[40];
+  char req_pipe_path[40];
   struct Subscriptions *head_subscricoes;
   int num_subscricoes;
 }Cliente;
