@@ -16,11 +16,13 @@ int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->ve
 int pipe_req;
 int pipe_resp;
 
-void pad_string(char *str, size_t length) {
-  size_t current_length = strlen(str);
-  if (current_length < length) {
-    memset(str + current_length, '\0', length - current_length);
-    str[length - 1] = '\0'; // Assegurar que termina com \0
+void pad_string(char *message,char *str, size_t length) {
+  for(size_t i=0; i<length &&str[i] != "\0"; i++){
+    if(i<strlen(str)){
+      message[i] = str[i];
+    }else{
+      message[i] = "\0";
+    }
   }
 }
 
@@ -200,8 +202,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   char message[42];
   //construir mensagem
   char keyPadded[41];
-  strcpy(keyPadded,key);
-  pad_string(keyPadded,41);
+  pad_string(keyPadded,key,41);
   snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
@@ -221,8 +222,7 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   char message[42];
   //construir mensagem
   char keyPadded[41];
-  strcpy(keyPadded,key);
-  pad_string(keyPadded,41);
+  pad_string(keyPadded,key,41);
   snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;

@@ -229,14 +229,10 @@ int main(int argc, char *argv[]) {
 
   char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
 
-  strcpy(req_pipe, req_pipe_path);
-  strcpy(resp_pipe, resp_pipe_path);
-  strcpy(notif_pipe, notif_pipe_path);
-
   // Preencher até 40 caracteres
-  pad_string(req_pipe, sizeof(req_pipe));
-  pad_string(resp_pipe, sizeof(resp_pipe));
-  pad_string(notif_pipe, sizeof(notif_pipe));
+  pad_string(req_pipe,req_pipe_path,40);
+  pad_string(resp_pipe,resp_pipe_path,40);
+  pad_string(notif_pipe,notif_pipe_path,40);
 
   server_pipe_path = argv[2];
 
