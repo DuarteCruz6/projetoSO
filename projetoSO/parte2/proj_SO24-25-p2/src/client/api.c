@@ -146,8 +146,6 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //    return 1;
   //}
   printf("fim sem stor\n");
-
-  close(server_pipe);
   pipe_resp = open(resp_pipe_path, O_RDONLY);
   int response = getResponse(resp_pipe_path);
   pipe_req = open(req_pipe_path, O_WRONLY);
