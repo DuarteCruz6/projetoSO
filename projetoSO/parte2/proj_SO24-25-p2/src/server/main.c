@@ -329,15 +329,10 @@ void iniciar_sessao(char *message){
 
 
 
-int subscribeClient(Cliente *cliente, char *message){
+int subscribeClient(Cliente *cliente, char *key){
   printf("ta na funcao subscribe\n");
   if(!getSinalSeguranca()){
-    char key[41];
-    int code;
-    sscanf(message,"%d%s",&code, key);
-    printf("subscribe code %d\n",code);
     printf("subscribe key %s\n",key);
-
     if (addSubscriber(cliente, key)==0){
       printf("funcao addSubscriber deu certo\n");
       //a key existe e deu certo
@@ -349,12 +344,8 @@ int subscribeClient(Cliente *cliente, char *message){
   return 1;
 }
 
-int unsubscribeClient(Cliente *cliente, char *message){
+int unsubscribeClient(Cliente *cliente, char *key){
   if(!getSinalSeguranca()){
-    char key[41];
-    int code;
-    sscanf(message,"%d%s",&code, key);
-
     if (removeSubscriber(cliente, key)==0){
       //a subscricao existia e deu certo
       return 0;
@@ -570,16 +561,16 @@ int manageClient(Cliente *cliente){
       }else if (code==3){
         printf("era subscribe\n");
         //subscribe
-        char message[41];
-        int success = read_all(cliente -> req_pipe,&message, 41, NULL);
-        result = subscribeClient(cliente, message);
+        char key[41];
+        int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        result = subscribeClient(cliente, key);
         printf("result da funcao addSubscriber: %d\n",result);
       }else if (code==4){
         printf("era unsub\n");
         //unsubscribe
-        char message[41];
-        int success = read_all(cliente -> req_pipe,&message, 41, NULL);
-        result = unsubscribeClient(cliente, message);
+        char key[41];
+        int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        result = unsubscribeClient(cliente, key);
       }else{
         printf("erro\n");
         //leu um codigo inesperado
