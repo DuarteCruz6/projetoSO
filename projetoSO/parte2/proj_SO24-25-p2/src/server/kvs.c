@@ -78,6 +78,7 @@ int write_pair(HashTable *ht, const char *key, const char *value) {
   keyNode->key = strdup(key);       // Allocate memory for the key
   keyNode->value = strdup(value);   // Allocate memory for the value
   keyNode->next = ht->table[index]; // Link to existing nodes
+  keyNode->head_subscribers = NULL;
   ht->table[index] = keyNode; // Place new key node at the start of the list
   return 0;
 }
@@ -177,7 +178,6 @@ void getAllSubsKey(KeyNode *par){
     printf("     cliente com id %d \n",sub_atual->subscriber->id);
     sub_atual = sub_atual->next;
   }
-  printf(" \n");
 }
 
 //adiciona subscricao à estrutura cliente
