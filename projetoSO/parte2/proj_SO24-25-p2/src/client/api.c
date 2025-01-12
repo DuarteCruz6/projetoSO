@@ -144,7 +144,9 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("fim sem stor\n");
 
   close(server_pipe);
-  int response = getResponse(resp_pipe_path);
+  int resp = open(resp_pipe_path, O_RDONLY);
+  int response = getResponse(resp);
+  close(resp);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to connect the client\n");
     return 1;
