@@ -57,8 +57,7 @@ int createMessage(const char *req_pipe_path, char *message){
   //    close(pipe_req);
   //    return 1;
   //}
-  printf("fim sem stor\n");
-  printf("ja pediu algo\n");
+  printf("ja pediu algo, com sucesso %d\n",success);
   //close(pipe_req);
   return 0;
 }
