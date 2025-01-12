@@ -21,7 +21,7 @@ void pad_string(char *message,char *str, int length) {
     if(i<strlen(str)){
       message[i] = str[i];
     }else{
-      message[i] = '\\0';
+      message[i] = '\0';
     }
   }
   message[length-1]='\0';
@@ -133,7 +133,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("pipe do server: %s\n",server_pipe_path);
 
   char message[121];
-  char opCodeStr[2];                      // Buffer para armazenar a string do OP_CODE
+  char opCodeStr[1];                      // Buffer para armazenar a string do OP_CODE
   sprintf(opCodeStr, "%d", OP_CODE_CONNECT);
   //construir mensagem
   strcat(message,opCodeStr);
