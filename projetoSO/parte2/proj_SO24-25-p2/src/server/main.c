@@ -537,14 +537,14 @@ int manageClient(Cliente *cliente){
   printf("a ler a pipe dos clientes\n");
   char message[43];
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
-    int request_pipe = open(cliente->req_pipe_path, O_RDONLY | O_NONBLOCK);
+    int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
     if(request_pipe==-1){
       return 1;
     }
     printf("vai ler\n");
     int success = read_all(request_pipe,&message, 43, NULL);
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
-    //close(request_pipe);
+    close(request_pipe);
     if (success >= 0){
       int code = message[0]- '0';
       int result;
