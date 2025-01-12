@@ -167,7 +167,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     return;
   }
 
-  int req_pipe = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
+  int req_pipe = open(req_pipe_path, O_WRONLY);
   int resp_pipe = open(resp_pipe_path, O_RDONLY);
   int notif_pipe = open(notif_pipe_path, O_RDONLY | O_NONBLOCK);
 
