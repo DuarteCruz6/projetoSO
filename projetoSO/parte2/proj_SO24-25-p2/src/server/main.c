@@ -324,11 +324,11 @@ void iniciar_sessao(char *message){
 
     //manda que deu sucesso
     char response[3] = "10";
-    //if (write_all(response_pipe, response, 3) == -1) {
-    //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
-    //  return;
-    //}
-    ssize_t bytes_written = write(response_pipe, response, strlen(response));
+    if (write_all(response_pipe, response, strlen(response)) == -1) {
+      write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
+      return;
+    }
+    //ssize_t bytes_written = write(response_pipe, response, strlen(response));
     return;
   }
   
