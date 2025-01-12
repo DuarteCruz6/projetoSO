@@ -112,8 +112,6 @@ static void *thread_principal_work(void *arguments){
 void *thread_secundaria_work(void *arguments){
   printf("comecou a secundaria\n");
   struct ThreadSecundariaData *thread_data = (struct ThreadSecundariaData *)arguments;
-  char notif_pipe[40];
-  strcpy(notif_pipe, thread_data->notif_pipe_path);
   int pipe_notif = thread_data->notif_pipe;
   if (pipe_notif == -1) {
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
@@ -251,6 +249,20 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   create_threads(req_pipe, resp_pipe, notif_pipe);
+  // Apagar os pipes
+  if(unlinkPipes(req_pipe)!=0){
+    write_str(STDERR_FILENO, "Failed to close request pipe\n");
+    return 1;
+  }
+  if(unlinkPipes(resp_pipe)!=0){
+    write_str(STDERR_FILENO, "Failed to close response pipe\n");
+    return 1;
+  }
+  if(unlinkPipes(notif_pipe)!=0){
+    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+    return 1;
+  }
+
   printf("xau\n");
   return 0;
 }

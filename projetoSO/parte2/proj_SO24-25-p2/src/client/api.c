@@ -116,7 +116,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
     return 1;
   }
   
-  printf("ja criou a mensagem %s, com tamanho %d agora vai recebe la\n", message, sizeof(message));
+  printf("ja criou a mensagem %s, com tamanho %ld agora vai recebe la\n", message, sizeof(message));
 
   printf("sem stor\n");
   //ssize_t bytes_written = write(server_pipe, message, strlen(message));
@@ -134,7 +134,9 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("fim sem stor\n");
 
   close(server_pipe);
-  int response = getResponse(resp_pipe_path);
+  int resp_pipe = open(resp_pipe_path, O_RDONLY | O_NONBLOCK);  
+  int response = getResponse(resp_pipe);
+  close(resp_pipe);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to connect the client\n");
     return 1;
@@ -152,20 +154,6 @@ int kvs_disconnect(int req_pipe, int resp_pipe, int notif_pipe) {
   int response = getResponse(resp_pipe);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to disconnect the client\n");
-    return 1;
-  }
-
-  // Apagar os pipes
-  if(unlinkPipes(req_pipe)!=0){
-    write_str(STDERR_FILENO, "Failed to close request pipe\n");
-    return 1;
-  }
-  if(unlinkPipes(resp_pipe)!=0){
-    write_str(STDERR_FILENO, "Failed to close response pipe\n");
-    return 1;
-  }
-  if(unlinkPipes(notif_pipe)!=0){
-    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
     return 1;
   }
   return 0;
