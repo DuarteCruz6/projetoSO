@@ -408,20 +408,23 @@ int sendOperationResult(int code, int result, Cliente* cliente){
       //erro a abrir o pipe de respostas
       return 1;
     }
-    int success = write_all(response_pipe, response, 3);
+    //int success = write_all(response_pipe, response, 3);
     ssize_t bytes_written = write(response_pipe, response, strlen(response));
     if (bytes_written == -1) {
         perror("Erro ao escrever no FIFO de resposta\n");
         close(response_pipe);
         return 1;
-    }
-    if(success==1){
+    }else{
       close(response_pipe);
       return 0;
-    }else{
-      write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-      return 1;
     }
+    //if(success==1){
+    //  close(response_pipe);
+    //  return 0;
+    //}else{
+    //  write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+    //  return 1;
+    //}
   }
   return 1;
 }
