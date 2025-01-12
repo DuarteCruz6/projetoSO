@@ -306,6 +306,7 @@ void iniciar_sessao(char *message){
     strcpy(new_cliente->resp_pipe_path, pipe_resp);
     strcpy(new_cliente->notif_pipe_path, pipe_notif);
     new_cliente->num_subscricoes=0;
+    new_cliente->head_subscricoes = NULL;
     User *new_user = malloc(sizeof(User));
     new_user->cliente = new_cliente;
     new_user->usedFlag = false;
