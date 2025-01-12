@@ -452,13 +452,19 @@ void sinalDetetado() {
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
     removeClientFromBuffer(cliente); //remover do buffer
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
-    //fechar todos os pipes do cliente
-    int pipe = open(cliente->req_pipe_path, O_RDONLY);
-    close(pipe);
-    pipe = open(cliente->resp_pipe_path, O_RDONLY);
-    close(pipe);
-    pipe = open(cliente->notif_pipe_path, O_RDONLY);
-    close(pipe);
+    //// Apagar os pipes do cliente
+    //  if (unlinkPipes(cliente->req_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close request pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->resp_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close response pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->notif_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+    //    return;
+    //  }
     free(cliente);
     userAtual=userAtual->nextUser;
   }
