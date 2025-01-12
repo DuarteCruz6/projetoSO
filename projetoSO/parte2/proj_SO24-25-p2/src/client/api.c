@@ -199,8 +199,10 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   // pipe
   char message[42];
   //construir mensagem
-  pad_string(&key,41);
-  snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,key);
+  char keyPadded[41];
+  strcpy(keyPadded,key);
+  pad_string(&keyPadded,41);
+  snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
@@ -218,8 +220,10 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   // pipe
   char message[42];
   //construir mensagem
-  pad_string(&key,41);
-  snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,key);
+  char keyPadded[41];
+  strcpy(keyPadded,key);
+  pad_string(&keyPadded,41);
+  snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
