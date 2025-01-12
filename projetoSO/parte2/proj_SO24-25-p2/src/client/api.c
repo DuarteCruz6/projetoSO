@@ -62,9 +62,9 @@ int getResponse(const char *resp_pipe_path){
       write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
   }
-  int code, result;
   printf("vai scannear o code e o result\n");
-  sscanf(buffer, "%d%d", &code, &result);
+  int code = buffer[0] - '0';
+  int result = buffer[1] - '0';
   printf("scanneou\n");
   printf("code: %d\n",code);
   printf("result: %d\n",result);
