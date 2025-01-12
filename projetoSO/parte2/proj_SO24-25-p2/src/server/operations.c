@@ -248,7 +248,7 @@ int disconnectClient(Cliente *cliente){
       printf("head nao é null\n");
     }
     if(cliente->head_subscricoes->next == NULL){
-      printf("head next é null");
+      printf("head next é null\n");
     }else{
       printf("head next nao é null\n");
     }
@@ -257,12 +257,12 @@ int disconnectClient(Cliente *cliente){
       printf("ta inscrito nalgo \n");
       KeyNode *par = subscricao_atual->par;
       char *key = par->key;
+      subscricao_atual = subscricao_atual->next; //tem de ser antes
       if(removeSubscription(cliente, key)==1){
         printf("deu erro no removeSubscription \n");
         return 1;
       }
       printf("removeu subscricao no cliente \n");
-      subscricao_atual = subscricao_atual->next;
     }
     return 0;
   }
