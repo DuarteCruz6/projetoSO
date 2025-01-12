@@ -175,9 +175,13 @@ void getAllSubsKey(KeyNode *par){
   Subscribers *sub_atual = par->head_subscribers;
   printf("cabeca da lista _%d_: \n",sub_atual->subscriber->id);
   while(sub_atual->subscriber != NULL){
-    printf("     cliente com id %d \n",sub_atual->subscriber->id);
+    printf("     cliente com id %d\n",sub_atual->subscriber->id);
+    if(sub_atual->next ==NULL){
+      break;
+    }
     sub_atual = sub_atual->next;
   }
+  return;
 }
 
 //adiciona subscricao à estrutura cliente
