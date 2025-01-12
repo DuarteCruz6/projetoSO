@@ -478,13 +478,14 @@ void *readServerPipe(){
   printf("desbloquear o sinal nesta thread\n");
   pthread_sigmask(SIG_UNBLOCK, &sinalSeguranca, NULL);
   // Registar o manipulador de sinal
-   printf("registar o sinal nesta thread\n");
+  printf("registar o sinal nesta thread\n");
   signal(SIGUSR1, sinalDetetado);
 
   //ler FIFO
   int erro=0;
   char message[122];
   server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
+  printf("pid do server:_%d_\n",server_fifo);
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);

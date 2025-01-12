@@ -81,7 +81,7 @@ int getResponse(const char *resp_pipe_path){
   printf("result: %d\n",result);
 
   if(code==5){
-    printf("code = 5 ->houve SIGSUR1\n");
+    printf("code = 5 -> houve SIGSUR1\n");
     //sinal de seguranca lancado
     mudarSinalSeguranca();
     return 0;
