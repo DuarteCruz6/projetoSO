@@ -607,14 +607,15 @@ Cliente* getClientForThread(){
 
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
 //so acaba quando o server morre (??)
-void *readClientPipe(){
+void *readClientPipe(void *arg) {
+  size_t thread_id = (size_t)arg;
   while(1){
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
       sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
-      printf("encontrou cliente\n");
+      printf("Cliente encontrado pelo thread %zu\n", thread_id);
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         return NULL;
@@ -656,7 +657,7 @@ static void dispatch_threads(DIR *dir) {
 
   //cria S threads ler do pipe de registo de cada cliente
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
-    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
+    if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)(uintptr_t)thread_gestora) !=
         0) {
       write_str(STDERR_FILENO, "Failed to create thread gestora");
       write_uint(STDERR_FILENO, (int) thread_gestora);
