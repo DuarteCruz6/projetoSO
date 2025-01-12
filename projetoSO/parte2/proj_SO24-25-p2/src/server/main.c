@@ -296,7 +296,7 @@ void iniciar_sessao(char *message){
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
       char response[2] = "11";
       if (write_all(response_pipe, response, 2) == -1) {
-        write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
+        write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao\n");
       }
       return;
     }
@@ -313,17 +313,24 @@ void iniciar_sessao(char *message){
     new_user->cliente = new_cliente;
     new_user->usedFlag = false;
     new_user ->nextUser = NULL;
+    printf("vai dar lock ao bufferThreads\n");
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //da lock ao buffer pois vamos escrever nele
     if(bufferThreads->headUser==NULL){
+      printf("a head do buffer era null\n");
       //buffer tava vazio
       bufferThreads->headUser = new_user;
     }else{
+      printf("a head do buffer nao era null\n");
       User *user_atual = bufferThreads->headUser; //vai ao primeiro user
+      printf("foi buscar o primeiro user\n");
       new_user->nextUser = user_atual; 
+      printf("meteu o novo como head\n");
       bufferThreads->headUser = new_user; //adiciona o novo user ao inicio do buffer
     }
     pthread_mutex_unlock(&bufferThreads->buffer_mutex);
+    printf("deu unlock ao bufferThreads\n");
     sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
+    printf("aumentou 1 no semaforo\n");
 
     //manda que deu sucesso
     char response[3] = "10";
