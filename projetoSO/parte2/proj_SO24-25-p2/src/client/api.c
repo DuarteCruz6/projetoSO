@@ -18,6 +18,7 @@ int getSinalSeguranca(){
 }
 
 void mudarSinalSeguranca(){
+  printf("sigusr1\n");
   if(sinalSeguranca){
     sinalSeguranca=0;
   }else{
