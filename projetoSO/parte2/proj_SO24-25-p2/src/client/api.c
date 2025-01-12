@@ -56,7 +56,7 @@ int createMessage(const char *req_pipe_path, char *message){
 int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
   printf("vai receber a msg agora \n");
-  int pipe_resp = open(resp_pipe_path, O_RDONLY | O_NONBLOCK);
+  int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1) {
       write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
