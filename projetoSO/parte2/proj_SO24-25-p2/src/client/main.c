@@ -15,13 +15,13 @@ char *server_pipe_path= NULL;
 bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
 
 struct ThreadPrincipalData {
-  const char *req_pipe_path;
-  const char *resp_pipe_path;
-  const char *notif_pipe_path;
+  int req_pipe;
+  int resp_pipe;
+  int notif_pipe;
 };
 
 struct ThreadSecundariaData {
-  const char *notif_pipe_path;
+  int notif_pipe;
 };
 
 void pad_string(char *str, size_t length) {
@@ -35,18 +35,14 @@ void pad_string(char *str, size_t length) {
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
 static void *thread_principal_work(void *arguments){
   struct ThreadPrincipalData *thread_data = (struct ThreadPrincipalData *)arguments;
-  char req_pipe[40];
-  strcpy(req_pipe, thread_data->req_pipe_path);
-
-  char resp_pipe[40];
-  strcpy(resp_pipe, thread_data->resp_pipe_path);
-
-  char notif_pipe[40];
-  strcpy(notif_pipe, thread_data->notif_pipe_path);
 
   char keys[MAX_NUMBER_SUB][MAX_STRING_SIZE] = {0};
   unsigned int delay_ms;
   size_t num;
+
+  int req_pipe = thread_data->req_pipe;
+  int resp_pipe = thread_data->resp_pipe;
+  int notif_pipe = thread_data->notif_pipe;
 
   while (!getSinalSeguranca()) {
     switch (get_next(STDIN_FILENO)) {
@@ -117,15 +113,16 @@ static void *thread_principal_work(void *arguments){
 void *thread_secundaria_work(void *arguments){
   printf("comecou a secundaria\n");
   struct ThreadSecundariaData *thread_data = (struct ThreadSecundariaData *)arguments;
-  char notif_pipe[40];
-  strcpy(notif_pipe, thread_data->notif_pipe_path);
+  //char notif_pipe[40];
+  //strcpy(notif_pipe, thread_data->notif_pipe_path);
   printf(" vai abrir o pipe notif\n");
-  int pipe_notif = open(notif_pipe, O_RDONLY | O_NONBLOCK);
+  //int pipe_notif = open(notif_pipe, O_RDONLY | O_NONBLOCK);
+  int pipe_notif = thread_data->notif_pipe;
   printf("abriu o pipe notif\n");
-  if (pipe_notif == -1) {
-    write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
-    return NULL;
-  }
+  //if (pipe_notif == -1) {
+  //  write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
+  //  return NULL;
+  //}
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect
     printf("while da secundaria\n");
     char buffer[256];
@@ -169,8 +166,13 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     write_str(STDERR_FILENO, "Failed to allocate memory for thread\n");
     return;
   }
-  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path};
-  struct ThreadSecundariaData threadSecundaria_data = {notif_pipe_path};
+
+  int req_pipe = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
+  int resp_pipe = open(resp_pipe_path, O_RDONLY);
+  int notif_pipe = open(notif_pipe_path, O_RDONLY | O_NONBLOCK);
+
+  struct ThreadPrincipalData threadPrincipal_data= {req_pipe, resp_pipe, notif_pipe};
+  struct ThreadSecundariaData threadSecundaria_data = {notif_pipe};
 
   //principal
   if (pthread_create(&thread_principal[0], NULL, thread_principal_work, (void *)&threadPrincipal_data)!=0) {
