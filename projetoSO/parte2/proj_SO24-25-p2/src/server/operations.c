@@ -210,9 +210,11 @@ int addSubscriber(Cliente *cliente, char *key){
     }
     pthread_rwlock_rdlock(&kvs_table->tablelock);
     if(addSubscription(kvs_table,cliente, key)!=0){
+      printf("funcao addSubscription deu errado\n");
       pthread_rwlock_unlock(&kvs_table->tablelock);
       return 1;
     }
+    printf("funcao addSubscription deu certo\n");
     pthread_rwlock_unlock(&kvs_table->tablelock);
     return 0;
   }
