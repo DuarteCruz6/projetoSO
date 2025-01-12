@@ -172,7 +172,7 @@ void getAllSubsKey(KeyNode *par){
   //da print a todos os subs de uma chave
   printf("subs da chave _%s_: \n",par->key);
   Subscribers *sub_atual = par->head_subscribers;
-  printf("cabeca da lista _%s_: \n",sub_atual);
+  printf("cabeca da lista _%s_: \n",sub_atual->subscriber->id);
   while(sub_atual->subscriber != NULL){
     printf("     cliente com id %d \n",sub_atual->subscriber->id);
     sub_atual = sub_atual->next;
@@ -206,6 +206,7 @@ int addSubscription(HashTable *ht,Cliente *cliente, char *key){
 //adiciona subscritor à estrutura keynode
 //0 se certo, 1 se errado
 int addSubscriberTable(Cliente *cliente, KeyNode *par){
+  printf("a adicionar cliente com id %d aos subs do par %s \n",cliente->id, par->key);
   Subscribers *subsPar = par->head_subscribers;
   Subscribers *newSub = malloc(sizeof(Subscribers));
   if(newSub!=NULL){
