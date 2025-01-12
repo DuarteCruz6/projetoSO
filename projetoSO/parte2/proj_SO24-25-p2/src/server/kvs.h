@@ -5,6 +5,7 @@
 
 #include <pthread.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct Subscriptions{
   struct KeyNode *par;
