@@ -30,7 +30,7 @@ void pad_string(char *message,char *str, int length) {
     }
   }
   printf("\n");
-  message[length]='\0';
+  message[length-1]='\0';
 }
 
 int getSinalSeguranca(){
