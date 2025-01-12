@@ -160,8 +160,8 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
   }
 
   int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
-  int pipe_resp = open(resp_pipe_path, O_WRONLY | O_NONBLOCK);
-  int pipe_notif = open(notif_pipe_path, O_WRONLY | O_NONBLOCK);
+  int pipe_resp = open(resp_pipe_path, O_RDONLY | O_NONBLOCK);
+  int pipe_notif = open(notif_pipe_path, O_RDONLY | O_NONBLOCK);
 
   struct ThreadPrincipalData threadPrincipal_data= {pipe_req, pipe_resp};
   struct ThreadSecundariaData threadSecundaria_data = {pipe_notif};
