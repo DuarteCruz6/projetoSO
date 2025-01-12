@@ -35,7 +35,7 @@ int createMessage(const char *req_pipe_path, char *message){
     mudarSinalSeguranca();
     return 1;
   } else if (pipe_req == -1){
-    write_str(STDERR_FILENO, "Error reading pipe response");
+    perror("Error reading pipe response, error: \n");
     return 1;
   }
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
