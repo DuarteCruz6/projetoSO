@@ -273,11 +273,11 @@ void iniciar_sessao(char *message){
   int code = atoi(&first_char);
   char pipe_req[40], pipe_resp[40], pipe_notif[40];
   strncpy(pipe_req, &message[1], 40); // Copiar os primeiros 40 caracteres após o número
-  pipe_req[40] = '\0';             // Adicionar terminador nulo
+  pipe_req[39] = '\0';             // Adicionar terminador nulo
   strncpy(pipe_resp, &message[41], 40); // Copiar os próximos 40 caracteres
-  pipe_resp[40] = '\0';              // Adicionar terminador nulo
+  pipe_resp[39] = '\0';              // Adicionar terminador nulo
   strncpy(pipe_notif, &message[81], 40); // Copiar os últimos 40 caracteres
-  pipe_notif[40] = '\0';  
+  pipe_notif[39] = '\0';  
   printf("code: %d\n",code);
   printf("pipe req: %s\n",pipe_req);
   printf("pipe resp: %s\n",pipe_resp);
