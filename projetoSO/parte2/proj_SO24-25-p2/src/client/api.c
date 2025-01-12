@@ -66,6 +66,8 @@ int getResponse(const char *resp_pipe_path){
   printf("vai scannear o code e o result\n");
   sscanf(buffer, "%d%d", &code, &result);
   printf("scanneou\n");
+  printf("code: %d\n",code);
+  printf("result: %d\n",result);
 
   if(code==5){
     printf("code = 5 ->houve SIGSUR1\n");
