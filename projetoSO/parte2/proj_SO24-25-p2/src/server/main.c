@@ -282,6 +282,7 @@ void iniciar_sessao(char *message){
   printf("pipe resp: %s\n",pipe_resp);
   printf("pipe notif: %s\n",pipe_notif);
   int response_pipe = open(pipe_resp, O_WRONLY);
+  printf("abriu o pipe de response do cliente\n");
   if (response_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
     write_str(STDERR_FILENO,pipe_resp);
@@ -289,6 +290,7 @@ void iniciar_sessao(char *message){
     return;
   }
   if(code==1){
+    printf("codigo era 1\n");
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
@@ -329,7 +331,9 @@ void iniciar_sessao(char *message){
     //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
     //  return;
     //}
+    printf("vai escrever no pipe response\n");
     ssize_t bytes_written = write(response_pipe, response, strlen(response));
+    printf("escreveu no pipe response\n");
     return;
   }
   
