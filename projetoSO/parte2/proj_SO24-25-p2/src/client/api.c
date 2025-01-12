@@ -79,7 +79,7 @@ int getResponse(const char *resp_pipe_path){
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
   printf("vai fazer a string para imprimir\n");
-  snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[result-1]);
+  snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[code-1]);
   printf("imprimir: %s\n",string);
   write_str(STDOUT_FILENO,string);
   return result; 
