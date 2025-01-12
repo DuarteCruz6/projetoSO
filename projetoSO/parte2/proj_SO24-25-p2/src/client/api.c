@@ -13,6 +13,9 @@
 
 int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->verdadeiro
 
+int pipe_req;
+int pipe_resp;
+
 int getSinalSeguranca(){
   return sinalSeguranca;
 }
@@ -30,7 +33,7 @@ void mudarSinalSeguranca(){
 //manda request
 int createMessage(const char *req_pipe_path, char *message){
   printf("vai abrir o pipe para pedir _%s_\n",message);
-  int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
+  //int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
   if (pipe_req == -1 && errno == EPIPE ) {
     mudarSinalSeguranca();
     return 1;
@@ -40,13 +43,13 @@ int createMessage(const char *req_pipe_path, char *message){
   }
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");
-    close(pipe_req);
+    //close(pipe_req);
     return 1;
   }
   //ssize_t bytes_written = write(pipe_req, message, strlen(message));
   int success = write_all(pipe_req,message,strlen(message));
   if(success<0){
-    close(pipe_req);
+    //close(pipe_req);
     return 1;
   }
   //if (bytes_written == -1) {
@@ -56,7 +59,7 @@ int createMessage(const char *req_pipe_path, char *message){
   //}
   printf("fim sem stor\n");
   printf("ja pediu algo\n");
-  close(pipe_req);
+  //close(pipe_req);
   return 0;
 }
 
@@ -64,7 +67,7 @@ int createMessage(const char *req_pipe_path, char *message){
 int getResponse(const char *resp_pipe_path){
   // abrir pipe de response para leitura
   printf("vai receber a msg agora \n");
-  int pipe_resp = open(resp_pipe_path, O_RDONLY);
+  //int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1 && errno == EPIPE ) {
     mudarSinalSeguranca();
     return 1;
@@ -80,7 +83,7 @@ int getResponse(const char *resp_pipe_path){
   
   buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
-  close(pipe_resp);
+  //close(pipe_resp);
   printf("fechou o pipe de resposta\n");
   if (success == -1) {
       write_str(STDERR_FILENO, "Error reading pipe response");
@@ -145,6 +148,8 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("fim sem stor\n");
 
   close(server_pipe);
+  pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
+  pipe_resp = open(resp_pipe_path, O_RDONLY);
   int response = getResponse(resp_pipe_path);
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to connect the client\n");
