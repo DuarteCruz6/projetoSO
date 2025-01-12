@@ -227,24 +227,11 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  char req_pipe[MAX_PIPE_PATH_LENGTH], resp_pipe[MAX_PIPE_PATH_LENGTH], notif_pipe[MAX_PIPE_PATH_LENGTH];
-
-  // Preencher até 40 caracteres
-  pad_string(req_pipe,req_pipe_path,40);
-  pad_string(resp_pipe,resp_pipe_path,40);
-  pad_string(notif_pipe,notif_pipe_path,40);
-
   server_pipe_path = argv[2];
-  printf("req_pipe: _%s_\n",req_pipe);
-
-  printf("resp_pipe: _%s_\n",resp_pipe);
-
-  printf("notif_pipe: _%s_\n",notif_pipe);
-
-  if (kvs_connect(req_pipe, resp_pipe, notif_pipe, server_pipe_path)==1){
+  if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
     return 1;
   }
-  create_threads(req_pipe, resp_pipe, notif_pipe);
+  create_threads(req_pipe_path, resp_pipe_path, notif_pipe_path);
   printf("xau\n");
   return 0;
 }
