@@ -239,22 +239,19 @@ int removeSubscriber(Cliente *cliente, char *key){
 }
 
 int disconnectClient(Cliente *cliente){
-  if(!getSinalSeguranca()){
-    printf("esta no disconnectClient \n");
-    Subscriptions *subscricao_atual = cliente->head_subscricoes;
-    //remover todas as suas subscricoes 
-    while (subscricao_atual!=NULL){
-      printf("ta inscrito nalgo \n");
-      KeyNode *par = subscricao_atual->par;
-      char *key = par->key;
-      subscricao_atual = subscricao_atual->next; //tem de ser antes pq vai haver free no removeSubscription
-      if(removeSubscription(cliente, key)==1){
-        printf("deu erro no removeSubscription \n");
-        return 1;
-      }
-      printf("removeu subscricao no cliente \n");
+  printf("esta no disconnectClient \n");
+  Subscriptions *subscricao_atual = cliente->head_subscricoes;
+  //remover todas as suas subscricoes 
+  while (subscricao_atual!=NULL){
+    printf("ta inscrito nalgo \n");
+    KeyNode *par = subscricao_atual->par;
+    char *key = par->key;
+    subscricao_atual = subscricao_atual->next; //tem de ser antes pq vai haver free no removeSubscription
+    if(removeSubscription(cliente, key)==1){
+      printf("deu erro no removeSubscription \n");
+      return 1;
     }
-    return 0;
+    printf("removeu subscricao no cliente \n");
   }
-  return 1;
+  return 0;
 }
