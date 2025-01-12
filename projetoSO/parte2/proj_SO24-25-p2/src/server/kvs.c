@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "string.h"
 #include "src/common/io.h"
@@ -188,6 +189,21 @@ void getAllSubsKey(KeyNode *par){
   return;
 }
 
+//verifica se algum cliente ja esta subscrito ao par, para nao haver repetidos
+bool alreadySubbed(KeyNode *par, Cliente *cliente){
+  Subscribers *subAtual = par->head_subscribers;
+  while (subAtual!=NULL){
+    Cliente *clienteAtual = subAtual->subscriber;
+    if(clienteAtual->id == cliente->id){
+      //ja estava inscrito
+      return true;
+    }
+    //nao encontramos o cliente ainda, passa para o proximo sub
+    subAtual = subAtual -> next;
+  }
+  return false;
+}
+
 //adiciona subscricao à estrutura cliente
 //0 se certo, 1 se errado
 int addSubscription(HashTable *ht,Cliente *cliente, char *key){
@@ -222,10 +238,12 @@ int addSubscriberTable(Cliente *cliente, KeyNode *par){
   Subscribers *subsPar = par->head_subscribers;
   Subscribers *newSub = malloc(sizeof(Subscribers));
   if(newSub!=NULL){
-    newSub->subscriber = cliente; //guarda o novo sub
-    newSub->next = subsPar; //mete o novo sub no inicio da lista e faz o link
-    par->head_subscribers = newSub; //guarda o novo Sub como cabeca da lista
-    return 0;
+    if(!alreadySubbed(par, cliente)){
+      newSub->subscriber = cliente; //guarda o novo sub
+      newSub->next = subsPar; //mete o novo sub no inicio da lista e faz o link
+      par->head_subscribers = newSub; //guarda o novo Sub como cabeca da lista
+      return 0;
+    }
   }
   return 1;
 }
