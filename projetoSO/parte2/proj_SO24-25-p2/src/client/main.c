@@ -24,14 +24,6 @@ struct ThreadSecundariaData {
   const char *notif_pipe_path;
 };
 
-void pad_string(char *str, size_t length) {
-  size_t current_length = strlen(str);
-  if (current_length < length) {
-    memset(str + current_length, ' ', length - current_length);
-    str[length - 1] = '\0'; // Assegurar que termina com \0
-  }
-}
-
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
 static void *thread_principal_work(void *arguments){
   struct ThreadPrincipalData *thread_data = (struct ThreadPrincipalData *)arguments;
