@@ -147,9 +147,9 @@ void *thread_secundaria_work(void *arguments){
       return NULL;
     }
     printf("a seguir vai fechar ??? isto deve tar mal\n");
-    close(pipe_notif);
+    //close(pipe_notif);
     printf("vai dar return NULL dentro do while, ta mal de certeza\n");
-    return NULL;
+    //return NULL;
   }
   return NULL;
 }
