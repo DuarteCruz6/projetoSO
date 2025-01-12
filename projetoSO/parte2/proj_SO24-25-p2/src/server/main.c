@@ -410,7 +410,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     //  return 0;
     //}
     if(success==1){
-      close(response_pipe);
+      //close(response_pipe);
       return 0;
     }else{
       write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
@@ -546,7 +546,7 @@ int manageClient(Cliente *cliente){
     printf("vai ler\n");
     int success = read_all(request_pipe,&message, 43, NULL);
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
-    close(request_pipe);
+    //close(request_pipe);
     if (success >= 0){
       int code = message[0]- '0';
       int result;
