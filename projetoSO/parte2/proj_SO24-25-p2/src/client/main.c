@@ -178,12 +178,13 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
   }
 
   //espera pela principal
+  printf("À espera que a principal acabe\n");
   if (pthread_join(thread_principal[0], NULL) != 0) {
     write_str(STDERR_FILENO, "Failed to join thread gestora\n");
     free(thread_principal);
     return;
   }
-  
+  printf("À espera que a secundaria acabe\n");
   //espera pela secundaria
   if (pthread_join(thread_secundaria[0], NULL) != 0) {
     write_str(STDERR_FILENO, "Failed to join thread\n");
@@ -191,9 +192,12 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     return;
   }
   
-
+  printf("vai dar free as threads\n");
   free(thread_principal);
+  printf("vai dar free a thread secundaria\n");
   free(thread_secundaria);
+  printf("deu free as threads\n");
+  return;
 }
 
 
@@ -240,5 +244,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   create_threads(req_pipe, resp_pipe, notif_pipe);
-
+  printf("xau\n");
+  return 0;
 }
