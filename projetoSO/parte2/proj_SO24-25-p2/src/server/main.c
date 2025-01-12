@@ -527,7 +527,7 @@ int manageClient(Cliente *cliente){
     int success = read_all(request_pipe,&message, 43, NULL);
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
     close(request_pipe);
-    if (success > 0){
+    if (success >= 0){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
