@@ -115,31 +115,40 @@ static void *thread_principal_work(void *arguments){
 
 //thread secundaria: recebe as notificacoes e imprime o resultado para o stdout
 void *thread_secundaria_work(void *arguments){
+  printf("comecou a secundaria\n");
   struct ThreadSecundariaData *thread_data = (struct ThreadSecundariaData *)arguments;
   char notif_pipe[40];
   strcpy(notif_pipe, thread_data->notif_pipe_path);
-
+  printf(" vai abrir o pipe notif\n");
   int pipe_notif = open(notif_pipe, O_RDONLY);
+  printf("abriu o pipe notif\n");
   if (pipe_notif == -1) {
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect
+    printf("while da secundaria\n");
     char buffer[256];
+    printf("a ler pipe notif\n");
     int success = read_all(pipe_notif, buffer, 256, NULL);
 
     if (success == 1) {
+      printf("sucesso = 1\n");
       buffer[256] = '\0'; // Assegurar que o buffer é uma string válida
       write_str(STDOUT_FILENO,buffer);
     } else if (success == 0) {
+      printf("sucesso = 0\n");
       // EOF, caso o escritor feche a pipe
       return NULL;
     } else {
+      printf("sucesso = -1\n");
       close(pipe_notif);
       write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
       return NULL;
     }
+    printf("a seguir vai fechar ??? isto deve tar mal\n");
     close(pipe_notif);
+    printf("vai dar return NULL dentro do while, ta mal de certeza\n");
     return NULL;
   }
   return NULL;
