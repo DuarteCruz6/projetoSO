@@ -617,6 +617,7 @@ void *readClientPipe(void *arg) {
     if(cliente!=NULL){
       sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
       printf("Cliente encontrado pelo thread %zu\n", thread_id);
+      printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         return NULL;
