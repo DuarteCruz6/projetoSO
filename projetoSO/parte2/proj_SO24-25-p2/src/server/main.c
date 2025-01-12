@@ -313,7 +313,7 @@ void iniciar_sessao(char *message){
       return;
     }
     printf("vai abrir o pipe de notif do cliuente \n");
-    new_cliente->notif_pipe = open(pipe_notif, O_WRONLY);
+    new_cliente->notif_pipe = open(pipe_notif, O_WRONLY | O_NONBLOCK);
     printf("abriu o pipe de notif do cliuente \n");
     if (new_cliente->notif_pipe == -1){
       write_str(STDERR_FILENO,"Erro ao abrir o pipe de notification\n");
