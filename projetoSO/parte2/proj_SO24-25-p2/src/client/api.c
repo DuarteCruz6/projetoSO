@@ -16,8 +16,8 @@ int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->ve
 int pipe_req;
 int pipe_resp;
 
-void pad_string(char *message,char *str, size_t length) {
-  for(size_t i=0; i<length &&str[i] != "\0"; i++){
+void pad_string(char *message,char *str, int length) {
+  for(size_t i=0; i<length && str[i]!="\0"; i++){
     if(i<strlen(str)){
       message[i] = str[i];
     }else{
