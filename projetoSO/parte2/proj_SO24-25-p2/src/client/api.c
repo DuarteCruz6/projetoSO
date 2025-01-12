@@ -201,7 +201,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   //construir mensagem
   char keyPadded[41];
   strcpy(keyPadded,key);
-  pad_string(&keyPadded,41);
+  pad_string(keyPadded,41);
   snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
@@ -222,7 +222,7 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   //construir mensagem
   char keyPadded[41];
   strcpy(keyPadded,key);
-  pad_string(&keyPadded,41);
+  pad_string(keyPadded,41);
   snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,keyPadded);
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
