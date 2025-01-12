@@ -211,6 +211,11 @@ int addSubscription(HashTable *ht,Cliente *cliente, char *key){
     return 1;
   }
   Subscriptions *subsCliente = cliente->head_subscricoes;
+  if(subsCliente==NULL){
+    printf("é null\n");
+  }else{
+    printf("nao é null\n");
+  }
   Subscriptions *newSub = malloc(sizeof(Subscriptions));
   KeyNode *par = getKeyNode(ht,key);
   if(newSub!=NULL && par!=NULL){
