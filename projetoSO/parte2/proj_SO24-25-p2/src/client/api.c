@@ -133,7 +133,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
 
   char message[122];
   //construir mensagem
-  message[0] = (char) ('0' * OP_CODE_CONNECT);
+  message[0] = (char) ('0' + OP_CODE_CONNECT);
   pad_string(&message[1], req_pipe_path, 40);
   pad_string(&message[41], req_pipe_path, 40);
   pad_string(&message[81], req_pipe_path, 40);
