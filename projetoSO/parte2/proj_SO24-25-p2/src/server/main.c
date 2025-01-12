@@ -514,7 +514,6 @@ void *readServerPipe(){
 
     // Exibe o conteúdo lido
     printf("Conteúdo lido: %s\n", buffer);
-    break;
 
   }
   return NULL;
