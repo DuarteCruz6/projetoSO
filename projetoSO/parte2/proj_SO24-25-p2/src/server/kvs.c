@@ -172,6 +172,7 @@ void getAllSubsKey(KeyNode *par){
   //da print a todos os subs de uma chave
   printf("subs da chave _%s_: ",par->key);
   Subscribers *sub_atual = par->head_subscribers;
+  printf("cabeca da lista _%s_: ",sub_atual);
   while(sub_atual->subscriber != NULL){
     printf("cliente com id %d ,",sub_atual->subscriber->id);
     sub_atual = sub_atual->next;
@@ -240,6 +241,7 @@ int removeSubscription(Cliente *cliente, char *key){
         }
         free(subscricao_atual);
         cliente->num_subscricoes--;
+        getAllSubsKey(par_atual);
         return 0;
       }
       return 1;
