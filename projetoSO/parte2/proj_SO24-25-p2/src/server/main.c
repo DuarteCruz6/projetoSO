@@ -393,7 +393,8 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     char response[3];
     snprintf(response,3,"%d%d", code, result);
     printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
-    int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+    //int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+    int response_pipe = cliente ->resp_pipe;
     if(response_pipe==-1){
       //erro a abrir o pipe de respostas
       return 1;
@@ -512,6 +513,7 @@ void *readServerPipe(){
 
 void iniciarSessaoCliente(Cliente *cliente){
   int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+  cliente ->resp_pipe = response_pipe;
   printf("abriu o pipe de response do cliente\n");
   if (response_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
@@ -537,6 +539,7 @@ int manageClient(Cliente *cliente){
   char message[43];
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
+    cliente -> req_pipe = request_pipe;
     if(request_pipe==-1){
       return 1;
     }
