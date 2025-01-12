@@ -480,7 +480,6 @@ void *readServerPipe(){
   while(erro==0){
     int success = read_all(server_fifo,&message, 121, &erro);
     
-    printf("b\n");
     if(erro==1){
       return NULL;
     }
@@ -496,24 +495,24 @@ void *readServerPipe(){
         write_str(STDERR_FILENO, "Codigo != 1\n");
         return NULL;
       }
-    } else {
+    } else if (success<0){
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
+      break;
     }
-    printf("sem usar funcao do stor: \n");
-    char buffer[256];
-    ssize_t bytes_read = read(server_fifo, buffer, sizeof(buffer) - 1);
-    if (bytes_read == -1) {
-        perror("Erro ao ler FIFO");
-        close(server_fifo);
-        return NULL;
-    }
+    //char buffer[256];
+    //ssize_t bytes_read = read(server_fifo, buffer, sizeof(buffer) - 1);
+    //if (bytes_read == -1) {
+    //    perror("Erro ao ler FIFO");
+    //    close(server_fifo);
+    //    return NULL;
+    //}
 
-    // Adiciona o caractere nulo para encerrar a string
-    buffer[bytes_read] = '\0';
-
-    // Exibe o conteúdo lido
-    printf("Conteúdo lido: %s\n", buffer);
+    //// Adiciona o caractere nulo para encerrar a string
+    //buffer[bytes_read] = '\0';
+//
+    //// Exibe o conteúdo lido
+    //printf("Conteúdo lido: %s\n", buffer);
 
   }
   return NULL;
