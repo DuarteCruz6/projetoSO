@@ -299,7 +299,7 @@ void iniciar_sessao(char *message){
     numClientes++;
     new_cliente->id = numClientes;
     printf("vai abrir o pipe de resposta do cliuente \n");
-    new_cliente->response_pipe = open(pipe_resp, O_WRONLY | O_NONBLOCK);
+    new_cliente->response_pipe = open(pipe_resp, O_WRONLY);
     printf("abriu o pipe de resposta do cliuente \n");
     if (new_cliente->response_pipe == -1){
       write_str(STDERR_FILENO,"Erro ao abrir o pipe de response\n");
