@@ -62,7 +62,6 @@ int getResponse(const char *resp_pipe_path){
       write_str(STDERR_FILENO, "Error reading pipe response");
       return 1;
   }
-  printf("vai scannear o code e o result\n");
   int code = buffer[0] - '0';
   int result = buffer[1] - '0';
   printf("scanneou\n");
@@ -78,10 +77,9 @@ int getResponse(const char *resp_pipe_path){
 
   char* operations[4]={"connect","disconnect","subscribe","unsubscribe"};
   char string[256];
-  printf("vai fazer a string para imprimir\n");
   snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[code-1]);
-  printf("imprimir: %s\n",string);
   write_str(STDOUT_FILENO,string);
+  write_str(STDOUT_FILENO,"\n");
   return result; 
 }
 
