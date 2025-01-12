@@ -525,12 +525,12 @@ int manageClient(Cliente *cliente){
     }
     printf("vai ler\n");
     int success = read_all(request_pipe,&message, 43, NULL);
-    printf("leu _%s_\n",message);
+    printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
     close(request_pipe);
     if (success > 0){
       int code = message[0]- '0';
       int result;
-      printf("leu _%d_\n",code);
+      printf("leu o codigo _%d_\n",code);
 
       if (code==2){
         printf("era disconnect\n");
