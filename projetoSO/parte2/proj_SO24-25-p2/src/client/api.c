@@ -35,6 +35,13 @@ int createMessage(const char *req_pipe_path, char *message){
     close(pipe_req);
     return 1;
   }
+  ssize_t bytes_written = write(pipe_req, message, strlen(message));
+  if (bytes_written == -1) {
+      perror("Erro ao escrever no FIFO");
+      close(pipe_req);
+      return 1;
+  }
+  printf("fim sem stor\n");
   printf("ja pediu algo\n");
   close(pipe_req);
   return 0;
@@ -79,7 +86,7 @@ int getResponse(const char *resp_pipe_path){
   char string[256];
   snprintf(string, sizeof(string), "Server returned %d for operation: %s", result, operations[code-1]);
   write_str(STDOUT_FILENO,string);
-  write_str(STDOUT_FILENO,"\n");
+  write_str(STDOUT_FILENO," \n");
   return result; 
 }
 
