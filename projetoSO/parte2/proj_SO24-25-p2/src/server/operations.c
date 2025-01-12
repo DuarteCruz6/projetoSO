@@ -245,6 +245,7 @@ int disconnectClient(Cliente *cliente){
     //remover todas as suas subscricoes 
     while (subscricao_atual!=NULL){
       printf("ta inscrito nalgo \n");
+      printf("inscricao: %s\n",subscricao_atual);
       KeyNode *par = subscricao_atual->par;
       char *key = par->key;
       if(removeSubscription(cliente, key)==1){
