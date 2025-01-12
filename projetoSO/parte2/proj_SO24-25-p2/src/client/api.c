@@ -31,7 +31,7 @@ void mudarSinalSeguranca(){
 }
 
 //manda request
-int createMessage(const char *req_pipe_path, char *message){
+int createMessage(const char *req_pipe_path, char *message, int size){
   printf("vai abrir o pipe para pedir _%s_\n",message);
   //int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
   if (pipe_req == -1 && errno == EPIPE ) {
@@ -41,7 +41,7 @@ int createMessage(const char *req_pipe_path, char *message){
     perror("Error reading pipe response, error: \n");
     return 1;
   }
-  if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
+  if (write_all(pipe_req, message, size) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");
     //close(pipe_req);
     return 1;
@@ -58,7 +58,7 @@ int createMessage(const char *req_pipe_path, char *message){
   //    return 1;
   //}
   printf("ja pediu algo, com sucesso %d\n",success);
-  close(pipe_req);
+  //close(pipe_req);
   return 0;
 }
 
@@ -121,10 +121,14 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("conectou a todos os pipes do cliente, agora vai mandar msg para o do server\n");
   printf("pipe do server: %s\n",server_pipe_path);
 
-  char message[256];
+  char message[121];
   //construir mensagem
-  snprintf(message, 256, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
+  snprintf(message, 121, "%d%s%s%s", OP_CODE_CONNECT ,req_pipe_path, resp_pipe_path, notif_pipe_path);
   int server_pipe = open(server_pipe_path, O_WRONLY);
+
+  if(write_all(server_pipe, message, 121) == -1){
+    return 1;
+  }
   
   printf("ja criou a mensagem %s, com tamanho %d agora vai recebe la\n", message, sizeof(message));
 
@@ -159,7 +163,7 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   // close pipes and unlink pipe files
   char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
-  if(createMessage(req_pipe_path,code)==1){
+  if(createMessage(req_pipe_path,code,1)==1){
     return 1;
   }
   int response = getResponse(resp_pipe_path);
@@ -190,7 +194,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   char message[42];
   //construir mensagem
   snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,key);
-  if(createMessage(req_pipe_path,message)==1){
+  if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
   int response = getResponse(resp_pipe_path);
@@ -208,7 +212,7 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const
   char message[42];
   //construir mensagem
   snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,key);
-  if(createMessage(req_pipe_path,message)==1){
+  if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
   int response = getResponse(resp_pipe_path);

@@ -400,7 +400,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
       //erro a abrir o pipe de respostas
       return 1;
     }
-    int success = write_all(response_pipe, response, strlen(response));
+    int success = write_all(response_pipe, response, 2);
     //ssize_t bytes_written = write(response_pipe, response, strlen(response));
     //if (bytes_written == -1) {
     //    perror("Erro ao escrever no FIFO de resposta\n");
@@ -537,7 +537,7 @@ void iniciarSessaoCliente(Cliente *cliente){
 int manageClient(Cliente *cliente){
   iniciarSessaoCliente(cliente);
   printf("a ler a pipe dos clientes\n");
-  char message[43];
+  char message[1];
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
@@ -545,7 +545,7 @@ int manageClient(Cliente *cliente){
       return 1;
     }
     printf("vai ler\n");
-    int success = read_all(cliente -> req_pipe,&message, 43, NULL);
+    int success = read_all(cliente -> req_pipe,&message, 1, NULL);
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
     //close(request_pipe);
     if (success >= 0){
@@ -570,11 +570,15 @@ int manageClient(Cliente *cliente){
       }else if (code==3){
         printf("era subscribe\n");
         //subscribe
+        char message[41];
+        int success = read_all(cliente -> req_pipe,&message, 41, NULL);
         result = subscribeClient(cliente, message);
         printf("result da funcao addSubscriber: %d\n",result);
       }else if (code==4){
         printf("era unsub\n");
         //unsubscribe
+        char message[41];
+        int success = read_all(cliente -> req_pipe,&message, 41, NULL);
         result = unsubscribeClient(cliente, message);
       }else{
         printf("erro\n");
