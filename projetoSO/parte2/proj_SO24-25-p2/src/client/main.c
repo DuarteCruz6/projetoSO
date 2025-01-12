@@ -17,7 +17,6 @@ bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
 struct ThreadPrincipalData {
   int req_pipe;
   int resp_pipe;
-  int notif_pipe;
 };
 
 struct ThreadSecundariaData {
@@ -41,12 +40,11 @@ static void *thread_principal_work(void *arguments){
 
   int req_pipe = thread_data->req_pipe;
   int resp_pipe = thread_data->resp_pipe;
-  int notif_pipe = thread_data->notif_pipe;
 
   while (!getSinalSeguranca()) {
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
-      if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
+      if (kvs_disconnect(req_pipe, resp_pipe) != 0) {
         write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
         return NULL;
       }
@@ -165,7 +163,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
   int pipe_resp = open(resp_pipe_path, O_WRONLY | O_NONBLOCK);
   int pipe_notif = open(notif_pipe_path, O_WRONLY | O_NONBLOCK);
 
-  struct ThreadPrincipalData threadPrincipal_data= {pipe_req, pipe_resp, pipe_notif};
+  struct ThreadPrincipalData threadPrincipal_data= {pipe_req, pipe_resp};
   struct ThreadSecundariaData threadSecundaria_data = {pipe_notif};
 
   //principal
