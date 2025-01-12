@@ -538,7 +538,7 @@ int manageClient(Cliente *cliente){
   iniciarSessaoCliente(cliente);
   printf("a ler a pipe dos clientes\n");
   char message[43];
-  int request_pipe = open(cliente->req_pipe_path, O_RDONLY);
+  int request_pipe = open(cliente->req_pipe_path, O_RDONLY | O_NONBLOCK);
   cliente -> req_pipe = request_pipe;
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     if(request_pipe==-1){
