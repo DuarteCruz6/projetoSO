@@ -252,17 +252,21 @@ int addSubscriberTable(Cliente *cliente, KeyNode *par){
 //remove subscricao da estrutura cliente
 //0 se certo, 1 se errado
 int removeSubscription(Cliente *cliente, char *key){
+  printf("esta no removeSubscription \n");
   Subscriptions *subscricao_atual = cliente->head_subscricoes;
   Subscriptions *subscricao_prev = NULL;
 
   //percorre a lista das subscricoes até encontrar a que queremos
   while(subscricao_atual!=NULL){
+    printf("esta no while do removeSubscription \n");
     //verifica se é a que queremos
     KeyNode *par_atual = subscricao_atual->par;
     if(strcmp(par_atual->key,key)==0){
+      printf("encontramos a chave que queremos \n");
       //encontramos a que queremos
       if (removeSubscriberTable(par_atual, cliente)==0){
         //retira a ligacao
+        printf("o removeSubscriberTable deu certo \n");
         Subscriptions *subscricao_prox = subscricao_atual->next;
 
         if(subscricao_prev!=NULL){
@@ -275,6 +279,7 @@ int removeSubscription(Cliente *cliente, char *key){
         getAllSubsKey(par_atual);
         return 0;
       }
+      printf("o removeSubscriberTable deu erro \n");
       return 1;
     }else{
       //ainda nao encontrou
@@ -289,14 +294,17 @@ int removeSubscription(Cliente *cliente, char *key){
 //remove cliente dos followers na estrutura da chave 
 //0 se certo, 1 se errado
 int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado){
+  printf("estamos no removeSubscriberTable \n");
   Subscribers *subscriber_atual = par->head_subscribers;
   Subscribers *subscriber_prev = NULL;
 
   //percorre a lista de todos os followers do par
   while(subscriber_atual!=NULL){
+    printf("estamos no while do removeSubscriberTable \n");
     Cliente *cliente_atual = subscriber_atual->subscriber;
     //verifica se é o que queremos
     if(cliente_atual->id == cliente_desejado->id){
+      printf("encontramos o cliente que queriamos \n");
       //é o cliente que queremos
       Subscribers *subscriber_prox = subscriber_atual->next;
 
@@ -310,6 +318,7 @@ int removeSubscriberTable(KeyNode *par, Cliente *cliente_desejado){
       free(subscriber_atual);
       return 0;
     }else{
+      printf("ainda nao encontramos o cliente que queriamos \n");
       //ainda nao encontrou
       subscriber_prev = subscriber_atual;
       subscriber_atual = subscriber_atual->next;
