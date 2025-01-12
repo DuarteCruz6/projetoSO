@@ -28,7 +28,7 @@ void mudarSinalSeguranca(){
 
 //manda request
 int createMessage(const char *req_pipe_path, char *message){
-  printf("vai abrir o pipe para pedir algo\n");
+  printf("vai abrir o pipe para pedir _%s_\n",message);
   int pipe_req = open(req_pipe_path, O_WRONLY);
   if (write_all(pipe_req, message, strlen(message)+1) == -1) { // +1 para incluir o '\0'
     write_str(STDERR_FILENO, "Error writing to pipe request");

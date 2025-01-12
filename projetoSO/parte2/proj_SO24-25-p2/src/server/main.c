@@ -339,10 +339,13 @@ void iniciar_sessao(char *message){
 
 
 int subscribeClient(Cliente *cliente, char *message){
+  printf("ta na funcao subscribe\n");
   if(!getSinalSeguranca()){
     char key[41];
     int code;
     sscanf(message,"%d%s",&code, key);
+    printf("subscribe code %d\n",code);
+    printf("subscribe key %s\n",key);
 
     if (addSubscriber(cliente, key)==0){
       //a key existe e deu certo
@@ -520,13 +523,17 @@ int manageClient(Cliente *cliente){
     if(request_pipe==-1){
       return 1;
     }
+    printf("vai ler\n");
     int success = read_all(request_pipe,&message, 43, NULL);
+    printf("leu _%s_\n",message);
     close(request_pipe);
     if (success > 0){
-      int code = message[0];
+      int code = message[0]- '0';
       int result;
+      printf("leu _%d_\n",code);
 
       if (code==2){
+        printf("era disconnect\n");
         //disconnect
         result = disconnectClient(cliente);
         if (result==0){
@@ -540,12 +547,15 @@ int manageClient(Cliente *cliente){
         }
 
       }else if (code==3){
+        printf("era subscribe\n");
         //subscribe
         result = subscribeClient(cliente, message);
       }else if (code==4){
+        printf("era unsub\n");
         //unsubscribe
         result = unsubscribeClient(cliente, message);
       }else{
+        printf("erro\n");
         //leu um codigo inesperado
         return 1;
       }
