@@ -281,23 +281,11 @@ void iniciar_sessao(char *message){
   printf("pipe req: %s\n",pipe_req);
   printf("pipe resp: %s\n",pipe_resp);
   printf("pipe notif: %s\n",pipe_notif);
-  int response_pipe = open(pipe_resp, O_WRONLY);
-  printf("abriu o pipe de response do cliente\n");
-  if (response_pipe == -1) {
-    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
-    write_str(STDERR_FILENO,pipe_resp);
-    write_str(STDERR_FILENO,"\n");
-    return;
-  }
   if(code==1){
     printf("codigo era 1\n");
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-      char response[2] = "11";
-      if (write_all(response_pipe, response, 2) == -1) {
-        write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao\n");
-      }
       return;
     }
 
@@ -331,16 +319,6 @@ void iniciar_sessao(char *message){
     printf("deu unlock ao bufferThreads\n");
     sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
     printf("aumentou 1 no semaforo\n");
-
-    //manda que deu sucesso
-    char response[3] = "10";
-    //if (write_all(response_pipe, response, strlen(response)) == -1) {
-    //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
-    //  return;
-    //}
-    printf("vai escrever no pipe response\n");
-    ssize_t bytes_written = write(response_pipe, response, strlen(response));
-    printf("escreveu no pipe response\n");
     return;
   }
   
@@ -532,8 +510,29 @@ void *readServerPipe(){
   return NULL;
 }
 
+void iniciarSessaoCliente(Cliente *cliente){
+  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+  printf("abriu o pipe de response do cliente\n");
+  if (response_pipe == -1) {
+    write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
+    write_str(STDERR_FILENO,response_pipe);
+    write_str(STDERR_FILENO,"\n");
+    return;
+  }
+  //manda que deu sucesso
+  char response[3] = "10";
+  //if (write_all(response_pipe, response, strlen(response)) == -1) {
+  //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
+  //  return;
+  //}
+  printf("vai escrever no pipe response\n");
+  ssize_t bytes_written = write(response_pipe, response, strlen(response));
+  printf("escreveu no pipe response\n");
+}
+
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
+  iniciarSessaoCliente(cliente);
   printf("a ler a pipe dos clientes\n");
   char message[43];
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
@@ -609,11 +608,11 @@ Cliente* getClientForThread(){
 void *readClientPipe(){
   while(1){
     printf("procura para ler a pipe dos clientes\n");
-    sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
+      sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
       printf("encontrou cliente\n");
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
