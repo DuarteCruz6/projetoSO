@@ -196,7 +196,7 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key) {
+int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
   // send subscribe message to request pipe and wait for response in response
   // pipe
   char message[42];
@@ -216,7 +216,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const c
   return 0;
 }
 
-int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key) {
+int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
   // send unsubscribe message to request pipe and wait for response in response
   // pipe
   char message[42];
