@@ -348,9 +348,11 @@ int subscribeClient(Cliente *cliente, char *message){
     printf("subscribe key %s\n",key);
 
     if (addSubscriber(cliente, key)==0){
+      printf("funcao addSubscriber deu certo\n");
       //a key existe e deu certo
       return 0;
     }
+    printf("funcao addSubscriber deu errado\n");
     return 1;
   }
   return 1;
@@ -400,6 +402,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     //escreve se a operacao deu certo (0) ou errado (1)
     char response[3];
     snprintf(response,3,"%d%d", code, result);
+    printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
     int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
     if(response_pipe==-1){
       //erro a abrir o pipe de respostas
@@ -550,6 +553,7 @@ int manageClient(Cliente *cliente){
         printf("era subscribe\n");
         //subscribe
         result = subscribeClient(cliente, message);
+        printf("result da funcao addSubscriber: %d\n",result);
       }else if (code==4){
         printf("era unsub\n");
         //unsubscribe
