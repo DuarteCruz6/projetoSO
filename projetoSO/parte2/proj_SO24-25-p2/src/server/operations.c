@@ -257,7 +257,7 @@ int disconnectClient(Cliente *cliente){
       printf("ta inscrito nalgo \n");
       KeyNode *par = subscricao_atual->par;
       char *key = par->key;
-      subscricao_atual = subscricao_atual->next; //tem de ser antes
+      subscricao_atual = subscricao_atual->next; //tem de ser antes pq vai haver free no removeSubscription
       if(removeSubscription(cliente, key)==1){
         printf("deu erro no removeSubscription \n");
         return 1;
