@@ -168,6 +168,17 @@ KeyNode *getKeyNode(HashTable *ht,char *key){
   return NULL; // Key not found
 }
 
+void getAllSubsKey(KeyNode *par){
+  //da print a todos os subs de uma chave
+  pritnf("subs da chave _%s_: ",par->key);
+  Subscribers *sub_atual = par->head_subscribers;
+  while(sub_atual->subscriber != NULL){
+    printf("cliente com id %d ,",sub_atual->subscriber->id);
+    sub_atual = sub_atual->next;
+  }
+  printf(" \n");
+}
+
 //adiciona subscricao à estrutura cliente
 //0 se certo, 1 se errado
 int addSubscription(HashTable *ht,Cliente *cliente, char *key){
@@ -183,6 +194,7 @@ int addSubscription(HashTable *ht,Cliente *cliente, char *key){
       newSub->par = par; //guarda o keynode na sub
       cliente->head_subscricoes = newSub; //guarda a novaSub como cabeca da lista
       cliente->num_subscricoes++;
+      getAllSubsKey(par);
       return 0;
     }
     return 1;
