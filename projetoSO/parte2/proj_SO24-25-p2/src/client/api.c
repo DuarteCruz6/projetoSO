@@ -17,6 +17,7 @@ int pipe_req;
 int pipe_resp;
 
 void pad_string(char *message,char *str, int length) {
+  char message[length];
   for(size_t i=0; i<length; i++){
     if(i<strlen(str)){
       message[i] = str[i];
@@ -25,6 +26,7 @@ void pad_string(char *message,char *str, int length) {
       message[i] = ' ';
     }
   }
+  message[length]='\0';
 }
 
 int getSinalSeguranca(){
