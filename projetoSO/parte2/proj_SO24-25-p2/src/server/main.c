@@ -412,7 +412,6 @@ void sinalDetetado() {
 
 //thread que lê o pipe do server
 void *readServerPipe(){
-  printf("readServerPipe\n");
   //desbloquear SIGUSR1 apenas nesta thread
   pthread_sigmask(SIG_UNBLOCK, &sinalSeguranca, NULL);
   //registar o manipulador de sinal

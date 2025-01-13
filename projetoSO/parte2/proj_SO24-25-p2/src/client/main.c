@@ -131,7 +131,7 @@ void *thread_secundaria_work(void *arguments){
   strcpy(notif_pipe, thread_data->notif_pipe_path);
   int pipe_notif = open(notif_pipe, O_RDONLY); //abre o pipe das notificacoes em modo de leitura
   if (pipe_notif == -1) {
-    write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
+    write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes\n");
     return NULL;
   }
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect ou haver um sigusr1
@@ -152,10 +152,11 @@ void *thread_secundaria_work(void *arguments){
 
     if (success != -1) {
       write_str(STDOUT_FILENO,output);
+      write_str(STDOUT_FILENO,"\n");
       free(output);
     } else {
       close(pipe_notif);
-      write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
+      write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes\n");
       free(output);
       return NULL;
     }
