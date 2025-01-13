@@ -117,7 +117,7 @@ int delete_pair(HashTable *ht, const char *key) {
     if (strcmp(keyNode->key, key) == 0) {
       notificarSubs(keyNode, "DELETED");
       Subscribers *currentSub = keyNode->head_subscribers;
-      while (currentSub != NULL) {
+      while (currentSub->subscriber != NULL) {
         Cliente *cliente = currentSub->subscriber;
         removeSubscription(cliente,key);
         printf("xau\n");
