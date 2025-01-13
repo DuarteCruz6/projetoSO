@@ -44,7 +44,7 @@ static void *thread_principal_work(void *arguments){
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
-        if(!getSinalSeguranca){
+        if(!getSinalSeguranca()){
           write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
@@ -65,7 +65,7 @@ static void *thread_principal_work(void *arguments){
       }
 
       if (kvs_subscribe(keys[0])==1){
-        if(!getSinalSeguranca){
+        if(!getSinalSeguranca()){
           write_str(STDERR_FILENO, "Command subscribe failed\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
@@ -83,7 +83,7 @@ static void *thread_principal_work(void *arguments){
       }
 
       if (kvs_unsubscribe(keys[0])==1) {
-        if(!getSinalSeguranca){
+        if(!getSinalSeguranca()){
           write_str(STDERR_FILENO, "Command unsubscribe failed\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
