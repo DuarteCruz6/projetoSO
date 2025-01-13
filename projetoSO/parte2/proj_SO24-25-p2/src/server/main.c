@@ -427,14 +427,6 @@ void sinalDetetado() {
     close(cliente->req_pipe);
     close(cliente->resp_pipe);
     printf("matou cliente com id: %d\n",cliente->id);
-    free(cliente->id);
-    free(cliente->notif_pipe_path);
-    free(cliente->num_subscricoes);
-    free(cliente->req_pipe);
-    free(cliente->req_pipe_path);
-    free(cliente->resp_pipe);
-    free(cliente->resp_pipe_path);
-    free(cliente->head_subscricoes);
     free(cliente);
     userAtual=userAtual->nextUser;
   }
