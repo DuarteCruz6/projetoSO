@@ -73,6 +73,8 @@ int getResponse(){
     write_str(STDERR_FILENO, "Error reading pipe response\n");
     printf("errno: %s\n",strerror(errno));
     return 1;
+  } else {
+    printf("sucesso: %d\n",success);
   }
   
   buffer[2]='\0';
