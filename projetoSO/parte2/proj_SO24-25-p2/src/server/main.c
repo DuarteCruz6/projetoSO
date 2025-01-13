@@ -427,7 +427,7 @@ void sinalDetetado() {
 }
 
     printf("matou cliente com id: %d\n",cliente->id);
-    free(cliente);
+    cliente->flag_sigusr1 = 1;
     userAtual=userAtual->nextUser;
   }
   mudarSinalSeguranca(); //volta a meter como false
@@ -520,7 +520,9 @@ int manageClient(Cliente *cliente){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
-      printf("cliente: %d\n",cliente->id);
+      if(cliente->flag_sigusr1){
+        return 1;
+      }
 
       if (code==2){
         printf("era disconnect\n");
