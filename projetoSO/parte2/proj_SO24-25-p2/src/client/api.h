@@ -5,9 +5,17 @@
 
 #include "src/common/constants.h"
 
+//retorna o sinal de seguranca (0->false, 1->true)
 int getSinalSeguranca();
 
+//muda o sinal de seguranca quando houve um sigusr1
 void mudarSinalSeguranca();
+
+//manda request atraves do pipe request
+int createMessage(char *message, int size);
+
+//recebe a resposta atraves do pipe response
+int getResponse();
 
 /// Connects to a kvs server.
 /// @param req_pipe_path Path to the name pipe to be created for requests.

@@ -97,6 +97,7 @@ void write_str(int fd, const char *str) {
   }
 }
 
+//adiciona \0 até a string tar de tamanho length
 void pad_string(char *message,const char *str, int length) {
   for(size_t i=0; i< (size_t) length; i++){
     if(i<strlen(str)){

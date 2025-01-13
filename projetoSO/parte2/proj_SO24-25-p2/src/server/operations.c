@@ -188,6 +188,7 @@ void kvs_wait(unsigned int delay_ms) {
   nanosleep(&delay, NULL);
 }
 
+//muda o sinal de seguranca quando ha um sigusr1
 void mudarSinalSeguranca(){
   if(sinalSegurancaLancado){
     sinalSegurancaLancado = 0; //mete como false
@@ -197,61 +198,65 @@ void mudarSinalSeguranca(){
   return;
 }
 
+//retorna o sinal de seguranca
 int getSinalSeguranca(){
   return sinalSegurancaLancado;
 }
 
-
+//adiciona um subscritor a uma chave
 int addSubscriber(Cliente *cliente, char *key){
   if(!getSinalSeguranca()){
+    //nao foi lancado nenhum sigusr1
     if (kvs_table == NULL) {
       write_str(STDERR_FILENO, "KVS state must be initialized\n");
       return 1;
     }
-    pthread_rwlock_rdlock(&kvs_table->tablelock);
-    if(addSubscription(kvs_table,cliente, key)!=0){
-      printf("funcao addSubscription deu errado\n");
-      pthread_rwlock_unlock(&kvs_table->tablelock);
+    pthread_rwlock_rdlock(&kvs_table->tablelock); //da lock a hashtable
+    if(addSubscription(kvs_table,cliente, key)!=0){ //adiciona a subscricao
+      //deu erro
+      pthread_rwlock_unlock(&kvs_table->tablelock); //da unlock a hashtable
       return 1;
     }
-    printf("funcao addSubscription deu certo\n");
-    pthread_rwlock_unlock(&kvs_table->tablelock);
+    pthread_rwlock_unlock(&kvs_table->tablelock); //da unlock a hashtable
     return 0;
   }
   return 1;
 }
 
+
+//retira um subscritor a uma chave
 int removeSubscriber(Cliente *cliente, char *key){
   if(!getSinalSeguranca()){
     if (kvs_table == NULL) {
       write_str(STDERR_FILENO, "KVS state must be initialized\n");
       return 1;
     }
-    pthread_rwlock_rdlock(&kvs_table->tablelock);
-    if(removeSubscription(cliente, key)!=0){
-      pthread_rwlock_unlock(&kvs_table->tablelock);
+    pthread_rwlock_rdlock(&kvs_table->tablelock); //da lock a hashtable
+    if(removeSubscription(cliente, key)!=0){ //remove a subscricao
+      //deu erro
+      pthread_rwlock_unlock(&kvs_table->tablelock); //da unlock a hashtable
       return 1;
     }
-    pthread_rwlock_unlock(&kvs_table->tablelock);
+    pthread_rwlock_unlock(&kvs_table->tablelock); //da unlock a hashtable
     return 0;
   }
   return 1;
 }
 
+//disconecta um cliente, apagando todas as suas subscricoes
 int disconnectClient(Cliente *cliente){
-  printf("esta no disconnectClient \n");
   Subscriptions *subscricao_atual = cliente->head_subscricoes;
   //remover todas as suas subscricoes 
   while (subscricao_atual!=NULL){
-    printf("ta inscrito nalgo \n");
+    //tem pelo menos uma subscricao
     KeyNode *par = subscricao_atual->par;
     char *key = par->key;
     subscricao_atual = subscricao_atual->next; //tem de ser antes pq vai haver free no removeSubscription
-    if(removeSubscription(cliente, key)==1){
-      printf("deu erro no removeSubscription \n");
+    if(removeSubscription(cliente, key)==1){ //remove a subscricao
+      //deu erro a remover
       return 1;
     }
-    printf("removeu subscricao no cliente \n");
+    //apagou uma das subscricoes
   }
   return 0;
 }

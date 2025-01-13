@@ -11,18 +11,20 @@
 #include "src/common/constants.h"
 #include "src/common/io.h"
 
-char *server_pipe_path= NULL;
+char *server_pipe_path= NULL; //caminho para o server pipe
 bool deuDisconnect = false; //flag para saber se deu disconnect ou nao
 
+//dados da thread principal
 struct ThreadPrincipalData {
-  const char *req_pipe_path;
-  const char *resp_pipe_path;
-  const char *notif_pipe_path;
-  pthread_t *thread_secundaria;
+  const char *req_pipe_path; //caminho para o pipe de request
+  const char *resp_pipe_path; //caminho para o pipe de response
+  const char *notif_pipe_path; //caminho para o pipe de notificacoes
+  pthread_t *thread_secundaria; //ponteiro para a thread secundaria que lê as notificacoes
 };
 
+//dados da thread secundaria
 struct ThreadSecundariaData {
-  const char *notif_pipe_path;
+  const char *notif_pipe_path; //caminho para o pipe de notificacoes
 };
 
 //thread principal: le os comandos e gere o envio de pedidos para o servidor e recebe as respostas do server
@@ -42,8 +44,10 @@ static void *thread_principal_work(void *arguments){
   size_t num;
 
   while (!getSinalSeguranca()) {
+    //nao foi lancado nenhum sigusr1
     switch (get_next(STDIN_FILENO)) {
     case CMD_DISCONNECT:
+      //era disconnect
       if (kvs_disconnect(req_pipe, resp_pipe, notif_pipe) != 0) {
         if(!getSinalSeguranca()){
           write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
@@ -53,12 +57,12 @@ static void *thread_principal_work(void *arguments){
         }
         return NULL;
       }
-      pthread_cancel(*(thread_data->thread_secundaria)); //cancelar a thread secundaria
-      printf("Disconnected from server\n");
+      pthread_cancel(*(thread_data->thread_secundaria)); //cancela a thread secundaria
       deuDisconnect = true;
       return NULL;
 
     case CMD_SUBSCRIBE:
+      //era subscribe
       num = parse_list(STDIN_FILENO, keys, 1, MAX_STRING_SIZE);
       if (num == 0) {
         write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
@@ -73,10 +77,10 @@ static void *thread_principal_work(void *arguments){
           return NULL;
         }
       }
-
       break;
 
     case CMD_UNSUBSCRIBE:
+      //era unsubscribe
       num = parse_list(STDIN_FILENO, keys, 1, MAX_STRING_SIZE);
       if (num == 0) {
         write_str(STDERR_FILENO, "Invalid command. See HELP for usage\n");
@@ -122,23 +126,17 @@ static void *thread_principal_work(void *arguments){
 
 //thread secundaria: recebe as notificacoes e imprime o resultado para o stdout
 void *thread_secundaria_work(void *arguments){
-  printf("comecou a secundaria\n");
   struct ThreadSecundariaData *thread_data = (struct ThreadSecundariaData *)arguments;
   char notif_pipe[41];
   strcpy(notif_pipe, thread_data->notif_pipe_path);
-  printf(" vai abrir o pipe notif\n");
-  int pipe_notif = open(notif_pipe, O_RDONLY);
-  printf("abriu o pipe notif\n");
+  int pipe_notif = open(notif_pipe, O_RDONLY); //abre o pipe das notificacoes em modo de leitura
   if (pipe_notif == -1) {
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
     return NULL;
   }
-  while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect
-    printf("while da secundaria\n");
+  while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect ou haver um sigusr1
     char notif[83];
-    printf("a ler pipe notif\n");
-    int success = read_all(pipe_notif, notif, 82, NULL);
-    printf("notificacao recebida\n");
+    int success = read_all(pipe_notif, notif, 82, NULL); //le o pipe de notifs
     char chave[41];
     memcpy(chave, &notif[0],40);
     chave[40] = '\0';
@@ -149,15 +147,13 @@ void *thread_secundaria_work(void *arguments){
     notif[83]= '\0';
     size_t tamanho = (size_t) snprintf(NULL,0,"(%s,%s)",chave,newValue);
     char *output = malloc(tamanho + 1);
+    //cria a mensagem para o output q mostra q houve notificacao
     snprintf(output, tamanho + 1, "(%s,%s)", chave, newValue);
-    printf("notificacao: _%s_\n",output);
 
     if (success != -1) {
-      printf("sucesso = %d\n",success);
       write_str(STDOUT_FILENO,output);
       free(output);
     } else {
-      printf("sucesso = -1\n");
       close(pipe_notif);
       write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
       free(output);
@@ -200,13 +196,12 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
   }
 
   //espera pela principal
-  printf("À espera que a principal acabe\n");
   if (pthread_join(thread_principal[0], NULL) != 0) {
     write_str(STDERR_FILENO, "Failed to join thread gestora\n");
     free(thread_principal);
     return;
   }
-  printf("À espera que a secundaria acabe\n");
+
   //espera pela secundaria
   if (pthread_join(thread_secundaria[0], NULL) != 0) {
     write_str(STDERR_FILENO, "Failed to join thread\n");
@@ -214,11 +209,8 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     return;
   }
   
-  printf("vai dar free as threads\n");
   free(thread_principal);
-  printf("vai dar free a thread secundaria\n");
   free(thread_secundaria);
-  printf("deu free as threads\n");
   return;
 }
 
@@ -243,11 +235,14 @@ int main(int argc, char *argv[]) {
 
 
   server_pipe_path = argv[2];
+  //conecta ao server
   if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
     return 1;
   }
+  //cria as threads
   create_threads(req_pipe_path, resp_pipe_path, notif_pipe_path);
 
+  //apaga os seus pipes
   unlink(req_pipe_path);
   unlink(resp_pipe_path);
   unlink(notif_pipe_path);

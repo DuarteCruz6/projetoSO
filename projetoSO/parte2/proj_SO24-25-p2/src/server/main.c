@@ -40,12 +40,12 @@ typedef struct BufferUserConsumer {
   pthread_mutex_t buffer_mutex; //read and write block para ter a certeza q 2 threads n vao ao mesmo tempo
 }BufferUserConsumer; 
 
-int numClientes=0;
+int numClientes=0; //para saber o numero de clientes
 sem_t semaforoBuffer; //semaforo para o buffer -> +1 quando ha inicio de sessao de um cliente, -1 quando uma thread vai buscar um cliente
 sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
-pthread_t *threads_gestoras;
+pthread_t *threads_gestoras; 
 char fifo_path[256] = "/tmp/";
 
 
@@ -57,7 +57,7 @@ size_t max_backups;        // Maximum allowed simultaneous backups
 size_t max_threads;        // Maximum allowed simultaneous threads
 char *jobs_directory = NULL;
 char *nome_fifo = NULL;
-int server_fifo;
+int server_fifo; //descritor do server pipe
 
 int filter_job_files(const struct dirent *entry) {
   const char *dot = strrchr(entry->d_name, '.');
@@ -268,8 +268,8 @@ static void *get_file(void *arguments) {
   return NULL;
 }
 
-void iniciar_sessao(char *message){
-  printf("vai iniciar sessao ao cliente: %s\n",message);
+//recebe um novo ciente e adiciona-o à estrutura e ao buffer
+int novoCliente(char *message){
   char first_char = message[0];
   int code = atoi(&first_char);
   char pipe_req[41], pipe_resp[41], pipe_notif[41];
@@ -279,74 +279,61 @@ void iniciar_sessao(char *message){
   pipe_resp[40] = '\0';              // Adicionar terminador nulo
   memcpy(pipe_notif, &message[81], 40); // Copiar os últimos 40 caracteres
   pipe_notif[40] = '\0';  
-  printf("code: %d\n",code);
-  printf("pipe req: %s\n",pipe_req);
-  printf("pipe resp: %s\n",pipe_resp);
-  printf("pipe notif: %s\n",pipe_notif);
+
   if(code==1){
-    printf("codigo era 1\n");
     Cliente *new_cliente = malloc(sizeof(Cliente));
     if (new_cliente == NULL) {
       write_str(STDERR_FILENO, "Erro ao alocar memória para novo cliente\n");
-      return;
+      return 1;
     }
 
-    // Inicializa os campos da estrutura
+    // Inicializa os campos da estrutura cliente
     numClientes++;
     new_cliente->id = numClientes;
-    strcpy(new_cliente->req_pipe_path, pipe_req);
-    strcpy(new_cliente->resp_pipe_path, pipe_resp);
-    strcpy(new_cliente->notif_pipe_path, pipe_notif);
     new_cliente->num_subscricoes=0;
     new_cliente->head_subscricoes = NULL;
     new_cliente ->usado = 0;
-    //new_cliente ->flag_sigusr1 = 0;
+    strcpy(new_cliente->req_pipe_path, pipe_req);
+    strcpy(new_cliente->resp_pipe_path, pipe_resp);
+    strcpy(new_cliente->notif_pipe_path, pipe_notif);
+    
+    //inicializa os campos da estrutura user
     User *new_user = malloc(sizeof(User));
     new_user->cliente = new_cliente;
     new_user->usedFlag = false;
     new_user ->nextUser = NULL;
-    printf("vai dar lock ao bufferThreads\n");
+
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //da lock ao buffer pois vamos escrever nele
     if(bufferThreads->headUser==NULL){
-      printf("a head do buffer era null\n");
-      //buffer tava vazio
+      //buffer tava vazio, ent este fica a head
       bufferThreads->headUser = new_user;
     }else{
-      printf("a head do buffer nao era null\n");
+      //buffer ja tinha clientes
       User *user_atual = bufferThreads->headUser; //vai ao primeiro user
-      printf("foi buscar o primeiro user\n");
       new_user->nextUser = user_atual; 
-      printf("meteu o novo como head\n");
       bufferThreads->headUser = new_user; //adiciona o novo user ao inicio do buffer
     }
-    pthread_mutex_unlock(&bufferThreads->buffer_mutex);
-    printf("deu unlock ao bufferThreads\n");
+    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //da unlock ao buffer
     sem_post(&semaforoBuffer); //aumentar 1 no semaforo pois adicionamos o cliente
-    printf("aumentou 1 no semaforo\n");
-    return;
+    return 0;
   }
-  
-  printf("Erro ao iniciar sessao de novo cliente.\n");
-  return;
+  write_str(STDERR_FILENO, "Erro ao iniciar novo cliente\n");
+  return 1;
 }
 
-
-
+//comando SUBSCRIBE
 int subscribeClient(Cliente *cliente, char *key){
-  printf("ta na funcao subscribe\n");
   if(!getSinalSeguranca()){
-    printf("subscribe key %s\n",key);
     if (addSubscriber(cliente, key)==0){
-      printf("funcao addSubscriber deu certo\n");
       //a key existe e deu certo
       return 0;
     }
-    printf("funcao addSubscriber deu errado\n");
     return 1;
   }
   return 1;
 }
 
+//COMANDO UNSUBSCRIBE
 int unsubscribeClient(Cliente *cliente, char *key){
   if(!getSinalSeguranca()){
     if (removeSubscriber(cliente, key)==0){
@@ -358,13 +345,13 @@ int unsubscribeClient(Cliente *cliente, char *key){
   return 1;
 }
 
+//para remover um cliente do buffer quando há um sigusr1 ou este da disconnect
 void removeClientFromBuffer(Cliente *cliente){
   User *user_atual = bufferThreads->headUser;
   if(user_atual->cliente->id == cliente->id){
     //este user era a cabeca da lista
     bufferThreads->headUser = user_atual->nextUser;
     free(user_atual);
-    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
     return;
   }else{
     //este user esta no meio da lista
@@ -382,12 +369,12 @@ void removeClientFromBuffer(Cliente *cliente){
 
 }
 
+//manda o code+result para o pipe response do user
 int sendOperationResult(int code, int result, Cliente* cliente){
   if(!getSinalSeguranca()){
     //escreve se a operacao deu certo (0) ou errado (1)
     char response[3];
     snprintf(response,3,"%d%d", code, result);
-    printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
     int success = write_all(cliente->resp_pipe, response, 2);
     if(success==1){
       return 0;
@@ -411,178 +398,165 @@ void sinalDetetado() {
       pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
       removeClientFromBuffer(cliente); //remover do buffer
       pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
-      //fechar os pipes do cliente
-      printf("caminho req: %s\n",cliente->req_pipe_path);
-      close(cliente->req_pipe);
-  
-      printf("caminho req: %s\n",cliente->resp_pipe_path);
-      close(cliente->resp_pipe);
 
+      //fechar os pipes do cliente e mete no cliente a flag de que houve um sigusr1
+      close(cliente->req_pipe);
+      close(cliente->resp_pipe);
       close(cliente->notif_pipe);
-      
-      printf("matou cliente com id: %d\n",cliente->id);
       cliente->flag_sigusr1 = 1;
     }
-    userAtual=userAtual->nextUser;
+    userAtual=userAtual->nextUser; //passa para o proximo user
   }
   return;
 }
 
+//thread que lê o pipe do server
 void *readServerPipe(){
-  // Desbloquear SIGUSR1 apenas nesta thread
-  printf("desbloquear o sinal nesta thread\n");
+  //desbloquear SIGUSR1 apenas nesta thread
   pthread_sigmask(SIG_UNBLOCK, &sinalSeguranca, NULL);
-  // Registar o manipulador de sinal
-  printf("registar o sinal nesta thread\n");
+  //registar o manipulador de sinal
   signal(SIGUSR1, sinalDetetado);
 
   //ler FIFO
   int erro=0;
   char message[122];
-  server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura e nao queremos que o processo fique bloqueado
-  printf("pid do server:_%d_\n",getpid());
+  server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura
+
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
     write_str(STDERR_FILENO, nome_fifo);
     write_str(STDERR_FILENO, "\n");
     return 0;
   }
+
+  //verifica o 4º argumento do read_all -> quando fica = 1 é para terminar o programa
   while(erro==0){
     int success = read_all(server_fifo,&message, 121, &erro);
     message[121] = '\0';
     if(erro==1){
+      //houve um erro
       if(getSinalSeguranca()){
-        //foi sigusr1
+        //foi sigusr1, entao nao se termina o programa
         mudarSinalSeguranca(); //volta a meter como false
         erro=0;
       }else{
-        printf("a\n");
+        //nao foi sigusr1, entao é para terminar o programa
         return NULL;
       }
+    
     }else if (success == 1){
-      printf("leu algo\n");
-      printf("mesagem recebida: %s\n",message);
+      //recebeu uma mensagem
       int code = atoi(message);
       if (code==1){
-        printf("vai iniciar sessao\n");
-        iniciar_sessao(message);
-        printf("iniciou sessao\n");
+        //inicia sessao a um novo cliente, adicionando-o ao buffer
+        if(novoCliente==1){
+          //novoCliente deu errado
+          return NULL;
+        }
       }else{
-        printf("b\n");
+        //o codigo inserido era != 1
         write_str(STDERR_FILENO, "Codigo != 1\n");
         return NULL;
       }
     } else if (success<0 ){
-      printf("c\n");
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
       break;
     }
-
   }
-  printf("d\n");
   return NULL;
 }
 
-void iniciarSessaoCliente(Cliente *cliente){
-  cliente ->resp_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-  printf("abriu o pipe de response do cliente\n");
-  printf("abriu o pipe de notif do cliente\n");
-  if (cliente->notif_pipe == -1) {
-        return;
-  }
+//abre os pipes de um cliente que uma thread gestora foi buscar ao buffer
+int iniciarSessaoCliente(Cliente *cliente){
+  cliente ->resp_pipe = open(cliente->resp_pipe_path, O_WRONLY); //abre a de response no modo de escrita
   if (cliente ->resp_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
     write_str(STDERR_FILENO,cliente->resp_pipe_path);
     write_str(STDERR_FILENO,"\n");
-    return;
+    return 1;
   }
   //manda que deu sucesso
   char response[3] = "10";
-  printf("vai escrever no pipe response\n");
   int success = write_all(cliente ->resp_pipe, response, 2);
   if(success!=1){
     write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-    return;
+    return 1;
   }
-  printf("escreveu no pipe response\n");
+  return 0;
 }
 
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
 int manageClient(Cliente *cliente){
-  iniciarSessaoCliente(cliente);
-  printf("a ler a pipe dos clientes\n");
+  //vai buscar um cliente ao buffer
+  if(iniciarSessaoCliente(cliente)==1){
+    return 1;
+  }
   char message[2];
-  printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
-  cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
+  cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY); //abre o pipe de request do cliente em modo leitura
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
+    //le o codigo que o user quer fazer
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
     if (successCode == 1){
+      //leu bem
       int code = message[0]- '0';
       int result;
-      printf("leu o codigo _%d_\n",code);
       if(cliente->flag_sigusr1){
-        printf("b\n");
+        //houve um sigusr1
         return 1;
       }
-
       if (code==2){
-        printf("era disconnect\n");
         //disconnect
         result = disconnectClient(cliente);
         if (result==0){
           //tirar do buffer
+          pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
           removeClientFromBuffer(cliente);
+          pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer
           if(sendOperationResult(code,result,cliente)==1){
             //erro a mandar mensagem para o cliente
-            printf("c\n");
             return 1;
-          }
-          
+          }   
           break;
         }
 
       }else if (code==3){
-        printf("era subscribe\n");
         //subscribe
         char key[42];
-        int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        int success = read_all(cliente -> req_pipe,&key, 41, NULL); //lê a chave
         if (success==-1){
-          printf("d, sucesso: %d\n",success);
+          //nao leu bem
           return 1;
         }
         key[41] = '\0';
         result = subscribeClient(cliente, key);
-        printf("result da funcao addSubscriber: %d\n",result);
+
       }else if (code==4){
-        printf("era unsub\n");
         //unsubscribe
         char key[42];
-        int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        int success = read_all(cliente -> req_pipe,&key, 41, NULL); //lê a chave
         if (success!=1){
-          printf("e\n");
           return 1;
         }
         key[41] = '\0';
         result = unsubscribeClient(cliente, key);
+
       }else{
-        printf("erro\n");
         //leu um codigo inesperado
         return 1;
       }
+
       if(sendOperationResult(code,result,cliente)==1){
         //erro a mandar mensagem para o cliente
-        printf("a\n");
         return 1;
       }
+
     }else if (successCode == -1){
       //nao leu nada pois houve erro
-      printf("f\n");
       return 1;
     }
   }
-  printf("g\n");
   return 0;
 }
 
@@ -610,18 +584,15 @@ Cliente* getClientForThread(){
 }
 
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
-//so acaba quando o server morre (??)
 void *readClientPipe(void *arg) {
   size_t thread_id = (size_t)arg;
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
-    pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
+    pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
       cliente->usado = 1;
-      printf("Cliente encontrado pelo thread %zu\n", thread_id);
-      printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         free(cliente);
@@ -630,8 +601,8 @@ void *readClientPipe(void *arg) {
   }
 }
 
+//cria a thread que lê o server pipe, as S threads gestoras e as threads dos .job
 static void dispatch_threads(DIR *dir) {
-  printf("vai criar as threads\n");
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
 
   //bloqueia o sinal SIGUSR1 em todas as threads
@@ -647,7 +618,6 @@ static void dispatch_threads(DIR *dir) {
   //threads dos .job
   struct SharedData thread_data = {dir, jobs_directory,
                                    PTHREAD_MUTEX_INITIALIZER};
-
   for (size_t i = 0; i < max_threads; i++) {
     if (pthread_create(&threads[i], NULL, get_file, (void *)&thread_data) !=
         0) {
@@ -659,9 +629,7 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
-  
-
-  //cria S threads ler do pipe de registo de cada cliente
+  //cria S threads gestoras, que vao buscando clientes e tratando deles
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,(void *)(uintptr_t)thread_gestora) !=
         0) {
@@ -672,17 +640,15 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
-  //inicia sessão dos clientes
-  printf("antes de ler o pipe do server\n");
+  //inicia sessão dos clientes, lendo o server pipe
   pthread_t thread_inicioSessao;
   if (pthread_create(&thread_inicioSessao, NULL, readServerPipe,NULL) !=
       0) {
     write_str(STDERR_FILENO, "Failed to create thread inicioSessao");
     return;
   }
-  printf("depois de ler o pipe do server\n");
 
-  printf("antes do thread join das threads dos .job\n");
+  //espera que as threads dos .jobs acabem
   for (unsigned int i = 0; i < max_threads; i++) {
     if (pthread_join(threads[i], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread");
@@ -693,7 +659,7 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
-  printf("chegou antes do thread join das gestoras\n");
+  //espera que as threads gestoras acabem
   for(unsigned int thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++){
     if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread gestora ");
@@ -703,7 +669,7 @@ static void dispatch_threads(DIR *dir) {
     }
   }
 
-  printf("chegou antes do thread join da thread inicioSessao\n");
+  //espera que a thread principal que lê o server pipe acabe
   if (pthread_join(thread_inicioSessao, NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread inicioSessao ");
       return;
@@ -712,7 +678,6 @@ static void dispatch_threads(DIR *dir) {
   if (pthread_mutex_destroy(&thread_data.directory_mutex) != 0) {
     write_str(STDERR_FILENO, "Failed to destroy directory_mutex\n");
   }
-
   free(threads);
 }
 
@@ -768,8 +733,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  //criar FIFO
-  //char fifo_path[256] = "tmp/";
+  //criar FIFO po server
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
       write_str(STDERR_FILENO, "Failed to create FIFO: ");
@@ -780,12 +744,13 @@ int main(int argc, char **argv) {
 
 
   sem_init(&semaforoBuffer, 0, MAX_SESSION_COUNT); //inicializar semaforo a 0 e vai até S
+  
+  //cria o buffer para as threads gestoras
   bufferThreads = (BufferUserConsumer*)malloc(sizeof(BufferUserConsumer));
   bufferThreads->headUser = NULL;
   pthread_mutex_init(&bufferThreads->buffer_mutex, NULL);
 
-  threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
-
+  //cria as threads todas e espera q acabem
   dispatch_threads(dir);
 
   if (closedir(dir) == -1) {
@@ -798,12 +763,11 @@ int main(int argc, char **argv) {
     active_backups--;
   }
 
-  
   kvs_terminate();
-  close(server_fifo);
-  pthread_mutex_destroy(&bufferThreads->buffer_mutex);
-  sem_destroy(&semaforoBuffer);
+  close(server_fifo); //fecha o pipe do server
+  pthread_mutex_destroy(&bufferThreads->buffer_mutex); //destroi o lock do buffer
   free(bufferThreads);
+  sem_destroy(&semaforoBuffer); //destroy o semaforo
 
   return 0;
 }
