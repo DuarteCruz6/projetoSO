@@ -454,7 +454,9 @@ void *readServerPipe(){
     return 0;
   }
   while(erro==0){
+    printf("a ler server pipe\n");
     int success = read_all(server_fifo,&message, 121, &erro);
+    printf("leu server pipe\n");
     message[121] = '\0';
     if(erro==1){
       return NULL;
