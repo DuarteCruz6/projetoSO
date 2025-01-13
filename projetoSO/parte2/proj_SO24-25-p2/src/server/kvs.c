@@ -263,14 +263,22 @@ int removeSubscription(Cliente *cliente, char *key){
         //retira a ligacao
         printf("o removeSubscriberTable deu certo \n");
         Subscriptions *subscricao_prox = subscricao_atual->next;
+        printf("a\n");
 
         if(subscricao_prev!=NULL){
+          printf("a\n");
           subscricao_prev->next = subscricao_prox;
+          printf("b\n");
         }else{
+          printf("c\n");
           cliente->head_subscricoes=subscricao_prox;
+          printf("d\n");
         }
+        printf("e\n");
         free(subscricao_atual);
+        printf("f\n");
         cliente->num_subscricoes--;
+        printf("g\n");
         return 0;
       }
       printf("o removeSubscriberTable deu erro \n");
