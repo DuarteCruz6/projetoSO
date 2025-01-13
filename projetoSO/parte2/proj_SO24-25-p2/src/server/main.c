@@ -449,7 +449,7 @@ void *readServerPipe(){
       int code = atoi(message);
       if (code==1){
         //inicia sessao a um novo cliente, adicionando-o ao buffer
-        if(novoCliente==1){
+        if(novoCliente(message)==1){
           //novoCliente deu errado
           return NULL;
         }
@@ -585,7 +585,6 @@ Cliente* getClientForThread(){
 
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
 void *readClientPipe(void *arg) {
-  size_t thread_id = (size_t)arg;
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq vai buscar um cliente ao buffer
