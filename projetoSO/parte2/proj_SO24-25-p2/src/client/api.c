@@ -17,7 +17,7 @@ int pipe_req;
 int pipe_resp;
 
 void pad_string(char *message,const char *str, int length) {
-  for(size_t i=0; i<length; i++){
+  for(size_t i=0; i< (size_t) length; i++){
     if(i<strlen(str)){
       message[i] = str[i];
     }else{
@@ -41,9 +41,8 @@ void mudarSinalSeguranca(){
 }
 
 //manda request
-int createMessage(const char *req_pipe_path, char *message, int size){
+int createMessage(char *message, int size){
   printf("vai abrir o pipe para pedir _%s_\n",message);
-  //int pipe_req = open(req_pipe_path, O_WRONLY | O_NONBLOCK);
   if (pipe_req == -1 && errno == EPIPE ) {
     mudarSinalSeguranca();
     return 1;
@@ -51,33 +50,21 @@ int createMessage(const char *req_pipe_path, char *message, int size){
     perror("Error reading pipe response, error: \n");
     return 1;
   }
-  //if (write_all(pipe_req, message, size) == -1) { // +1 para incluir o '\0'
-  //  write_str(STDERR_FILENO, "Error writing to pipe request");
-  //  //close(pipe_req);
-  //  return 1;
-  //}
-  ////ssize_t bytes_written = write(pipe_req, message, strlen(message));
-  int success = write_all(pipe_req,message,size);
+  int success = write_all(pipe_req,message,(size_t) size);
   if(success<0){
     write_str(STDERR_FILENO, "Error writing to pipe request");
     //close(pipe_req);
     return 1;
   }
-  //if (bytes_written == -1) {
-  //    perror("Erro ao escrever no FIFO");
-  //    close(pipe_req);
-  //    return 1;
-  //}
   printf("ja pediu algo, com sucesso %d\n",success);
   //close(pipe_req);
   return 0;
 }
 
 //recebe a resposta do pipe
-int getResponse(const char *resp_pipe_path){
+int getResponse(){
   // abrir pipe de response para leitura
   printf("vai receber a msg agora \n");
-  //int pipe_resp = open(resp_pipe_path, O_RDONLY);
   if (pipe_resp == -1 && errno == EPIPE ) {
     mudarSinalSeguranca();
     return 1;
@@ -146,7 +133,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
     return 1;
   }
   
-  printf("ja criou a mensagem %s, com tamanho %d agora vai recebe la\n", message, sizeof(message));
+  printf("ja criou a mensagem %s, com tamanho %ld agora vai recebe la\n", message, sizeof(message));
 
   printf("sem stor\n");
   //ssize_t bytes_written = write(server_pipe, message, strlen(message));
@@ -177,10 +164,10 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   // close pipes and unlink pipe files
   char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
-  if(createMessage(req_pipe_path,code,1)==1){
+  if(createMessage(code,1)==1){
     return 1;
   }
-  int response = getResponse(resp_pipe_path);
+  int response = getResponse();
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to disconnect the client\n");
     return 1;
@@ -202,7 +189,7 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path,const char *key) {
+int kvs_subscribe(const char *key) {
   // send subscribe message to request pipe and wait for response in response
   // pipe
   char message[43];
@@ -210,10 +197,10 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path,const ch
   pad_string(&message[1], key, 41);
   message[42] = '\0';
 
-  if(createMessage(req_pipe_path,message,42)==1){
+  if(createMessage(message,42)==1){
     return 1;
   }
-  int response = getResponse(resp_pipe_path);
+  int response = getResponse();
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to subscribe the client\n");
     return 1;
@@ -222,7 +209,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path,const ch
   return 0;
 }
 
-int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path,const char *key) {
+int kvs_unsubscribe(const char *key) {
   // send unsubscribe message to request pipe and wait for response in response
   // pipe
   //construir mensagem
@@ -233,10 +220,10 @@ int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path,const 
   message[42] = '\0';
 
 
-  if(createMessage(req_pipe_path,message,42)==1){
+  if(createMessage(message,42)==1){
     return 1;
   }
-  int response = getResponse(resp_pipe_path);
+  int response = getResponse();
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to unsubscribe the client\n");
     return 1;

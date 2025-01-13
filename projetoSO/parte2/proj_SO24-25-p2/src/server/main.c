@@ -520,7 +520,11 @@ void iniciarSessaoCliente(Cliente *cliente){
   //  return;
   //}
   printf("vai escrever no pipe response\n");
-  ssize_t bytes_written = write(response_pipe, response, strlen(response));
+  int success = write_all(response_pipe, response, 2);
+  if(success!=1){
+    write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+    return;
+  }
   printf("escreveu no pipe response\n");
 }
 
@@ -536,11 +540,10 @@ int manageClient(Cliente *cliente){
       return 1;
     }
     printf("vai ler\n");
-    int success = read_all(cliente -> req_pipe,&message, 1, NULL);
+    int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
-    printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
     //close(request_pipe);
-    if (success >= 0){
+    if (successCode >= 0){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
