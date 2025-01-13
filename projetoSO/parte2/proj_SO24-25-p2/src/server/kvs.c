@@ -120,25 +120,34 @@ int delete_pair(HashTable *ht, const char *key) {
       while (currentSub != NULL) {
         Cliente *cliente = currentSub->subscriber;
         removeSubscription(cliente,key);
-        printf("oi\n");
-        currentSub = currentSub->next; //próximo subscritor
         printf("xau\n");
+        currentSub = currentSub->next; //próximo subscritor
+        printf("oi again\n");
       }
       // Key found; delete this node
+      printf("1\n");
       if (prevNode == NULL) {
         // Node to delete is the first node in the list
+        printf("2\n");
         ht->table[index] =
             keyNode->next; // Update the table to point to the next node
+            printf("3\n");
       } else {
+        printf("4\n");
         // Node to delete is not the first; bypass it
         prevNode->next =
             keyNode->next; // Link the previous node to the next node
+            printf("5\n");
       }
 
       // Free the memory allocated for the key and value
+      printf("6\n");
       free(keyNode->key);
+      printf("7\n");
       free(keyNode->value);
+      printf("8\n");
       free(keyNode); // Free the key node itself
+      printf("9\n");
       return 0;      // Exit the function
     }
     prevNode = keyNode;      // Move prevNode to current node
