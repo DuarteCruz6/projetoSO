@@ -59,7 +59,7 @@ static void *thread_principal_work(void *arguments){
         continue;
       }
 
-      if (kvs_subscribe(req_pipe, resp_pipe, keys[0])) {
+      if (kvs_subscribe(keys[0])) {
         write_str(STDERR_FILENO, "Command subscribe failed\n");
       }
 
@@ -72,7 +72,7 @@ static void *thread_principal_work(void *arguments){
         continue;
       }
 
-      if (kvs_unsubscribe(req_pipe, resp_pipe, keys[0])) {
+      if (kvs_unsubscribe(keys[0])) {
         write_str(STDERR_FILENO, "Command subscribe failed\n");
       }
 
