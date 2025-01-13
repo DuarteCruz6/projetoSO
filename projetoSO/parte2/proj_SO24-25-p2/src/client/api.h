@@ -9,7 +9,7 @@ int getSinalSeguranca();
 
 void mudarSinalSeguranca();
 
-void pad_string(char *message,char *str, int length);
+void pad_string(char *message, const char *str, int length);
 
 /// Connects to a kvs server.
 /// @param req_pipe_path Path to the name pipe to be created for requests.
@@ -29,13 +29,13 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
 /// @return 1 if the key was subscribed successfully (key existing), 0
 /// otherwise.
 
-int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key);
+int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key);
 
 /// Remove a subscription for a key
 /// @param key Key to be unsubscribed
 /// @return 0 if the key was unsubscribed successfully  (subscription existed
 /// and was removed), 1 otherwise.
 
-int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key);
+int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, const char *key);
 
 #endif // CLIENT_API_H

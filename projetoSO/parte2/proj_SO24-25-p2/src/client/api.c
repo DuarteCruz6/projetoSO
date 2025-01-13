@@ -16,7 +16,7 @@ int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->ve
 int pipe_req;
 int pipe_resp;
 
-void pad_string(char *message,char *str, int length) {
+void pad_string(char *message,const char *str, int length) {
   for(size_t i=0; i<length; i++){
     if(i<strlen(str)){
       message[i] = str[i];
@@ -201,7 +201,7 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
+int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path,const char *key) {
   // send subscribe message to request pipe and wait for response in response
   // pipe
   char message[43];
@@ -221,7 +221,7 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *k
   return 0;
 }
 
-int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
+int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path,const char *key) {
   // send unsubscribe message to request pipe and wait for response in response
   // pipe
   //construir mensagem
