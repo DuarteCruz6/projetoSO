@@ -616,11 +616,11 @@ Cliente* getClientForThread(){
 void *readClientPipe(void *arg) {
   size_t thread_id = (size_t)arg;
   while(1){
+    sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq  vai buscar um cliente ao buffer
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
-      sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
       printf("Cliente encontrado pelo thread %zu\n", thread_id);
       printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
