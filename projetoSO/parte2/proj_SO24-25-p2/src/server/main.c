@@ -388,7 +388,6 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
     int success = write_all(cliente->resp_pipe, response, 2);
     if(success==1){
-      //close(response_pipe);
       return 0;
     }else{
       write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
@@ -509,9 +508,6 @@ int manageClient(Cliente *cliente){
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
-    if(cliente -> req_pipe==-1){
-      return 1;
-    }
     printf("vai ler\n");
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
@@ -520,6 +516,7 @@ int manageClient(Cliente *cliente){
       int result;
       printf("leu o codigo _%d_\n",code);
       if(cliente->flag_sigusr1){
+        printf("b\n");
         return 1;
       }
 
@@ -532,8 +529,10 @@ int manageClient(Cliente *cliente){
           removeClientFromBuffer(cliente);
           if(sendOperationResult(code,result,cliente)==1){
             //erro a mandar mensagem para o cliente
+            printf("c\n");
             return 1;
           }
+          
           break;
         }
 
@@ -542,6 +541,10 @@ int manageClient(Cliente *cliente){
         //subscribe
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        if (success!=1){
+          printf("d\n");
+          return 1;
+        }
         key[41] = '\0';
         result = subscribeClient(cliente, key);
         printf("result da funcao addSubscriber: %d\n",result);
@@ -550,6 +553,10 @@ int manageClient(Cliente *cliente){
         //unsubscribe
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        if (success!=1){
+          printf("e\n");
+          return 1;
+        }
         key[41] = '\0';
         result = unsubscribeClient(cliente, key);
       }else{
@@ -559,13 +566,16 @@ int manageClient(Cliente *cliente){
       }
       if(sendOperationResult(code,result,cliente)==1){
         //erro a mandar mensagem para o cliente
+        printf("a\n");
         return 1;
       }
     }else{
       //nao leu nada pois houve erro
+      printf("f\n");
       return 1;
     }
   }
+  printf("g\n");
   return 0;
 }
 
