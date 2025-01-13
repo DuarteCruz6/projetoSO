@@ -18,7 +18,7 @@ struct ThreadPrincipalData {
   const char *req_pipe_path;
   const char *resp_pipe_path;
   const char *notif_pipe_path;
-  pthread_t thread_secundaria;
+  pthread_t *thread_secundaria;
 };
 
 struct ThreadSecundariaData {
