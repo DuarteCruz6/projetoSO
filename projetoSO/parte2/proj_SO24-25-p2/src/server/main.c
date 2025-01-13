@@ -459,6 +459,7 @@ void *readServerPipe(){
     printf("leu server pipe\n");
     message[121] = '\0';
     if(erro==1){
+      printf("a\n");
       return NULL;
     }
     if (success == 1){
@@ -470,16 +471,19 @@ void *readServerPipe(){
         iniciar_sessao(message);
         printf("iniciou sessao\n");
       }else{
+        printf("b\n");
         write_str(STDERR_FILENO, "Codigo != 1\n");
         return NULL;
       }
     } else if (success<0){
+      printf("c\n");
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
       break;
     }
 
   }
+  printf("d\n");
   return NULL;
 }
 
@@ -517,7 +521,6 @@ int manageClient(Cliente *cliente){
     printf("vai ler\n");
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
-    //close(request_pipe);
     if (successCode >= 0){
       int code = message[0]- '0';
       int result;
@@ -610,7 +613,6 @@ void *readClientPipe(void *arg) {
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
         free(cliente);
-        return NULL;
       }
     }
   }
