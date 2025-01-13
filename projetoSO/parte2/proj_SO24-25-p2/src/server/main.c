@@ -412,25 +412,14 @@ void sinalDetetado() {
     //fechar os pipes do cliente
     printf("caminho req: %s\n",cliente->req_pipe_path);
     close(cliente->req_pipe);
-    if (fcntl(cliente->req_pipe, F_GETFD) == -1 && errno == EBADF) {
-    printf("Pipe fechado com sucesso.\n");
-} else {
-    perror("Erro ao verificar o fechamento do pipe");
-}
 
     printf("caminho req: %s\n",cliente->resp_pipe_path);
     close(cliente->resp_pipe);
-    if (fcntl(cliente->req_pipe, F_GETFD) == -1 && errno == EBADF) {
-    printf("Pipe fechado com sucesso.\n");
-} else {
-    perror("Erro ao verificar o fechamento do pipe");
-}
-
+    
     printf("matou cliente com id: %d\n",cliente->id);
     cliente->flag_sigusr1 = 1;
     userAtual=userAtual->nextUser;
   }
-  mudarSinalSeguranca(); //volta a meter como false
   return;
 }
 
@@ -459,6 +448,12 @@ void *readServerPipe(){
     printf("leu server pipe\n");
     message[121] = '\0';
     if(erro==1){
+      if(getSinalSeguranca()){
+        //foi sigusr1
+        mudarSinalSeguranca(); //volta a meter como false
+      }else{
+
+      }
       printf("a\n");
       return NULL;
     }
