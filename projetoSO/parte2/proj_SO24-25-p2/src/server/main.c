@@ -464,7 +464,7 @@ void *readServerPipe(){
   }
   while(erro==0){
     int success = read_all(server_fifo,&message, 121, &erro);
-    
+    message[121] = '\0';
     if(erro==1){
       return NULL;
     }
