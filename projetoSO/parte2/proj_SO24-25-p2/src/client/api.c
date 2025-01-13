@@ -65,22 +65,19 @@ int getResponse(){
   char buffer[3];
   printf("vai ler a msg agora \n");
   int success = read_all(pipe_resp, buffer, 2, NULL);
+  buffer[2]='\0';
   if (success != 1 && errno == EPIPE ) {
     printf("era errno == epipe\n");
     mudarSinalSeguranca();
     return 1;
   }else if (success != 1){
     write_str(STDERR_FILENO, "Error reading pipe response\n");
-    printf("errno: %s\n",strerror(errno));
+    printf("errno: _%s_\n",strerror(errno));
     return 1;
   } 
   
-  buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
-  if (success != 1) {
-    write_str(STDERR_FILENO, "Error reading pipe response");
-    return 1;
-  }
+  
   int code = buffer[0] - '0';
   int result = buffer[1] - '0';
   printf("scanneou\n");
