@@ -21,7 +21,7 @@ void pad_string(char *message,char *str, int length) {
     if(i<strlen(str)){
       message[i] = str[i];
     }else{
-      message[i] = '_';
+      message[i] = '\0';
     }
   }
 }
