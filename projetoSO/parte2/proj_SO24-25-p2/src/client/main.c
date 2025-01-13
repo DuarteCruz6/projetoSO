@@ -134,22 +134,37 @@ void *thread_secundaria_work(void *arguments){
   }
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect
     printf("while da secundaria\n");
-    char notif[85];
+    char notif[83];
     printf("a ler pipe notif\n");
-    int success = read_all(pipe_notif, notif, 84, NULL);
-    notif[84]= '\0';
+    int success = read_all(pipe_notif, notif, 82, NULL);
+    printf("notificacao recebida\n");
+    char chave[41];
+    memcpy(chave, &notif[0],40);
+    chave[40] = '\0';
+    char newValue[41];
+    memcpy(newValue, &notif[41],40);
+    newValue[40] = '\0';
+
+    notif[83]= '\0';
+    size_t tamanho = (size_t) snprintf(NULL,0,"(%s,%s)",chave,newValue);
+    char *output = malloc(tamanho + 1);
+    snprintf(output, tamanho + 1, "(%s,%s)", chave, newValue);
+    printf("notificacao: _%s_\n",output);
 
     if (success == 1) {
       printf("sucesso = 1\n");
-      write_str(STDOUT_FILENO,notif);
+      write_str(STDOUT_FILENO,output);
+      free(output);
     } else if (success == 0) {
       printf("sucesso = 0\n");
       // EOF, caso o escritor feche a pipe
+      free(output);
       return NULL;
     } else {
       printf("sucesso = -1\n");
       close(pipe_notif);
       write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes");
+      free(output);
       return NULL;
     }
   }

@@ -127,8 +127,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   return 0;
 }
 
-int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
-                char const *notif_pipe_path) {
+int kvs_disconnect() {
   // close pipes and unlink pipe files
   char code[2];
   sprintf(code, "%d", OP_CODE_DISCONNECT);
