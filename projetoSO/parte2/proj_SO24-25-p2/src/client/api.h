@@ -26,7 +26,7 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
 
 /// Requests a subscription for a key
 /// @param key Key to be subscribed
-/// @return 1 if the key was subscribed successfully (key existing), 0
+/// @return 0 if the key was subscribed successfully (key existing), 1
 /// otherwise.
 
 int kvs_subscribe(const char *key);

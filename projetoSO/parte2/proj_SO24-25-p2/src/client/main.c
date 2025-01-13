@@ -59,8 +59,9 @@ static void *thread_principal_work(void *arguments){
         continue;
       }
 
-      if (kvs_subscribe(keys[0])) {
+      if (kvs_subscribe(keys[0])==1) {
         write_str(STDERR_FILENO, "Command subscribe failed\n");
+        return NULL;
       }
 
       break;
@@ -72,8 +73,9 @@ static void *thread_principal_work(void *arguments){
         continue;
       }
 
-      if (kvs_unsubscribe(keys[0])) {
+      if (kvs_unsubscribe(keys[0])==1) {
         write_str(STDERR_FILENO, "Command subscribe failed\n");
+        return NULL;
       }
 
       break;

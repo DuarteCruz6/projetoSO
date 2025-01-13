@@ -51,13 +51,11 @@ int createMessage(char *message, int size){
     return 1;
   }
   int success = write_all(pipe_req,message,(size_t) size);
-  if(success<0){
+  if(success!=1){
     write_str(STDERR_FILENO, "Error writing to pipe request");
-    //close(pipe_req);
     return 1;
   }
   printf("ja pediu algo, com sucesso %d\n",success);
-  //close(pipe_req);
   return 0;
 }
 
@@ -82,9 +80,9 @@ int getResponse(){
   printf("leu a msg agora _%s_\n",buffer);
   //close(pipe_resp);
   printf("fechou o pipe de resposta\n");
-  if (success == -1) {
-      write_str(STDERR_FILENO, "Error reading pipe response");
-      return 1;
+  if (success != 1) {
+    write_str(STDERR_FILENO, "Error reading pipe response");
+    return 1;
   }
   int code = buffer[0] - '0';
   int result = buffer[1] - '0';
@@ -135,17 +133,11 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("sem stor\n");
   //ssize_t bytes_written = write(server_pipe, message, strlen(message));
   int success = write_all(server_pipe,message,121);
-  if(success<0){
+  if(success!=1){
     perror("Erro ao escrever no FIFO do server");
-    close(server_pipe);
     return 1;
   }
-  //if (bytes_written == -1) {
-  //    perror("Erro ao escrever no FIFO");
-  //    close(server_pipe);
-  //    return 1;
-  //}
-  printf("fim sem stor\n");
+
   pipe_resp = open(resp_pipe_path, O_RDONLY);
   int response = getResponse(resp_pipe_path);
   pipe_req = open(req_pipe_path, O_WRONLY);
