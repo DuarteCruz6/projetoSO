@@ -134,10 +134,11 @@ void *thread_secundaria_work(void *arguments){
   }
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect
     printf("while da secundaria\n");
-    char notif[83];
+    char notif[85];
     printf("a ler pipe notif\n");
     int success = read_all(pipe_notif, notif, 82, NULL);
-    notif[82]= '\0';
+    int success = read_all(pipe_notif, notif, 84, NULL);
+    notif[84]= '\0';
 
     if (success == 1) {
       printf("sucesso = 1\n");
