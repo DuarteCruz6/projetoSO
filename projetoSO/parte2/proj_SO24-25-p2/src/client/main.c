@@ -155,6 +155,7 @@ void *thread_secundaria_work(void *arguments){
       free(output);
     } else {
       close(pipe_notif);
+      printf("sucesso %d\n",success);
       write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes\n");
       free(output);
       return NULL;
