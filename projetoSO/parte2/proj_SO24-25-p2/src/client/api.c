@@ -78,8 +78,6 @@ int getResponse(){
   
   buffer[2]='\0';
   printf("leu a msg agora _%s_\n",buffer);
-  //close(pipe_resp);
-  printf("fechou o pipe de resposta\n");
   if (success != 1) {
     write_str(STDERR_FILENO, "Error reading pipe response");
     return 1;

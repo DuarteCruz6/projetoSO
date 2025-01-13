@@ -385,22 +385,7 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     char response[3];
     snprintf(response,3,"%d%d", code, result);
     printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
-    //int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-    int response_pipe = cliente ->resp_pipe;
-    if(response_pipe==-1){
-      //erro a abrir o pipe de respostas
-      return 1;
-    }
-    int success = write_all(response_pipe, response, 2);
-    //ssize_t bytes_written = write(response_pipe, response, strlen(response));
-    //if (bytes_written == -1) {
-    //    perror("Erro ao escrever no FIFO de resposta\n");
-    //    close(response_pipe);
-    //    return 1;
-    //}else{
-    //  close(response_pipe);
-    //  return 0;
-    //}
+    int success = write_all(cliente->resp_pipe, response, 2);
     if(success==1){
       //close(response_pipe);
       return 0;
@@ -424,7 +409,9 @@ void sinalDetetado() {
     removeClientFromBuffer(cliente); //remover do buffer
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
     //fechar os pipes do cliente
+    printf("caminho req: %s\n",cliente->req_pipe_path);
     close(cliente->req_pipe);
+    printf("caminho req: %s\n",cliente->resp_pipe_path);
     close(cliente->resp_pipe);
     printf("matou cliente com id: %d\n",cliente->id);
     free(cliente);
@@ -482,10 +469,9 @@ void *readServerPipe(){
 }
 
 void iniciarSessaoCliente(Cliente *cliente){
-  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
-  cliente ->resp_pipe = response_pipe;
+  cliente ->resp_pipe = open(cliente->resp_pipe_path, O_WRONLY);
   printf("abriu o pipe de response do cliente\n");
-  if (response_pipe == -1) {
+  if (cliente ->resp_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
     write_str(STDERR_FILENO,cliente->resp_pipe_path);
     write_str(STDERR_FILENO,"\n");
@@ -493,12 +479,8 @@ void iniciarSessaoCliente(Cliente *cliente){
   }
   //manda que deu sucesso
   char response[3] = "10";
-  //if (write_all(response_pipe, response, strlen(response)) == -1) {
-  //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
-  //  return;
-  //}
   printf("vai escrever no pipe response\n");
-  int success = write_all(response_pipe, response, 2);
+  int success = write_all(cliente ->resp_pipe, response, 2);
   if(success!=1){
     write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
     return;
