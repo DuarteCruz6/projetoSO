@@ -201,10 +201,10 @@ int kvs_unsubscribe(const char *key) {
   // pipe
   //construir mensagem
 
-  char message[42];
+  char message[43];
   message[0] = (char) ('0' + OP_CODE_UNSUBSCRIBE);
   pad_string(&message[1], key, 41);
-  message[41] = '\0';
+  message[42] = '\0';
 
 
   if(createMessage(message,42)==1){
