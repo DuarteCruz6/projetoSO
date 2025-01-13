@@ -19,8 +19,7 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
                 
 /// Disconnects from an KVS server.
 /// @return 0 in case of success, 1 otherwise.
-int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
-                char const *notif_pipe_path);
+int kvs_disconnect();
 
 /// Requests a subscription for a key
 /// @param key Key to be subscribed
