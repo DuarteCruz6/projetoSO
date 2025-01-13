@@ -16,16 +16,6 @@ int sinalSeguranca = 0; //flag para saber se occoreu um SIGUSR1, 0->falso, 1->ve
 int pipe_req;
 int pipe_resp;
 
-void pad_string(char *message,const char *str, int length) {
-  for(size_t i=0; i< (size_t) length; i++){
-    if(i<strlen(str)){
-      message[i] = str[i];
-    }else{
-      message[i] = '\0';
-    }
-  }
-}
-
 int getSinalSeguranca(){
   return sinalSeguranca;
 }
@@ -148,20 +138,6 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
   int response = getResponse();
   if(response!=0){
     write_str(STDERR_FILENO, "Failed to disconnect the client\n");
-    return 1;
-  }
-
-  // Apagar os pipes
-  if(unlinkPipes(req_pipe_path)!=0){
-    write_str(STDERR_FILENO, "Failed to close request pipe\n");
-    return 1;
-  }
-  if(unlinkPipes(resp_pipe_path)!=0){
-    write_str(STDERR_FILENO, "Failed to close response pipe\n");
-    return 1;
-  }
-  if(unlinkPipes(notif_pipe_path)!=0){
-    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
     return 1;
   }
   return 0;

@@ -9,8 +9,6 @@ int getSinalSeguranca();
 
 void mudarSinalSeguranca();
 
-void pad_string(char *message, const char *str, int length);
-
 /// Connects to a kvs server.
 /// @param req_pipe_path Path to the name pipe to be created for requests.
 /// @param resp_pipe_path Path to the name pipe to be created for responses.

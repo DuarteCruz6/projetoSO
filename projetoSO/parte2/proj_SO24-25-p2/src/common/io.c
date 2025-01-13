@@ -97,9 +97,12 @@ void write_str(int fd, const char *str) {
   }
 }
 
-int unlinkPipes(const char* pipe_path){
-  if (unlink(pipe_path) == -1) {
-    return 1;
+void pad_string(char *message,const char *str, int length) {
+  for(size_t i=0; i< (size_t) length; i++){
+    if(i<strlen(str)){
+      message[i] = str[i];
+    }else{
+      message[i] = '\0';
+    }
   }
-  return 0;
 }

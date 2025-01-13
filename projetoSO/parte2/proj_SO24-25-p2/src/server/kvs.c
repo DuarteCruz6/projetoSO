@@ -46,9 +46,18 @@ int notificarSubs(KeyNode *keyNode,const char *newValue){
     if (pipe_notif == -1) {
         return 1;
     }
-    char mensagem[256];
-    snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
-    if(write_all(pipe_notif, mensagem, 256)!=1){
+    char mensagem[86];
+    mensagem[0]=('(');
+    mensagem[42]=(',');
+    mensagem[84]=(')');
+    mensagem[85] = '\0';
+
+    pad_string(&mensagem[1], keyNode->key, 41);
+    pad_string(&mensagem[43], newValue, 41);
+
+    printf("notificacao: _%s_\n",mensagem);
+
+    if(write_all(pipe_notif, mensagem, 84)!=1){
       //erro
       return 1;
     }
