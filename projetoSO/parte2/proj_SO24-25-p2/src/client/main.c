@@ -222,10 +222,7 @@ int main(int argc, char *argv[]) {
   strncat(resp_pipe_path, argv[1], strlen(argv[1]));
   strncat(notif_pipe_path, argv[1], strlen(argv[1]));
 
-  if(strlen(req_pipe_path)>40 || strlen(resp_pipe_path)>40 || strlen(notif_pipe_path)>40){
-    write_str(STDERR_FILENO,"Too big of a lenght for a pipe\n");
-    return 1;
-  }
+
 
   server_pipe_path = argv[2];
   if (kvs_connect(req_pipe_path, resp_pipe_path, notif_pipe_path, server_pipe_path)==1){
