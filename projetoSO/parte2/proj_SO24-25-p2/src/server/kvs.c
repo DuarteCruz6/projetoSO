@@ -48,7 +48,7 @@ int notificarSubs(KeyNode *keyNode,const char *newValue){
     mensagem[82] = '\0';
 
     printf("notificacao: _%s_\n",mensagem);
-    if(cliente->notif_pipe==NULL){
+    if(cliente->notif_pipe==0){
       cliente->notif_pipe = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
     }
     if(write_all(cliente->notif_pipe, mensagem, 82)!=1){
