@@ -509,7 +509,7 @@ int manageClient(Cliente *cliente){
     printf("vai ler\n");
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
-    if (successCode >= 0){
+    if (successCode == 1){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
@@ -567,7 +567,7 @@ int manageClient(Cliente *cliente){
         printf("a\n");
         return 1;
       }
-    }else{
+    }else if (successCode == -1){
       //nao leu nada pois houve erro
       printf("f\n");
       return 1;
