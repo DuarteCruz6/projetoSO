@@ -204,11 +204,11 @@ int kvs_disconnect(char const *req_pipe_path, char const *resp_pipe_path,
 int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
   // send subscribe message to request pipe and wait for response in response
   // pipe
-  char message[42];
-  //construir mensagem
-  char keyPadded[41];
-  pad_string(keyPadded,key,41);
-  snprintf(message, 42, "%d%s", OP_CODE_SUBSCRIBE ,keyPadded);
+  char message[43];
+  message[0] = (char) ('0' + OP_CODE_SUBSCRIBE);
+  pad_string(&message[1], key, 41);
+  message[42] = '\0';
+
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
@@ -224,11 +224,14 @@ int kvs_subscribe(char const *req_pipe_path, char const *resp_pipe_path, char *k
 int kvs_unsubscribe(char const *req_pipe_path, char const *resp_pipe_path, char *key) {
   // send unsubscribe message to request pipe and wait for response in response
   // pipe
-  char message[42];
   //construir mensagem
-  char keyPadded[41];
-  pad_string(keyPadded,key,41);
-  snprintf(message, 42, "%d%s", OP_CODE_UNSUBSCRIBE ,keyPadded);
+
+  char message[43];
+  message[0] = (char) ('0' + OP_CODE_UNSUBSCRIBE);
+  pad_string(&message[1], key, 41);
+  message[42] = '\0';
+
+
   if(createMessage(req_pipe_path,message,42)==1){
     return 1;
   }
