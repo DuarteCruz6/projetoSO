@@ -34,7 +34,7 @@ void mudarSinalSeguranca(){
 int createMessage(char *message, int size){
   int success = write_all(pipe_req,message,(size_t) size);
   if(success!=1){
-    write_str(STDERR_FILENO, "Error writing to pipe request");
+    write_str(STDERR_FILENO, "Error writing to pipe request\n");
     return 1;
   }
   return 0;
@@ -47,7 +47,12 @@ int getResponse(){
   buffer[2]='\0';
   if (success != 1) {
     write_str(STDERR_FILENO, "Error reading pipe response\n");
-    mudarSinalSeguranca(); //houve um sigusr1
+    if(success==0){
+      mudarSinalSeguranca(); //houve um sigusr1
+      return 1;
+    }else{
+      write_str(STDERR_FILENO, "Error reading pipe response\n");
+    }
     return 1;
   }
   

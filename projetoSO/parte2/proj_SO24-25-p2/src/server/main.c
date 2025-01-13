@@ -477,13 +477,14 @@ int iniciarSessaoCliente(Cliente *cliente){
     return 1;
   }
   //manda que deu sucesso
-  char response[3] = "10";
-  int success = write_all(cliente ->resp_pipe, response, 2);
-  if(success!=1){
-    write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-    return 1;
-  }
-  return 0;
+  return sendOperationResult(1, 0,cliente);
+  //char response[3] = "10";
+  //int success = write_all(cliente ->resp_pipe, response, 2);
+  //if(success!=1){
+  //  write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
+  //  return 1;
+  //}
+  //return 0;
 }
 
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
@@ -622,6 +623,7 @@ static void dispatch_threads(DIR *dir) {
         0) {
       write_str(STDERR_FILENO, "Failed to create thread");
       write_uint(STDERR_FILENO,(int) i);
+      write_str(STDERR_FILENO, "\n");
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
       return;
@@ -633,6 +635,7 @@ static void dispatch_threads(DIR *dir) {
         0) {
       write_str(STDERR_FILENO, "Failed to create thread gestora");
       write_uint(STDERR_FILENO, (int) thread_gestora);
+      write_str(STDERR_FILENO, "\n");
       free(threads_gestoras);
       return;
     }
@@ -643,6 +646,7 @@ static void dispatch_threads(DIR *dir) {
   if (pthread_create(&thread_inicioSessao, NULL, readServerPipe,NULL) !=
       0) {
     write_str(STDERR_FILENO, "Failed to create thread inicioSessao");
+    write_str(STDERR_FILENO, "\n");
     return;
   }
 
@@ -651,6 +655,7 @@ static void dispatch_threads(DIR *dir) {
     if (pthread_join(threads[i], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread");
       write_uint(STDERR_FILENO, (int) i);
+      write_str(STDERR_FILENO, "\n");
       pthread_mutex_destroy(&thread_data.directory_mutex);
       free(threads);
       return;
@@ -662,6 +667,7 @@ static void dispatch_threads(DIR *dir) {
     if (pthread_join(threads_gestoras[thread_gestora], NULL) != 0) {
       write_str(STDERR_FILENO, "Failed to join thread gestora ");
       write_uint(STDERR_FILENO, (int) thread_gestora);
+      write_str(STDERR_FILENO, "\n");
       free(threads_gestoras);
       return;
     }
@@ -669,7 +675,7 @@ static void dispatch_threads(DIR *dir) {
 
   //espera que a thread principal que lê o server pipe acabe
   if (pthread_join(thread_inicioSessao, NULL) != 0) {
-      write_str(STDERR_FILENO, "Failed to join thread inicioSessao ");
+      write_str(STDERR_FILENO, "Failed to join thread inicioSessao\n");
       return;
     }
 
@@ -728,6 +734,7 @@ int main(int argc, char **argv) {
   if (dir == NULL) {
     write_str(STDERR_FILENO, "Failed to open directory: ");
     write_str(STDERR_FILENO, argv[1]);
+    write_str(STDERR_FILENO, "\n");
     return 0;
   }
 

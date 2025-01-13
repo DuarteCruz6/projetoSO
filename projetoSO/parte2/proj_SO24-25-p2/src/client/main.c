@@ -187,14 +187,14 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
 
   //principal
   if (pthread_create(&thread_principal[0], NULL, thread_principal_work, (void *)&threadPrincipal_data)!=0) {
-    write_str(STDERR_FILENO, "Failed to create client main thread");
+    write_str(STDERR_FILENO, "Failed to create client main thread\n");
     free(thread_principal);
     return;
   }
 
   //secundaria
   if (pthread_create(&thread_secundaria[0], NULL, thread_secundaria_work, (void *)&threadSecundaria_data)!=0) {
-    write_str(STDERR_FILENO, "Failed to create client second thread \n");
+    write_str(STDERR_FILENO, "Failed to create client second thread\n");
     free(thread_secundaria);
     return;
   }
