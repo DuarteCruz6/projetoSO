@@ -110,13 +110,25 @@ void deleteSub(KeyNode *par){
   //da print a todos os subs de uma chave
   if(par->head_subscribers!=NULL){
     Subscribers *sub_atual = par->head_subscribers;
-    while(sub_atual->subscriber != NULL){
-      removeSubscription(sub_atual->subscriber,par->key);
-      if(sub_atual->next ==NULL){
-        break;
+    while(sub_atual!=NULL){
+      Cliente *cliente_atual = sub_atual->subscriber; 
+      Subscriptions *subscriptionAtual = cliente_atual->head_subscricoes;
+      Subscriptions *subscription_prev = NULL;
+      while(subscriptionAtual->par->key != par->key) {
+        //ainda nao encontramos
+        subscription_prev = subscriptionAtual;
+        subscriptionAtual = subscriptionAtual ->next;
       }
-      sub_atual = sub_atual->next;
+      if(subscription_prev==NULL){
+        //era a primeira sub
+        cliente_atual->head_subscricoes = subscriptionAtual ->next;
+      }else{
+        subscription_prev ->next = subscriptionAtual ->next;
+      }
+      sub_atual = sub_atual ->next;
     }
+    
+    
   }
   return;
 }
