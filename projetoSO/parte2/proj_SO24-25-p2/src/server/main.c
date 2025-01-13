@@ -421,6 +421,7 @@ void *readServerPipe(){
   int erro=0;
   char message[122];
   server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura
+  printf("O PID do processo é: %d\n", getpid());
 
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
@@ -622,7 +623,7 @@ static void dispatch_threads(DIR *dir) {
       return;
     }
   }
-  
+
   //cria S threads gestoras, que vao buscando clientes e tratando deles
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
@@ -740,7 +741,6 @@ int main(int argc, char **argv) {
       write_str(STDERR_FILENO, "\n");
       return 0;
   }
-
 
   sem_init(&semaforoBuffer, 0, MAX_SESSION_COUNT); //inicializar semaforo a 0 e vai até S
   
