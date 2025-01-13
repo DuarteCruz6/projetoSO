@@ -46,7 +46,7 @@ sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 pthread_t *threads_gestoras; 
-char fifo_path[256] = "/tmp/";
+char fifo_path[256] = "/tmp";
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
@@ -733,6 +733,10 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  if(strlen(nome_fifo)>MAX_PIPE_PATH_LENGTH){
+    write_str(STDERR_FILENO, "Invalid pipe path\n");
+    return 0;
+  }
   //criar FIFO po server
   strcat(fifo_path,nome_fifo);
   if (mkfifo(fifo_path, 0777) == -1) {
