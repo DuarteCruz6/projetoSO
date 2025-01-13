@@ -53,6 +53,7 @@ static void *thread_principal_work(void *arguments){
           write_str(STDERR_FILENO, "Failed to disconnect to the server\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
+          pthread_cancel(*(thread_data->thread_secundaria)); //cancela a thread secundaria
           return NULL;
         }
         return NULL;
@@ -74,6 +75,7 @@ static void *thread_principal_work(void *arguments){
           write_str(STDERR_FILENO, "Command subscribe failed\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
+          pthread_cancel(*(thread_data->thread_secundaria)); //cancela a thread secundaria
           return NULL;
         }
       }
@@ -92,6 +94,7 @@ static void *thread_principal_work(void *arguments){
           write_str(STDERR_FILENO, "Command unsubscribe failed\n");
         }else{
           write_str(STDERR_FILENO, "Pipe fechado pelo servidor\n");
+          pthread_cancel(*(thread_data->thread_secundaria)); //cancela a thread secundaria
           return NULL;
         }
       }
