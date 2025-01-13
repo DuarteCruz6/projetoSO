@@ -420,8 +420,8 @@ void sinalDetetado() {
       
       printf("matou cliente com id: %d\n",cliente->id);
       cliente->flag_sigusr1 = 1;
-      userAtual=userAtual->nextUser;
     }
+    userAtual=userAtual->nextUser;
   }
   return;
 }
