@@ -51,14 +51,15 @@ int createMessage(const char *req_pipe_path, char *message, int size){
     perror("Error reading pipe response, error: \n");
     return 1;
   }
-  if (write_all(pipe_req, message, size) == -1) { // +1 para incluir o '\0'
-    write_str(STDERR_FILENO, "Error writing to pipe request");
-    //close(pipe_req);
-    return 1;
-  }
-  //ssize_t bytes_written = write(pipe_req, message, strlen(message));
+  //if (write_all(pipe_req, message, size) == -1) { // +1 para incluir o '\0'
+  //  write_str(STDERR_FILENO, "Error writing to pipe request");
+  //  //close(pipe_req);
+  //  return 1;
+  //}
+  ////ssize_t bytes_written = write(pipe_req, message, strlen(message));
   int success = write_all(pipe_req,message,size);
   if(success<0){
+    write_str(STDERR_FILENO, "Error writing to pipe request");
     //close(pipe_req);
     return 1;
   }
