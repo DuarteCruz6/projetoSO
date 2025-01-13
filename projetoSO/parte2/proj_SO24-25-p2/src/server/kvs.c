@@ -106,6 +106,21 @@ char *read_pair(HashTable *ht, const char *key) {
   return NULL; // Key not found
 }
 
+void deleteSub(KeyNode *par){
+  //da print a todos os subs de uma chave
+  if(par->head_subscribers!=NULL){
+    Subscribers *sub_atual = par->head_subscribers;
+    while(sub_atual->subscriber != NULL){
+      removeSubscription(sub_atual->subscriber,par->key);
+      if(sub_atual->next ==NULL){
+        break;
+      }
+      sub_atual = sub_atual->next;
+    }
+  }
+  return;
+}
+
 int delete_pair(HashTable *ht, const char *key) {
   int index = hash(key);
 
@@ -116,6 +131,7 @@ int delete_pair(HashTable *ht, const char *key) {
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
       notificarSubs(keyNode, "DELETED");
+      deleteSub(keyNode);
       // Key found; delete this node
       if (prevNode == NULL) {
         // Node to delete is the first node in the list
