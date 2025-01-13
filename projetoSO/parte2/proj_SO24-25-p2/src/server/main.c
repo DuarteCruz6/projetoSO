@@ -13,7 +13,6 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <signal.h>
-#include <errno.h>
 
 #include "constants.h"
 #include "io.h"
@@ -386,8 +385,24 @@ int sendOperationResult(int code, int result, Cliente* cliente){
     char response[3];
     snprintf(response,3,"%d%d", code, result);
     printf("vai mandar o resultado %d sobre a funcao %d\n",result, code);
-    int success = write_all(cliente->resp_pipe, response, 2);
+    //int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+    int response_pipe = cliente ->resp_pipe;
+    if(response_pipe==-1){
+      //erro a abrir o pipe de respostas
+      return 1;
+    }
+    int success = write_all(response_pipe, response, 2);
+    //ssize_t bytes_written = write(response_pipe, response, strlen(response));
+    //if (bytes_written == -1) {
+    //    perror("Erro ao escrever no FIFO de resposta\n");
+    //    close(response_pipe);
+    //    return 1;
+    //}else{
+    //  close(response_pipe);
+    //  return 0;
+    //}
     if(success==1){
+      //close(response_pipe);
       return 0;
     }else{
       write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
@@ -408,17 +423,23 @@ void sinalDetetado() {
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
     removeClientFromBuffer(cliente); //remover do buffer
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
-    //fechar os pipes do cliente
-    printf("caminho req: %s\n",cliente->req_pipe_path);
-    close(cliente->req_pipe);
-
-    printf("caminho req: %s\n",cliente->resp_pipe_path);
-    close(cliente->resp_pipe);
-    
-    printf("matou cliente com id: %d\n",cliente->id);
-    cliente->flag_sigusr1 = 1;
+    //// Apagar os pipes do cliente
+    //  if (unlinkPipes(cliente->req_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close request pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->resp_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close response pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->notif_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+    //    return;
+    //  }
+    free(cliente);
     userAtual=userAtual->nextUser;
   }
+  mudarSinalSeguranca(); //volta a meter como false
   return;
 }
 
@@ -445,15 +466,9 @@ void *readServerPipe(){
     int success = read_all(server_fifo,&message, 121, &erro);
     message[121] = '\0';
     if(erro==1){
-      if(getSinalSeguranca()){
-        //foi sigusr1
-        mudarSinalSeguranca(); //volta a meter como false
-        erro=0;
-      }else{
-        printf("a\n");
-        return NULL;
-      }
-    }else if (success == 1){
+      return NULL;
+    }
+    if (success == 1){
       printf("leu algo\n");
       printf("mesagem recebida: %s\n",message);
       int code = atoi(message);
@@ -462,26 +477,24 @@ void *readServerPipe(){
         iniciar_sessao(message);
         printf("iniciou sessao\n");
       }else{
-        printf("b\n");
         write_str(STDERR_FILENO, "Codigo != 1\n");
         return NULL;
       }
-    } else if (success<0 ){
-      printf("c\n");
+    } else if (success<0){
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
       break;
     }
 
   }
-  printf("d\n");
   return NULL;
 }
 
 void iniciarSessaoCliente(Cliente *cliente){
-  cliente ->resp_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+  int response_pipe = open(cliente->resp_pipe_path, O_WRONLY);
+  cliente ->resp_pipe = response_pipe;
   printf("abriu o pipe de response do cliente\n");
-  if (cliente ->resp_pipe == -1) {
+  if (response_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
     write_str(STDERR_FILENO,cliente->resp_pipe_path);
     write_str(STDERR_FILENO,"\n");
@@ -489,8 +502,12 @@ void iniciarSessaoCliente(Cliente *cliente){
   }
   //manda que deu sucesso
   char response[3] = "10";
+  //if (write_all(response_pipe, response, strlen(response)) == -1) {
+  //  write_str(STDERR_FILENO,"Erro ao enviar pedido de inicio de sessao");
+  //  return;
+  //}
   printf("vai escrever no pipe response\n");
-  int success = write_all(cliente ->resp_pipe, response, 2);
+  int success = write_all(response_pipe, response, 2);
   if(success!=1){
     write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
     return;
@@ -506,17 +523,17 @@ int manageClient(Cliente *cliente){
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
+    if(cliente -> req_pipe==-1){
+      return 1;
+    }
     printf("vai ler\n");
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
+    //close(request_pipe);
     if (successCode >= 0){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
-      if(cliente->flag_sigusr1){
-        printf("b\n");
-        return 1;
-      }
 
       if (code==2){
         printf("era disconnect\n");
@@ -527,10 +544,8 @@ int manageClient(Cliente *cliente){
           removeClientFromBuffer(cliente);
           if(sendOperationResult(code,result,cliente)==1){
             //erro a mandar mensagem para o cliente
-            printf("c\n");
             return 1;
           }
-          
           break;
         }
 
@@ -539,10 +554,6 @@ int manageClient(Cliente *cliente){
         //subscribe
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
-        if (success==-1){
-          printf("d, sucesso: %d\n",success);
-          return 1;
-        }
         key[41] = '\0';
         result = subscribeClient(cliente, key);
         printf("result da funcao addSubscriber: %d\n",result);
@@ -551,10 +562,6 @@ int manageClient(Cliente *cliente){
         //unsubscribe
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
-        if (success!=1){
-          printf("e\n");
-          return 1;
-        }
         key[41] = '\0';
         result = unsubscribeClient(cliente, key);
       }else{
@@ -564,16 +571,13 @@ int manageClient(Cliente *cliente){
       }
       if(sendOperationResult(code,result,cliente)==1){
         //erro a mandar mensagem para o cliente
-        printf("a\n");
         return 1;
       }
     }else{
       //nao leu nada pois houve erro
-      printf("f\n");
       return 1;
     }
   }
-  printf("g\n");
   return 0;
 }
 
@@ -614,7 +618,7 @@ void *readClientPipe(void *arg) {
       printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
-        free(cliente);
+        return NULL;
       }
     }
   }

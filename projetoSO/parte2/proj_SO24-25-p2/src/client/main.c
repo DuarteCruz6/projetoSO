@@ -231,10 +231,6 @@ int main(int argc, char *argv[]) {
     return 1;
   }
   create_threads(req_pipe_path, resp_pipe_path, notif_pipe_path);
-
-  unlinkPipes(req_pipe_path);
-  unlinkPipes(resp_pipe_path);
-  unlinkPipes(notif_pipe_path);
   printf("xau\n");
   return 0;
 }
