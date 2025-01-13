@@ -540,7 +540,7 @@ int manageClient(Cliente *cliente){
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
         if (success!=1){
-          printf("d\n");
+          printf("d, sucesso: %d\n",success);
           return 1;
         }
         key[41] = '\0';
