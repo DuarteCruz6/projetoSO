@@ -476,15 +476,8 @@ int iniciarSessaoCliente(Cliente *cliente){
     write_str(STDERR_FILENO,"\n");
     return 1;
   }
-  //manda que deu sucesso
+  //manda que deu sucesso para o pipe de resposta do cliente
   return sendOperationResult(1, 0,cliente);
-  //char response[3] = "10";
-  //int success = write_all(cliente ->resp_pipe, response, 2);
-  //if(success!=1){
-  //  write_str(STDERR_FILENO, "Erro ao escrever no pipe de response\n");
-  //  return 1;
-  //}
-  //return 0;
 }
 
 //so acaba quando o client der disconnect ou houver o sinal SIGSUR1
@@ -629,6 +622,7 @@ static void dispatch_threads(DIR *dir) {
       return;
     }
   }
+  
   //cria S threads gestoras, que vao buscando clientes e tratando deles
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
