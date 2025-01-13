@@ -46,7 +46,7 @@ sigset_t sinalSeguranca; //sinal SIGUSR1
 
 BufferUserConsumer* bufferThreads;//buffer utilizador - consumidor
 pthread_t *threads_gestoras;
-char fifo_path[256] = "../common/tmp/";
+char fifo_path[256] = "tmp/";
 
 
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;

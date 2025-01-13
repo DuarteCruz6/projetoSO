@@ -231,12 +231,9 @@ int main(int argc, char *argv[]) {
     return 1;
   }
 
-  //char req_pipe_path[256] = "tmp/req_";
-  //char resp_pipe_path[256] = "tmp/resp_";
-  //char notif_pipe_path[256] = "tmp/notif_";
-  char req_pipe_path[256] = "../common/tmp/req_";
-  char resp_pipe_path[256] = "../common/tmp/resp_";
-  char notif_pipe_path[256] = "../common/tmp/notif_";
+  char req_pipe_path[256] = "tmp/req_";
+  char resp_pipe_path[256] = "tmp/resp_";
+  char notif_pipe_path[256] = "tmp/notif_";
 
   //adicionar id do cliente ao nome dos pipes
   strncat(req_pipe_path, argv[1], strlen(argv[1]));
@@ -254,6 +251,5 @@ int main(int argc, char *argv[]) {
   unlink(req_pipe_path);
   unlink(resp_pipe_path);
   unlink(notif_pipe_path);
-  printf("xau\n");
   return 0;
 }
