@@ -21,6 +21,7 @@ typedef struct Cliente {
   int num_subscricoes;
   int resp_pipe;
   int req_pipe;
+  int notif_pipe;
   int flag_sigusr1;
   int usado;
 }Cliente;

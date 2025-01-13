@@ -485,6 +485,11 @@ void *readServerPipe(){
 void iniciarSessaoCliente(Cliente *cliente){
   cliente ->resp_pipe = open(cliente->resp_pipe_path, O_WRONLY);
   printf("abriu o pipe de response do cliente\n");
+  cliente->notif_pipe = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
+  printf("abriu o pipe de notif do cliente\n");
+  if (cliente->notif_pipe == -1) {
+        return 1;
+  }
   if (cliente ->resp_pipe == -1) {
     write_str(STDERR_FILENO,"Erro ao abrir o pipe de response: ");
     write_str(STDERR_FILENO,cliente->resp_pipe_path);
