@@ -42,6 +42,16 @@ int notificarSubs(KeyNode *keyNode,const char *newValue){
   Subscribers *currentSub = keyNode->head_subscribers;
   while (currentSub != NULL) {
     Cliente *cliente = currentSub->subscriber;
+    //int pipe_notif = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
+    //if (pipe_notif == -1) {
+    //    return 1;
+    //}
+    //char mensagem[256];
+    //snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
+    //if(write_all(pipe_notif, mensagem, 256)!=1){
+    //  //erro
+    //  return 1;
+    //}
     char mensagem[256];
     snprintf(mensagem, sizeof(mensagem), "(%s,%s)", keyNode->key, newValue);
     if(write_all(cliente->notif_pipe, mensagem, 256)!=1){

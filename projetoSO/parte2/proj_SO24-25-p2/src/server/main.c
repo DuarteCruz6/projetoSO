@@ -423,19 +423,7 @@ void sinalDetetado() {
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
     removeClientFromBuffer(cliente); //remover do buffer
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
-    //// Apagar os pipes do cliente
-      //if (unlinkPipes(cliente->req_pipe_path)!=0){
-      //  write_str(STDERR_FILENO, "Failed to close request pipe\n");
-      //  return;
-      //}
-      //if (unlinkPipes(cliente->resp_pipe_path)!=0){
-      //  write_str(STDERR_FILENO, "Failed to close response pipe\n");
-      //  return;
-      //}
-      //if (unlinkPipes(cliente->notif_pipe_path)!=0){
-      //  write_str(STDERR_FILENO, "Failed to close notification pipe\n");
-      //  return;
-      //}
+    //// Fechar os pipes do cliente
       if (close(cliente->resp_pipe)!=0){
         write_str(STDERR_FILENO, "Failed to close request pipe\n");
         return;
@@ -534,7 +522,6 @@ int manageClient(Cliente *cliente){
   char message[2];
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
-  //cliente -> notif_pipe = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     if(cliente -> req_pipe==-1){
       return 1;

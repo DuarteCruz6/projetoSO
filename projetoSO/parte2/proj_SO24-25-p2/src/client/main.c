@@ -114,7 +114,8 @@ void *thread_secundaria_work(void *arguments){
   char notif_pipe[40];
   strcpy(notif_pipe, thread_data->notif_pipe_path);
   printf(" vai abrir o pipe notif\n");
-  int pipe_notif = open(notif_pipe, O_RDONLY);
+  int pipe_notif = open(notif_pipe, O_RDONLY | O_NONBLOCK);
+  //int pipe_notif = open(notif_pipe, O_RDONLY);
   printf("abriu o pipe notif\n");
   if (pipe_notif == -1) {
     write_str(STDERR_FILENO, "Erro ao abrir a pipe de notificacoes");
