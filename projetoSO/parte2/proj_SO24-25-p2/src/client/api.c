@@ -67,7 +67,8 @@ int getResponse(){
     mudarSinalSeguranca();
     return 1;
   } else if (pipe_resp == -1){
-    write_str(STDERR_FILENO, "Error reading pipe response");
+    write_str(STDERR_FILENO, "Error reading pipe response\n");
+    perror("erro\n");
     return 1;
   }
 
