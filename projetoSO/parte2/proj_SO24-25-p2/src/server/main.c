@@ -506,7 +506,6 @@ int manageClient(Cliente *cliente){
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
-    printf("vai ler\n");
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
     if (successCode == 1){
