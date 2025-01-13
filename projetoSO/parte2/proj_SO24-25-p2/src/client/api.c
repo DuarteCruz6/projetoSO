@@ -129,15 +129,12 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   printf("len message: %ld\n",strlen(message));
   int server_pipe = open(server_pipe_path, O_WRONLY);
 
-  if(write_all(server_pipe, message, 121) == -1){
-    return 1;
-  }
   
   printf("ja criou a mensagem %s, com tamanho %ld agora vai recebe la\n", message, sizeof(message));
 
   printf("sem stor\n");
   //ssize_t bytes_written = write(server_pipe, message, strlen(message));
-  int success = write_all(server_pipe,message,strlen(message));
+  int success = write_all(server_pipe,message,121);
   if(success<0){
     perror("Erro ao escrever no FIFO do server");
     close(server_pipe);

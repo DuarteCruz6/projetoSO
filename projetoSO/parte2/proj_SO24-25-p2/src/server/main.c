@@ -485,19 +485,6 @@ void *readServerPipe(){
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
       break;
     }
-    //char buffer[256];
-    //ssize_t bytes_read = read(server_fifo, buffer, sizeof(buffer) - 1);
-    //if (bytes_read == -1) {
-    //    perror("Erro ao ler FIFO");
-    //    close(server_fifo);
-    //    return NULL;
-    //}
-
-    //// Adiciona o caractere nulo para encerrar a string
-    //buffer[bytes_read] = '\0';
-//
-    //// Exibe o conteúdo lido
-    //printf("Conteúdo lido: %s\n", buffer);
 
   }
   return NULL;
