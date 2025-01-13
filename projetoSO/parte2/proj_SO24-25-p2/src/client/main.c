@@ -136,7 +136,6 @@ void *thread_secundaria_work(void *arguments){
     printf("while da secundaria\n");
     char notif[85];
     printf("a ler pipe notif\n");
-    int success = read_all(pipe_notif, notif, 82, NULL);
     int success = read_all(pipe_notif, notif, 84, NULL);
     notif[84]= '\0';
 
