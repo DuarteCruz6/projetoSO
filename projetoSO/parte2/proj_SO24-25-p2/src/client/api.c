@@ -64,11 +64,12 @@ int getResponse(){
   // abrir pipe de response para leitura
   printf("vai receber a msg agora \n");
   if (pipe_resp == -1 && errno == EPIPE ) {
+    printf("era errno == epipe\n");
     mudarSinalSeguranca();
     return 1;
   } else if (pipe_resp == -1){
     write_str(STDERR_FILENO, "Error reading pipe response\n");
-    perror("erro");
+    printf("errno: %s\n",errno);
     return 1;
   }
 
