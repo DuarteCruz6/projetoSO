@@ -421,7 +421,7 @@ void *readServerPipe(){
   int erro=0;
   char message[122];
   server_fifo = open(fifo_path, O_RDONLY); //so queremos em modo leitura
-  printf("O PID do processo é: %d\n", getpid());
+  //printf("O PID do processo é: %d\n", getpid()); <- para fazer o comando kill -s SIGUSR1 <pid> 
 
   if (server_fifo == -1) {
     write_str(STDERR_FILENO, "Failed to open fifo: ");
