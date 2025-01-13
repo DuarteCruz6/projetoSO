@@ -37,7 +37,6 @@ void mudarSinalSeguranca(){
   }else{
     sinalSeguranca=1;
   }
-  return;
 }
 
 //manda request
@@ -66,15 +65,11 @@ int getResponse(){
   printf("vai ler a msg agora \n");
   int success = read_all(pipe_resp, buffer, 2, NULL);
   buffer[2]='\0';
-  if (success != 1 && errno == EPIPE ) {
-    printf("era errno == epipe\n");
+  if (success != 1) {
+    write_str(STDERR_FILENO, "Error reading pipe response\n");
     mudarSinalSeguranca();
     return 1;
-  }else if (success != 1){
-    write_str(STDERR_FILENO, "Error reading pipe response\n");
-    printf("errno: _%s_\n",strerror(errno));
-    return 1;
-  } 
+  }
   
   printf("leu a msg agora _%s_\n",buffer);
   
