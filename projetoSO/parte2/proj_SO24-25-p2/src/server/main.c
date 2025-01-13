@@ -13,6 +13,7 @@
 #include <semaphore.h>
 #include <pthread.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "constants.h"
 #include "io.h"
@@ -411,8 +412,20 @@ void sinalDetetado() {
     //fechar os pipes do cliente
     printf("caminho req: %s\n",cliente->req_pipe_path);
     close(cliente->req_pipe);
+    if (fcntl(cliente->req_pipe, F_GETFD) == -1 && errno == EBADF) {
+    printf("Pipe fechado com sucesso.\n");
+} else {
+    perror("Erro ao verificar o fechamento do pipe");
+}
+
     printf("caminho req: %s\n",cliente->resp_pipe_path);
     close(cliente->resp_pipe);
+    if (fcntl(cliente->req_pipe, F_GETFD) == -1 && errno == EBADF) {
+    printf("Pipe fechado com sucesso.\n");
+} else {
+    perror("Erro ao verificar o fechamento do pipe");
+}
+
     printf("matou cliente com id: %d\n",cliente->id);
     free(cliente);
     userAtual=userAtual->nextUser;
