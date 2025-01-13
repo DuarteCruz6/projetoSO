@@ -135,8 +135,8 @@ int kvs_connect(char const *req_pipe_path, char const *resp_pipe_path,
   //construir mensagem
   message[0] = (char) ('0' + OP_CODE_CONNECT);
   pad_string(&message[1], req_pipe_path, 40);
-  pad_string(&message[41], req_pipe_path, 40);
-  pad_string(&message[81], req_pipe_path, 40);
+  pad_string(&message[41], resp_pipe_path, 40);
+  pad_string(&message[81], notif_pipe_path, 40);
   message[121] = '\0';
   printf("len message: %ld\n",strlen(message));
   int server_pipe = open(server_pipe_path, O_WRONLY);
