@@ -63,12 +63,29 @@ void set_n_current_backups(int _n_current_backups);
 // @return n_current_backups
 int get_n_current_backups();
 
-int addSubscriber(Cliente *Cliente, char *key);
-int removeSubscriber(Cliente *Cliente, char *key);
-int disconnectClient(Cliente *cliente);
-
+//muda o sinal de seguranca quando ha um sigusr1 
 void mudarSinalSeguranca();
 
+//retorna o sinal de seguranca
+/// @return 1 se houve, 0 se nao
 int getSinalSeguranca();
+
+/// @brief adiciona um subscritor a uma chave
+/// @param Cliente subscritor novo da chave
+/// @param key chave À qual vai ser adicionado um novo subscritor
+/// @return 0 se der certo, 1 se der errado
+int addSubscriber(Cliente *Cliente, char *key);
+
+/// @brief retira um subscritor a uma chave
+/// @param Cliente subscritor que vai ser removido da chave
+/// @param key chave À qual vai ser retirado um subscritor
+/// @return 0 se der certo, 1 se der errado
+int removeSubscriber(Cliente *Cliente, char *key);
+
+/// @brief disconecta um cliente, apagando todas as suas subscricoes
+/// @param cliente cliente que vai ser desconectado
+/// @return 0 se der certo, 1 se der errado
+int disconnectClient(Cliente *cliente);
+
 
 #endif // KVS_OPERATIONS_H
