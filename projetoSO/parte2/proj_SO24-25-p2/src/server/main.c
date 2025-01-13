@@ -300,7 +300,7 @@ void iniciar_sessao(char *message){
     new_cliente->num_subscricoes=0;
     new_cliente->head_subscricoes = NULL;
     new_cliente ->usado = 0;
-    new_cliente ->flag_sigusr1 = 0;
+    //new_cliente ->flag_sigusr1 = 0;
     User *new_user = malloc(sizeof(User));
     new_user->cliente = new_cliente;
     new_user->usedFlag = false;
