@@ -37,22 +37,6 @@ int read_all(int fd, void *buffer, size_t size, int *intr) {
   return 1;
 }
 
-//int read_string(int fd, char *str) {
-//  ssize_t bytes_read = 0;
-//  char ch;
-//  while (bytes_read < MAX_STRING_SIZE - 1) {
-//    if (read(fd, &ch, 1) != 1) {
-//      return -1;
-//    }
-//    if (ch == '\0' || ch == '\n') {
-//      break;
-//    }
-//    str[bytes_read++] = ch;
-//  }
-//  str[bytes_read] = '\0';
-//  return (int)bytes_read;
-//}
-
 int write_all(int fd, const void *buffer, size_t size) {
   size_t bytes_written = 0;
   while (bytes_written < size) {

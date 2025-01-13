@@ -137,20 +137,19 @@ void *thread_secundaria_work(void *arguments){
   while(!deuDisconnect && !getSinalSeguranca()){ //trabalha até dar disconnect ou haver um sigusr1
     char notif[83];
     int success = read_all(pipe_notif, notif, 82, NULL); //le o pipe de notifs
+    notif[82]= '\0';
     char chave[41];
     memcpy(chave, &notif[0],40);
     chave[40] = '\0';
     char newValue[41];
     memcpy(newValue, &notif[41],40);
     newValue[40] = '\0';
-
-    notif[83]= '\0';
     size_t tamanho = (size_t) snprintf(NULL,0,"(%s,%s)",chave,newValue);
     char *output = malloc(tamanho + 1);
     //cria a mensagem para o output q mostra q houve notificacao
     snprintf(output, tamanho + 1, "(%s,%s)", chave, newValue);
 
-    if (success != -1) {
+    if (success == 1) {
       write_str(STDOUT_FILENO,output);
       write_str(STDOUT_FILENO,"\n");
       free(output);
