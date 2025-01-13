@@ -69,7 +69,7 @@ int getResponse(){
     return 1;
   } else if (pipe_resp == -1){
     write_str(STDERR_FILENO, "Error reading pipe response\n");
-    printf("errno: %s\n",errno);
+    printf("errno: %s\n",strerror(errno));
     return 1;
   }
 
