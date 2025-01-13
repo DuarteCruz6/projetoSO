@@ -14,7 +14,11 @@
 /// -1
 int read_all(int fd, void *buffer, size_t size, int *intr);
 
-int read_string(int fd, char *str);
+/// @brief Reads a string from a file des
+/// @param fd 
+/// @param str 
+/// @return 
+//int read_string(int fd, char *str);
 
 /// Writes a given number of bytes to a file descriptor. Will block until all
 /// bytes are written, or fail if not all bytes could be written.
