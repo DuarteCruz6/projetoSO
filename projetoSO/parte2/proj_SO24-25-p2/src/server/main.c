@@ -536,7 +536,7 @@ int manageClient(Cliente *cliente){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
-      if(sinalDetetado){
+      if(getSinalSeguranca()){
         return 1;
       }
 
