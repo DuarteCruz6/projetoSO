@@ -609,6 +609,7 @@ void *readClientPipe(void *arg) {
       printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
         //deu erro a ler cliente
+        free(cliente);
         return NULL;
       }
     }
