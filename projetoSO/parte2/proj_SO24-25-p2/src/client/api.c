@@ -57,7 +57,7 @@ int createMessage(const char *req_pipe_path, char *message, int size){
     return 1;
   }
   //ssize_t bytes_written = write(pipe_req, message, strlen(message));
-  int success = write_all(pipe_req,message,strlen(message));
+  int success = write_all(pipe_req,message,size);
   if(success<0){
     //close(pipe_req);
     return 1;
