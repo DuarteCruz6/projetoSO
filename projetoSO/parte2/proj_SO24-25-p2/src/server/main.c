@@ -539,7 +539,7 @@ int manageClient(Cliente *cliente){
         //subscribe
         char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
-        if (success!=1){
+        if (success==-1){
           printf("d, sucesso: %d\n",success);
           return 1;
         }
