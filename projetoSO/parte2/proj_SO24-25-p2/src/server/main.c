@@ -585,7 +585,6 @@ Cliente* getClientForThread(){
 
 //quando o manage client acaba significa q o client deu disconnect, portanto vai buscar outro client
 void *readClientPipe() {
-  printf("readclientpipe\n");
   while(1){
     sem_wait(&semaforoBuffer); //tirar 1 ao semaforo
     pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear mutex pq vai buscar um cliente ao buffer
@@ -603,6 +602,7 @@ void *readClientPipe() {
 
 //cria a thread que lê o server pipe, as S threads gestoras e as threads dos .job
 static void dispatch_threads(DIR *dir) {
+  printf("dispatch_threads\n");
   pthread_t *threads = malloc(max_threads * sizeof(pthread_t));
 
   //bloqueia o sinal SIGUSR1 em todas as threads
@@ -618,6 +618,7 @@ static void dispatch_threads(DIR *dir) {
   //threads dos .job
   struct SharedData thread_data = {dir, jobs_directory,
                                    PTHREAD_MUTEX_INITIALIZER};
+  printf("pthread_create\n");
   for (size_t i = 0; i < max_threads; i++) {
     if (pthread_create(&threads[i], NULL, get_file, (void *)&thread_data) !=
         0) {
@@ -628,7 +629,7 @@ static void dispatch_threads(DIR *dir) {
       return;
     }
   }
-
+  printf("readclientpipe\n");
   //cria S threads gestoras, que vao buscando clientes e tratando deles
   for (size_t thread_gestora = 0; thread_gestora < MAX_SESSION_COUNT; thread_gestora++) {
     if (pthread_create(&threads_gestoras[thread_gestora], NULL, readClientPipe,NULL) !=
