@@ -430,7 +430,7 @@ void sinalDetetado() {
     free(cliente);
     userAtual=userAtual->nextUser;
   }
-  //mudarSinalSeguranca(); //volta a meter como false
+  mudarSinalSeguranca(); //volta a meter como false
   return;
 }
 
