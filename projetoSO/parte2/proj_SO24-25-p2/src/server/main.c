@@ -534,7 +534,7 @@ int manageClient(Cliente *cliente){
   char message[2];
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
-  cliente -> notif_pipe = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
+  //cliente -> notif_pipe = open(cliente->notif_pipe_path, O_WRONLY); //abre o pipe das notificacoes para escrita
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
     if(cliente -> req_pipe==-1){
       return 1;
