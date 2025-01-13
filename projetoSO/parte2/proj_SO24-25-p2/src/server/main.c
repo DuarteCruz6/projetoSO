@@ -424,18 +424,18 @@ void sinalDetetado() {
     removeClientFromBuffer(cliente); //remover do buffer
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
     //// Apagar os pipes do cliente
-      if (unlinkPipes(cliente->req_pipe_path)!=0){
-        write_str(STDERR_FILENO, "Failed to close request pipe\n");
-        return;
-      }
-      if (unlinkPipes(cliente->resp_pipe_path)!=0){
-        write_str(STDERR_FILENO, "Failed to close response pipe\n");
-        return;
-      }
-      if (unlinkPipes(cliente->notif_pipe_path)!=0){
-        write_str(STDERR_FILENO, "Failed to close notification pipe\n");
-        return;
-      }
+    //  if (unlinkPipes(cliente->req_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close request pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->resp_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close response pipe\n");
+    //    return;
+    //  }
+    //  if (unlinkPipes(cliente->notif_pipe_path)!=0){
+    //    write_str(STDERR_FILENO, "Failed to close notification pipe\n");
+    //    return;
+    //  }
     free(cliente);
     userAtual=userAtual->nextUser;
   }
@@ -530,7 +530,7 @@ int manageClient(Cliente *cliente){
     int successCode = read_all(cliente -> req_pipe,&message, 1, NULL);
     message[1] = '\0';
     //close(request_pipe);
-    if (successCode != 1){
+    if (successCode >= 0){
       int code = message[0]- '0';
       int result;
       printf("leu o codigo _%d_\n",code);
