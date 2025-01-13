@@ -299,6 +299,8 @@ void iniciar_sessao(char *message){
     strcpy(new_cliente->notif_pipe_path, pipe_notif);
     new_cliente->num_subscricoes=0;
     new_cliente->head_subscricoes = NULL;
+    new_cliente ->usado = 0;
+    new_cliente ->flag_sigusr1 = 0;
     User *new_user = malloc(sizeof(User));
     new_user->cliente = new_cliente;
     new_user->usedFlag = false;
@@ -404,20 +406,22 @@ void sinalDetetado() {
   User *userAtual = bufferThreads->headUser;
   while (userAtual!=NULL){
     Cliente* cliente = userAtual->cliente;
-    disconnectClient(cliente); //remove as suas subscricoes
-    pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
-    removeClientFromBuffer(cliente); //remover do buffer
-    pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
-    //fechar os pipes do cliente
-    printf("caminho req: %s\n",cliente->req_pipe_path);
-    close(cliente->req_pipe);
-
-    printf("caminho req: %s\n",cliente->resp_pipe_path);
-    close(cliente->resp_pipe);
-    
-    printf("matou cliente com id: %d\n",cliente->id);
-    cliente->flag_sigusr1 = 1;
-    userAtual=userAtual->nextUser;
+    if(cliente->usado){
+      disconnectClient(cliente); //remove as suas subscricoes
+      pthread_mutex_lock(&bufferThreads->buffer_mutex); //bloquear o buffer pois vamos altera-lo
+      removeClientFromBuffer(cliente); //remover do buffer
+      pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear o buffer 
+      //fechar os pipes do cliente
+      printf("caminho req: %s\n",cliente->req_pipe_path);
+      close(cliente->req_pipe);
+  
+      printf("caminho req: %s\n",cliente->resp_pipe_path);
+      close(cliente->resp_pipe);
+      
+      printf("matou cliente com id: %d\n",cliente->id);
+      cliente->flag_sigusr1 = 1;
+      userAtual=userAtual->nextUser;
+    }
   }
   return;
 }
@@ -609,6 +613,7 @@ void *readClientPipe(void *arg) {
     Cliente *cliente = getClientForThread();
     pthread_mutex_unlock(&bufferThreads->buffer_mutex); //desbloquear mutex 
     if(cliente!=NULL){
+      cliente->usado = 1;
       printf("Cliente encontrado pelo thread %zu\n", thread_id);
       printf("cliente id: %d\n",cliente->id);
       if(manageClient(cliente)==1){
