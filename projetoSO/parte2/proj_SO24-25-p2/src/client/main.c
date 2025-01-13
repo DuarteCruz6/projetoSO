@@ -153,10 +153,13 @@ void *thread_secundaria_work(void *arguments){
       write_str(STDOUT_FILENO,output);
       write_str(STDOUT_FILENO,"\n");
       free(output);
-    } else {
+    } else if(success == -1){
       close(pipe_notif);
-      printf("sucesso %d\n",success);
       write_str(STDERR_FILENO, "Erro ao ler a pipe de notificacoes\n");
+      free(output);
+      return NULL;
+    } else{
+      //o pipe foi fechado
       free(output);
       return NULL;
     }
