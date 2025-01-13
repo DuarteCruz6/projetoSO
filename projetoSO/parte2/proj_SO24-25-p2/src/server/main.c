@@ -456,8 +456,7 @@ void *readServerPipe(){
         printf("a\n");
         return NULL;
       }
-    }
-    if (success == 1){
+    }else if (success == 1){
       printf("leu algo\n");
       printf("mesagem recebida: %s\n",message);
       int code = atoi(message);
@@ -470,7 +469,7 @@ void *readServerPipe(){
         write_str(STDERR_FILENO, "Codigo != 1\n");
         return NULL;
       }
-    } else if (success<0){
+    } else if (success<0 ){
       printf("c\n");
       // Erro ao ler
       write_str(STDERR_FILENO, "Erro ao ler do pipe do server\n");
