@@ -115,6 +115,7 @@ int delete_pair(HashTable *ht, const char *key) {
 
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
+      notificarSubs(keyNode, "DELETED");
       Subscribers *currentSub = keyNode->head_subscribers;
       while (currentSub != NULL) {
         Cliente *cliente = currentSub->subscriber;
@@ -131,7 +132,6 @@ int delete_pair(HashTable *ht, const char *key) {
         prevNode->next =
             keyNode->next; // Link the previous node to the next node
       }
-      notificarSubs(keyNode, "DELETED");
 
       // Free the memory allocated for the key and value
       free(keyNode->key);
