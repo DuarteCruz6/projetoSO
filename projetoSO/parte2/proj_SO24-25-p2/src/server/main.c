@@ -451,6 +451,7 @@ void *readServerPipe(){
       if(getSinalSeguranca()){
         //foi sigusr1
         mudarSinalSeguranca(); //volta a meter como false
+        erro=0;
       }else{
         printf("a\n");
         return NULL;
