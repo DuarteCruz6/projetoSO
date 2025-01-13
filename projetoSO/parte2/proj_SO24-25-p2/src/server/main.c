@@ -417,6 +417,8 @@ void sinalDetetado() {
   
       printf("caminho req: %s\n",cliente->resp_pipe_path);
       close(cliente->resp_pipe);
+
+      close(cliente->notif_pipe);
       
       printf("matou cliente com id: %d\n",cliente->id);
       cliente->flag_sigusr1 = 1;

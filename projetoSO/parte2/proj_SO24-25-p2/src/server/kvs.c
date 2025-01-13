@@ -126,6 +126,12 @@ int delete_pair(HashTable *ht, const char *key) {
             keyNode->next; // Link the previous node to the next node
       }
       notificarSubs(keyNode, "DELETED");
+      Subscribers *currentSub = keyNode->head_subscribers;
+      while (currentSub != NULL) {
+        Cliente *cliente = currentSub->subscriber;
+        removeSubscription(cliente,key);
+        currentSub = currentSub->next; //próximo subscritor
+      }
 
       // Free the memory allocated for the key and value
       free(keyNode->key);

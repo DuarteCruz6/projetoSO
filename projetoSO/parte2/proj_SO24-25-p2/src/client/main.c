@@ -151,7 +151,7 @@ void *thread_secundaria_work(void *arguments){
     snprintf(output, tamanho + 1, "(%s,%s)", chave, newValue);
     printf("notificacao: _%s_\n",output);
 
-    if (success == 1) {
+    if (success != 1) {
       printf("sucesso = 1\n");
       write_str(STDOUT_FILENO,output);
       free(output);
