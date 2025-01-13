@@ -528,7 +528,7 @@ void iniciarSessaoCliente(Cliente *cliente){
 int manageClient(Cliente *cliente){
   iniciarSessaoCliente(cliente);
   printf("a ler a pipe dos clientes\n");
-  char message[1];
+  char message[2];
   printf("vai abrir o pipe do cliente no caminho %s\n",cliente->req_pipe_path);
   cliente -> req_pipe = open(cliente->req_pipe_path, O_RDONLY);
   while(!getSinalSeguranca()){ //trabalha enquanto o sinal SIGUSR1 nao for detetado
@@ -537,6 +537,7 @@ int manageClient(Cliente *cliente){
     }
     printf("vai ler\n");
     int success = read_all(cliente -> req_pipe,&message, 1, NULL);
+    message[1] = '\0';
     printf("leu a mensagem _%s_ com sucesso %d\n",message,success);
     //close(request_pipe);
     if (success >= 0){
@@ -561,15 +562,17 @@ int manageClient(Cliente *cliente){
       }else if (code==3){
         printf("era subscribe\n");
         //subscribe
-        char key[41];
+        char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        key[41] = '\0';
         result = subscribeClient(cliente, key);
         printf("result da funcao addSubscriber: %d\n",result);
       }else if (code==4){
         printf("era unsub\n");
         //unsubscribe
-        char key[41];
+        char key[42];
         int success = read_all(cliente -> req_pipe,&key, 41, NULL);
+        key[41] = '\0';
         result = unsubscribeClient(cliente, key);
       }else{
         printf("erro\n");
