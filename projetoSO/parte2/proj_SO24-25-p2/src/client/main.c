@@ -53,7 +53,7 @@ static void *thread_principal_work(void *arguments){
         }
         return NULL;
       }
-      pthread_cancel(&thread_data->thread_secundaria); //cancelar a thread secundaria
+      pthread_cancel(thread_data->thread_secundaria); //cancelar a thread secundaria
       printf("Disconnected from server\n");
       deuDisconnect = true;
       return NULL;
