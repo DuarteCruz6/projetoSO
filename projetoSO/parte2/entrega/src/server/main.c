@@ -732,7 +732,7 @@ int main(int argc, char **argv) {
     write_str(STDERR_FILENO, "\n");
     return 0;
   }
-
+  
   if(strlen(nome_fifo)>MAX_PIPE_PATH_LENGTH){
     write_str(STDERR_FILENO, "Invalid pipe path\n");
     return 0;

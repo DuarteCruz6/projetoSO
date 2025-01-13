@@ -3,6 +3,7 @@ WRITE [(d,dinis)(c,carlota)]
 READ [x,z,l,v]
 SHOW
 BACKUP
+WAIT 10000
 DELETE [c]
 READ [c]
 WAIT 1000
