@@ -115,6 +115,12 @@ int delete_pair(HashTable *ht, const char *key) {
 
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
+      Subscribers *currentSub = keyNode->head_subscribers;
+      while (currentSub != NULL) {
+        Cliente *cliente = currentSub->subscriber;
+        removeSubscription(cliente,key);
+        currentSub = currentSub->next; //próximo subscritor
+      }
       // Key found; delete this node
       if (prevNode == NULL) {
         // Node to delete is the first node in the list
@@ -126,12 +132,6 @@ int delete_pair(HashTable *ht, const char *key) {
             keyNode->next; // Link the previous node to the next node
       }
       notificarSubs(keyNode, "DELETED");
-      Subscribers *currentSub = keyNode->head_subscribers;
-      while (currentSub != NULL) {
-        Cliente *cliente = currentSub->subscriber;
-        removeSubscription(cliente,key);
-        currentSub = currentSub->next; //próximo subscritor
-      }
 
       // Free the memory allocated for the key and value
       free(keyNode->key);
@@ -179,25 +179,6 @@ KeyNode *getKeyNode(HashTable *ht,char *key){
   return NULL; // Key not found
 }
 
-void getAllSubsKey(KeyNode *par){
-  //da print a todos os subs de uma chave
-  printf("subs da chave _%s_: \n",par->key);
-  if(par->head_subscribers!=NULL){
-    Subscribers *sub_atual = par->head_subscribers;
-    printf("cabeca da lista _%d_: \n",sub_atual->subscriber->id);
-    while(sub_atual->subscriber != NULL){
-      printf("     cliente com id %d\n",sub_atual->subscriber->id);
-      if(sub_atual->next ==NULL){
-        break;
-      }
-      sub_atual = sub_atual->next;
-    }
-  }else{
-    printf("nao tem subs\n");
-  }
-  return;
-}
-
 //verifica se algum cliente ja esta subscrito ao par, para nao haver repetidos
 bool alreadySubbed(KeyNode *par, Cliente *cliente){
   Subscribers *subAtual = par->head_subscribers;
@@ -236,7 +217,6 @@ int addSubscription(HashTable *ht,Cliente *cliente, char *key){
       newSub->par = par; //guarda o keynode na sub
       cliente->head_subscricoes = newSub; //guarda a novaSub como cabeca da lista
       cliente->num_subscricoes++;
-      getAllSubsKey(par);
       return 0;
     }
     printf("funcao addSubscriberTable deu errado\n");
@@ -291,7 +271,6 @@ int removeSubscription(Cliente *cliente, char *key){
         }
         free(subscricao_atual);
         cliente->num_subscricoes--;
-        getAllSubsKey(par_atual);
         return 0;
       }
       printf("o removeSubscriberTable deu erro \n");

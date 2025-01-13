@@ -151,15 +151,10 @@ void *thread_secundaria_work(void *arguments){
     snprintf(output, tamanho + 1, "(%s,%s)", chave, newValue);
     printf("notificacao: _%s_\n",output);
 
-    if (success != 1) {
-      printf("sucesso = 1\n");
+    if (success != -1) {
+      printf("sucesso = %d\n",success);
       write_str(STDOUT_FILENO,output);
       free(output);
-    } else if (success == 0) {
-      printf("sucesso = 0\n");
-      // EOF, caso o escritor feche a pipe
-      free(output);
-      return NULL;
     } else {
       printf("sucesso = -1\n");
       close(pipe_notif);
