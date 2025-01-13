@@ -116,38 +116,16 @@ int delete_pair(HashTable *ht, const char *key) {
   while (keyNode != NULL) {
     if (strcmp(keyNode->key, key) == 0) {
       notificarSubs(keyNode, "DELETED");
-      Subscribers *currentSub = keyNode->head_subscribers;
-      while (currentSub != NULL && currentSub ->subscriber!=NULL) {
-        printf("a\n");
-        Cliente *cliente = currentSub->subscriber;
-        printf("b\n");
-        removeSubscription(cliente,key);
-        printf("xau\n");
-        
-        if(currentSub->next!=NULL){
-          printf("muito estranho\n");
-        }else{
-          printf("ainda mais estranho\n");
-        }
-        currentSub = currentSub->next; //próximo subscritor
-        printf("oi again\n");
-      }
       // Key found; delete this node
-      printf("1\n");
       if (prevNode == NULL) {
         // Node to delete is the first node in the list
-        printf("2\n");
         ht->table[index] =
             keyNode->next; // Update the table to point to the next node
-            printf("3\n");
       } else {
-        printf("4\n");
         // Node to delete is not the first; bypass it
         prevNode->next =
             keyNode->next; // Link the previous node to the next node
-            printf("5\n");
       }
-
       // Free the memory allocated for the key and value
       free(keyNode->key);
       free(keyNode->value);
