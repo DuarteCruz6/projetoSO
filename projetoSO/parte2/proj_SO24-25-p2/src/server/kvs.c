@@ -249,6 +249,9 @@ int addSubscriberTable(Cliente *cliente, KeyNode *par){
     if(!alreadySubbed(par, cliente)){
       newSub->subscriber = cliente; //guarda o novo sub
       newSub->next = subsPar; //mete o novo sub no inicio da lista e faz o link
+      if(subsPar!=NULL){
+        printf("nao ºe nul,\n");
+      }
       par->head_subscribers = newSub; //guarda o novo Sub como cabeca da lista
       return 0;
     }
