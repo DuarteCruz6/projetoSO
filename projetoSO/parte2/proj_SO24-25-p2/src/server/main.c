@@ -749,6 +749,9 @@ int main(int argc, char **argv) {
   bufferThreads->headUser = NULL;
   pthread_mutex_init(&bufferThreads->buffer_mutex, NULL);
 
+  //cria a lista das threads gestoras de tamanho S
+  threads_gestoras = malloc(MAX_SESSION_COUNT * sizeof(pthread_t));
+
   //cria as threads todas e espera q acabem
   dispatch_threads(dir);
 
