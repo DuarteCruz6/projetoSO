@@ -452,10 +452,9 @@ void *readServerPipe(){
         //foi sigusr1
         mudarSinalSeguranca(); //volta a meter como false
       }else{
-
+        printf("a\n");
+        return NULL;
       }
-      printf("a\n");
-      return NULL;
     }
     if (success == 1){
       printf("leu algo\n");
