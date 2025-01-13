@@ -123,6 +123,12 @@ int delete_pair(HashTable *ht, const char *key) {
         printf("b\n");
         removeSubscription(cliente,key);
         printf("xau\n");
+        
+        if(currentSub->next!=NULL){
+          printf("muito estranho\n");
+        }else{
+          printf("ainda mais estranho\n");
+        }
         currentSub = currentSub->next; //próximo subscritor
         printf("oi again\n");
       }
@@ -249,11 +255,6 @@ int addSubscriberTable(Cliente *cliente, KeyNode *par){
     if(!alreadySubbed(par, cliente)){
       newSub->subscriber = cliente; //guarda o novo sub
       newSub->next = subsPar; //mete o novo sub no inicio da lista e faz o link
-      if(subsPar!=NULL){
-        printf("nao ºe nul,\n");
-      }else{
-        printf("QUERO MORRER,\n");
-      }
       par->head_subscribers = newSub; //guarda o novo Sub como cabeca da lista
       return 0;
     }
