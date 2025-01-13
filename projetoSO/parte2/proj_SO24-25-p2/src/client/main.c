@@ -18,6 +18,7 @@ struct ThreadPrincipalData {
   const char *req_pipe_path;
   const char *resp_pipe_path;
   const char *notif_pipe_path;
+  pthread_t thread_secundaria;
 };
 
 struct ThreadSecundariaData {
@@ -52,7 +53,7 @@ static void *thread_principal_work(void *arguments){
         }
         return NULL;
       }
-      //pthread_cancel(thread_data->thread_secundaria); //cancelar a thread secundaria
+      pthread_cancel(thread_data->thread_secundaria); //cancelar a thread secundaria
       printf("Disconnected from server\n");
       deuDisconnect = true;
       return NULL;
@@ -181,7 +182,7 @@ void create_threads(const char *req_pipe_path, const char *resp_pipe_path, const
     write_str(STDERR_FILENO, "Failed to allocate memory for thread\n");
     return;
   }
-  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path};
+  struct ThreadPrincipalData threadPrincipal_data= {req_pipe_path, resp_pipe_path, notif_pipe_path,&thread_secundaria[0]};
   struct ThreadSecundariaData threadSecundaria_data = {notif_pipe_path};
 
   //principal
